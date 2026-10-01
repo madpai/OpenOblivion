@@ -116,7 +116,7 @@ depletion/recovery and drowning remain untested.
 
 The served package is **0.10-touch-name** (versionCode 10). It does not change the motor, the stair filter, or the strip loader. The overlay adds attack, sneak, weapon, spell, inventory, journal, wait, menu, and POV on the engine's existing bindings. USE, JUMP, and attack leave the bottom 13% clear for the minimap. A player script draws a top name bar when Lua has a record name, and does not print record ids. TES4 actor names stay on the engine tooltip. GUI scale 1.25 and font size 20 are a comfort choice for the 960×540 framebuffer. That package is the served download, QA `OO-ANDROID-010`. See [preview play](research/PREVIEW_PLAY.md).
 
-The private download is 0.9-authored-collision; 0.8-run is archived, 0.6 and 0.7 are withdrawn, 0.5 remains the stair comparison, and the complete working 0.3 APK/page/notes are archived
+The private download is 0.10-touch-name; 0.9-authored-collision and 0.8-run are archived, 0.6 and 0.7 are withdrawn, 0.5 remains the stair comparison, and the complete working 0.3 APK/page/notes are archived
 for recovery/comparison. The rejected 0.4 Lua-filter APK remains withheld.
 Native 0.5 keeps the original movement and camera collision paths and adds
 bounded read-only QA samples. It remains OpenGL, with animation, general TES4
