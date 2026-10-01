@@ -2,7 +2,7 @@
 
 Date: 2026-10-01. This began as a movement-blocking investigation. The static
 strip loader and its shape comparison are now done, and phone preview
-`0.9-authored-collision` carries the switch. The player cylinder, step
+`0.9-authored-collision` carries the switch. The player body, step
 constants, and stair filter are unchanged. Tuning walk/run speed is still
 blocked: the character body dimensions are unknown, and the 0.8 log never
 left the borrowed walk. A ray grid is not a character-controller trace.
@@ -132,12 +132,14 @@ in this slice is the ragdoll path (625 blocks in 26 files), not the live
 player. `bhkSPCollisionObject` is a phantom used for trigger volumes. Neither
 is required to test stair contact.
 
-The live player capsule is not one of these static meshes. Oblivion constructs
+The live player body is not one of these static meshes. Oblivion constructs
 it at runtime on `OL_CHAR_CONTROLLER`. Its radius, height, and step offset are
-not in the stair NIFs and are not recovered here. OpenMW's cylinder, 34-unit
-step-up, and 62-unit ground sweep are Morrowind controller constants. Changing
-them before the ground mesh is the authored one would tune contact against the
-decorative render surface.
+not in the stair NIFs. A later read of the master (382 GMSTs), `Oblivion_default.ini`,
+and the player skeleton also did not find them. The skeleton capsules are
+layer-8 ragdoll limbs. OpenMW's default actor shape is an axis-aligned box
+(setting 0), not the cylinder (setting 2). Step-up 34 and step-down 62 are
+still the Morrowind constants. Changing them is not supported by a recovered
+Oblivion body. See [preview play](PREVIEW_PLAY.md).
 
 ## What is required, and what is not
 
@@ -175,8 +177,8 @@ Strip scale and MOPP scale must be 1. The root Gamebryo transform must be
 identity. Triangles are built in the stored units and added as one compound
 child at the origin. The rigid-body translation is not applied. MOPP bytes are
 not executed. Anything else, including a non-identity root, keeps the
-render-mesh fallback. The player cylinder, the 34/62 step constants and the
-camera filter were not changed.
+render-mesh fallback. The player body, the 34/62 step constants and the
+camera filter were not changed. The default actor shape is a box, not a cylinder.
 
 The desktop 0.52 loader was rebuilt and run on the six stair NIFs. Bullet's
 triangle count omits degenerate strip steps, the same rule the render-mesh

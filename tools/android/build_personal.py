@@ -132,6 +132,8 @@ def main():
     # Original read-only camera/player diagnostics; no donor scripts modified.
     paths += [(ROOT / 'tools/android/phone_qa.omwscripts', 'qa/phone_qa.omwscripts'),
               (ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua', 'qa/scripts/openoblivion_phone_qa.lua'),
+              (ROOT / 'tools/android/look_name.omwscripts', 'qa/look_name.omwscripts'),
+              (ROOT / 'tools/android/scripts/openoblivion_look_name.lua', 'qa/scripts/openoblivion_look_name.lua'),
               (ROOT / 'tools/android/run_gate.omwscripts', 'qa/run_gate.omwscripts'),
               (ROOT / 'tools/android/scripts/openoblivion_run_gate.lua', 'qa/scripts/openoblivion_run_gate.lua'),
               (ROOT / 'tools/android/camera_repair.omwscripts', 'qa/camera_repair.omwscripts'),
@@ -174,7 +176,8 @@ def main():
                                        for file in sorted((ROOT / 'android/host').rglob('*')) if file.is_file()}
     provenance['preview_tools_sha256'] = {file.relative_to(ROOT).as_posix(): digest(file) for file in
         (Path(__file__).resolve(), ROOT / 'tools/android/scene_assets.py',
-         ROOT / 'tools/android/phone_qa.omwscripts', ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua')}
+         ROOT / 'tools/android/phone_qa.omwscripts', ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua',
+         ROOT / 'tools/android/look_name.omwscripts', ROOT / 'tools/android/scripts/openoblivion_look_name.lua')}
     for file in (ROOT / 'tools/android/camera_repair.omwscripts', ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua'):
         provenance['preview_tools_sha256'][file.relative_to(ROOT).as_posix()] = digest(file)
     (assets / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')

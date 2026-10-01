@@ -132,7 +132,7 @@ public final class MainActivity extends Activity {
         base = base.replace("resources=./resources", "resources=" + resourcePath).replace("data=./resources/vfs-mw", "data=" + resourcePath + "/vfs-mw");
         write(new File(global, "openmw.cfg"), base);
         String cfg = "replace=content\nreplace=fallback-archive\nresources=" + resourcePath
-            + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ncontent=template.omwgame\ncontent=Oblivion.esm\ncontent=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\n"
+            + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ncontent=template.omwgame\ncontent=Oblivion.esm\ncontent=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\ncontent=look_name.omwscripts\n"
             + (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE ? "content=native_stair_qa.omwscripts\n" : "")
             + "encoding=win1252\n"
             ;
@@ -141,7 +141,9 @@ public final class MainActivity extends Activity {
         settings = settings.replace("[Models]", "[Models]\nload unsupported nif files = true");
         settings += "\n[Video]\nresolution x = 960\nresolution y = 540\nfullscreen = true\nvsync = true\n"
             + "\n[Shadows]\nenable shadows = false\n\n[Water]\nshader = false\n\n[Camera]\nviewing distance = 4096\n"
-            + "\n[Terrain]\ndistant terrain = false\n\n[Post Processing]\nenabled = false\n";
+            + "\n[Terrain]\ndistant terrain = false\n\n[Post Processing]\nenabled = false\n"
+            // Comfort scale for the 960x540 framebuffer. Not an Oblivion constant.
+            + "\n[GUI]\nscaling factor = 1.25\nfont size = 20\n";
         write(new File(user, "settings.cfg"), settings);
     }
     @Override public void onBackPressed() { if (!preparing) super.onBackPressed(); }

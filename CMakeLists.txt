@@ -90,4 +90,6 @@ if(BUILD_TESTING AND NOT ANDROID)
         "${CMAKE_SOURCE_DIR}/tests/test_player_movement.py")
     add_test(NAME grounded-eye-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_grounded_eye.lua" "${CMAKE_SOURCE_DIR}")
+    add_test(NAME look-name-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_look_name.lua" "${CMAKE_SOURCE_DIR}")
 endif()

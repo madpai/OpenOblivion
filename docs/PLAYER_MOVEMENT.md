@@ -32,8 +32,10 @@ feedback, independently of the desktop variation measurements.
 
 One-to-one Oblivion movement, including stair contact, is not the current
 target. Upstream still builds static collision from visible geometry. Preview
-0.9 can replace a fixed `OL_STATIC` strip with the authored triangles; the
-player body is still the borrowed cylinder. A read of the owner master found Player
+0.9 can replace a fixed `OL_STATIC` strip with the authored triangles. The
+player body is still OpenMW's. The default `actor collision shape type` is 0,
+an axis-aligned box. A cylinder is setting 2, and the phone template does not
+set it. Step-up stays 34 and step-down stays 62. A read of the owner master found Player
 `00000007` (Imperial `00000907`, height 1, Speed 40, Athletics 5, Acrobatics 5)
 and the present settings `fMoveCharWalkMin/Max` 90/130, `fMoveRunMult` 3,
 `fMoveNoWeaponMult` 1.1, `fMoveEncumEffect` 0.4, `fMoveWeightMax` 150,

@@ -12,9 +12,15 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 `/home/commander/openoblivion-private/sideload`, served only on Tailscale port
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
-and the owner's earlier failed physical-phone views. The current download is
-`0.9-authored-collision`, with screenshot uploads and QA objective `OO-ANDROID-009`.
-It keeps the 0.5 stair filter and adds fixed `OL_STATIC` strip collision.
+and the owner's earlier failed physical-phone views. The served download is
+`0.10-touch-name` (versionCode 10), QA objective `OO-ANDROID-010`. Its APK
+SHA256 is `02b7c090ee570365b463fdb105830b880fa6a32e18cbdfd1f766ad05c270c366`
+(656,482,247 bytes). It keeps the 0.5 stair filter, the fixed `OL_STATIC`
+strip collision, and the 0.9 movement. It adds touch attack, sneak, weapon,
+spell, inventory, journal, wait, menu, and POV, a top name bar for records
+Lua can name, and GUI scale 1.25 / font size 20. See
+[preview play](research/PREVIEW_PLAY.md). `0.9-authored-collision` is archived.
+The 0.9 package keeps the 0.5 stair filter and adds fixed `OL_STATIC` strip collision.
 USE is the lower-right button, JUMP
 is above it, and run is a held Shift with always-run pinned off. It starts on
 run. Run speed is still the borrowed walk. `0.8-run` is archived.
