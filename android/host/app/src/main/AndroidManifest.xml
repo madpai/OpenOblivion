@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <application android:label="OpenOblivion Preview" android:theme="@android:style/Theme.Material.NoActionBar"
+        android:allowBackup="false" android:largeHeap="true" android:extractNativeLibs="true">
+        <activity android:name="ui.activity.MainActivity" android:exported="true" android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity>
+        <activity android:name="ui.activity.GameActivity" android:exported="false" android:screenOrientation="sensorLandscape"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|uiMode"
+            android:process=":scene" />
+    </application>
+</manifest>

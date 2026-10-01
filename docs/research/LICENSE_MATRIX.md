@@ -22,7 +22,7 @@ This is a per-candidate reuse register, not permission to copy an entire reposit
 | [BulletPhysics/bullet3](https://github.com/bulletphysics/bullet3/tree/63c4d67e337017f9d8b298c900e9aabdb69296e7)<br>`63c4d67e337017f9d8b298c900e9aabdb69296e7` | Zlib for core; Extras/examples/ThirdPartyLibs excluded (LICENSE.txt) | Collision and character-controller candidate; no Havok binary dependency | Compatible for audited core files | Research only; not linked | Preserve license, origin and changed-source marking; audit anything from excluded directories. |
 | [libsdl-org/SDL](https://github.com/libsdl-org/SDL/tree/56a72f8c869fd5ebd69c1bd4ba7abcdf0b7b83b4)<br>`56a72f8c869fd5ebd69c1bd4ba7abcdf0b7b83b4` | Zlib (LICENSE.txt) | Desktop window/input and Android integration candidate | Compatible for audited SDL source | Research only; not linked | Preserve origin/license, mark altered source and separately audit bundled dependencies. |
 | [ColeDeanShepherd/TESUnity](https://github.com/ColeDeanShepherd/TESUnity/tree/f4d5e19f68da380da9da745356c7904f3428b9d6)<br>`f4d5e19f68da380da9da745356c7904f3428b9d6` | MIT for original code (LICENSE.txt); vendor/schema rights separate | Alternative world-viewer/VR architecture | MIT original code candidate; Unity is an external engine dependency | Research only; README targets Morrowind | Retain Cole Shepherd notice; audit Vendors/nif.xml separately; not evidence of a native Oblivion runtime. |
-| [madpai/open-asset-lab](https://github.com/madpai/open-asset-lab/tree/e5f9dcb29f67ed6346954e66ee6d0af575f832fc)<br>`e5f9dcb29f67ed6346954e66ee6d0af575f832fc` | GPLv3 (LICENSE); optional decoder has separate license | Classic BSA/static NIF import, provenance and compiler/native agreement | GPLv3 candidate; no runtime/content-package compatibility assumption | Read-only source study and six original-fixture tests | Retain GPL/source and decoder notices if reused; keep owner assets and compiled packages private. |
+| [madpai/open-asset-lab](https://github.com/madpai/open-asset-lab/tree/e5f9dcb29f67ed6346954e66ee6d0af575f832fc)<br>`e5f9dcb29f67ed6346954e66ee6d0af575f832fc` | GPLv3 (LICENSE); optional decoder has separate license | Classic BSA/static NIF import, provenance and compiler/native agreement | GPLv3 candidate; no runtime/content-package compatibility assumption | Six original-fixture tests; unchanged external BSA API used by the private scene packager, not included in the APK | Retain GPL/source and decoder notices if reused; keep owner assets and compiled packages private. |
 | [madpai/megamod-showdown](https://github.com/madpai/megamod-showdown/tree/b6f54ea71c92953441751a28b0f93375e53bf1bc)<br>`b6f54ea71c92953441751a28b0f93375e53bf1bc` | GPLv3 (LICENSE) | Vulkan/Android experience, host-owned survival rules and evidence workflow | GPLv3 candidate; inherited dependencies require audit | Read-only architecture study; no code copied | Retain GPL/source and third-party notices if reused; no donor data or personal APK contents. |
 
 ## Standalone reproduction dependencies
@@ -52,3 +52,38 @@ Asset Lab reproduction used PyFFI `7f4404dbb8cf832dadd4b3150819340b8764f9b0` wit
 Before importing code, record upstream path and blob hash, exact license/notice, original vs adapted status, changed lines, and the OpenOblivion destination. Preserve notices next to copied files and in a distribution notice inventory. Audit transitive dependencies and generated output, not just a top-level license badge. Researching behavior does not authorize copying code from an unclear-license repository.
 
 Canonical license references: [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html), [MPL-2.0](https://www.mozilla.org/en-US/MPL/2.0/). MPL compatibility remains conditional on exact covered files and secondary-license eligibility.
+
+## Private Android baseline (2026-10-01)
+
+Before staging any donor files, inspected **Andiweli/OpenMW-Android**, tag
+`0.51.0-11`, source `7c97200966c9cb35a76b74d16d5c76f1a8939612`. LICENSE is GPLv3;
+individual source notices and dependency licenses still apply. The release APK
+SHA256 is `c0ea41c9f862d95c10796909d3b0edef6f401d5ac92ce9dd3bf92f967f32ee07`.
+Its `libopenmw.so` SHA256 is
+`a99f89d2e8de0f652de219af9acd29db48db10f55f0026cc7a911c426a7efdc0`, matching
+`source/buildscripts/openmw-051-patch39-libopenmw.sha256` at that source revision.
+Native engine base is OpenMW 0.51.0,
+`f4bec41444214a7903bebd178389ca22ca13f646`, with the donor's documented patches.
+This is a separate reproduction host, not our 0.52 reader runtime or Vulkan renderer.
+
+Intended use: copy the eight unchanged Java files in
+`source/app/src/main/java/org/libsdl/app/` to an **external private build directory**,
+plus the six released ARM64 libraries (OpenMW, SDL2, GL4ES, OpenAL, Collada DOM,
+libc++), engine resources and base configuration. Preserve donor LICENSE and
+`source/3rdparty-licenses.txt`, engine resource notices, and Template LICENSE /
+AUTHORS. No donor launcher, Bugsnag libraries, icons, proprietary game binaries,
+or runtime payloads are committed here. OpenOblivion's launcher, touch overlay,
+packager and download service are independently authored GPL-3.0-only code.
+
+SDL has zlib upstream licensing; this port's modified Java bridge is conservatively
+treated as GPLv3 under the donor project. OpenAL is LGPL, GL4ES MIT, Collada DOM
+MIT-style, libc++ Apache-2.0 with LLVM exceptions; statically linked engine
+dependencies retain their individual licenses. The donor build scripts and full
+third-party notices accompany the private test. Dependency recipes include
+historical/floating inputs: a hash-verified released binary is **not** proof of a
+fully reproducible transitive source build. Public binary release remains gated
+on a complete dependency revision/source inventory and corresponding-source
+bundle. This personal package is supplied back to the installation owner over
+their private tailnet; it must never enter public releases or CI artifacts.
+
+[Exact donor source and patches](https://github.com/Andiweli/OpenMW-Android/tree/7c97200966c9cb35a76b74d16d5c76f1a8939612).

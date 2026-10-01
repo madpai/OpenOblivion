@@ -1,4 +1,14 @@
 {
+  "Andiweli/OpenMW-Android": {
+    "engine_base_revision": "f4bec41444214a7903bebd178389ca22ca13f646",
+    "libopenmw_sha256": "a99f89d2e8de0f652de219af9acd29db48db10f55f0026cc7a911c426a7efdc0",
+    "release_sha256": "c0ea41c9f862d95c10796909d3b0edef6f401d5ac92ce9dd3bf92f967f32ee07",
+    "release_url": "https://github.com/Andiweli/OpenMW-Android/releases/download/0.51.0-11/OpenMW.0.51-11.apk",
+    "revision": "7c97200966c9cb35a76b74d16d5c76f1a8939612",
+    "role": "Private Android scene baseline; unchanged SDL Java bridge and released open-source ARM64 runtime. Separate from linked 0.52 readers.",
+    "tag": "0.51.0-11",
+    "url": "https://github.com/Andiweli/OpenMW-Android"
+  },
   "BulletPhysics/bullet3": {
     "branch": "master",
     "commit_date": "2025-10-22T02:13:14Z",

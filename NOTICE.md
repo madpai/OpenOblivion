@@ -29,3 +29,12 @@ automation and fetch/integrity tools are independently authored.
 
 The Elder Scrolls IV: Oblivion belongs to its respective rights holders.
 This independent interoperability project supplies code; users supply game data.
+
+The optional personal Android scene preview uses an external unchanged
+OpenMW Android release by Andiweli and preceding port contributors, source
+`7c97200966c9cb35a76b74d16d5c76f1a8939612` (GPLv3 plus individual dependency
+licenses). Its patched SDL Java bridge and native/runtime resources are staged
+only outside this checkout. The independently authored OpenOblivion host is
+not an official OpenMW app. See the license matrix for exact binary provenance
+and restrictions on any future public binary release. Owner game content in
+a personal APK is private and is not licensed by this project's GPL.

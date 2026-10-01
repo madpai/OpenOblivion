@@ -22,6 +22,10 @@ and [upstream comparison](docs/research/FOUNDATION_COMPARISON.md).
   bodies and reports counts without content names or installation paths.
 - A Vulkan physical-device and graphics-queue capability probe on Linux.
 - Both executables cross-compile for Android `arm64-v8a`, API 29, NDK r28.
+- An optional [personal Android scene APK](tools/android/README.md) packages
+  an audited OpenMW Android baseline and owner-supplied scene assets privately.
+  Emulator installation/unpacking pass; world rendering and touch movement
+  still need phone validation after an emulator graphics translation crash.
 - Original generated fixtures, upstream revision/integrity checks and a
   public-content guard covering working files, staged blobs and Git history.
 - A separate unchanged full OpenMW build and private interior/exterior scene
@@ -79,7 +83,7 @@ cmake -S . -B build-arm64 -G Ninja \
 cmake --build build-arm64 --parallel 4
 ```
 
-These are native command-line probes. An APK, Android activity, Storage Access
+These are native command-line probes. The new runtime's Storage Access
 Framework integration, touch controls and a Vulkan surface are not implemented.
 Cross-compilation alone does not prove execution on a phone.
 

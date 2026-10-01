@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sdl_start_error">Unable to start the scene runtime: %1$s</string>
+    <string name="sdl_error_title">OpenOblivion Preview</string>
+    <string name="sdl_exit">Return</string>
+</resources>

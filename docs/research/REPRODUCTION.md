@@ -133,3 +133,39 @@ trusted classic owner installations.
 Next: complete the private interior/exterior and collision checks, then measure
 the immutable scene/content boundary before accepting a full runtime fork. Vulkan scene
 rendering, a native Android app and authoritative co-op remain separate gates.
+
+
+## Personal Android sideload checkpoint (2026-10-01)
+
+Original launcher/touch host plus unchanged external Andiweli OpenMW Android
+0.51 baseline, source `7c97200966c9cb35a76b74d16d5c76f1a8939612`. See
+[license matrix](LICENSE_MATRIX.md) for the release/native hashes and dependency
+limits. This is separate from the unchanged desktop 0.52 reproduction.
+
+- APK: 440,107,222 bytes (about 420 MiB), SHA256
+  `d374efdce1d5c512d6ec76cef3cb0d41f11079c6011309533230dfb108be252b`. Android APK Signature Scheme v2 verifies.
+- Packaged ZIP CRCs and all six unchanged native library hashes pass. The
+  payload manifest verifies every extracted entry on first launch. Owner files
+  stay outside Git; the APK is a personal test, not a public release.
+- Visual selection: 1,287 extracted files (157 MiB), four Vilverin interiors
+  plus nine Tamriel exterior cells; whole master/public Template/runtime
+  resources included. 47 unresolved requests are recorded privately, primarily
+  unsupported SpeedTree and unavailable/unused expansion landscape paths. This
+  is a bounded scene slice; distant exploration may encounter missing resources.
+- Android 14 Google APIs x86_64 emulator, `libndk_translation.so` ARM64 bridge,
+  software graphics: APK install, cold asset verification and launcher pass.
+  World loading fails in `libndk_translation_proxy_libGLESv2.so`, null function
+  target; OSG single-threading does not resolve it. An experimental ANGLE
+  preference did not select an installed ANGLE package and was removed.
+  Template-only control gets further and reports Collada model load errors.
+  No physical phone rendering, movement, collision, frame-time or lifecycle
+  claim is established. Logs/screenshots remain private.
+- Tailscale-only HTTP service: HEAD, byte/suffix ranges, If-Range behavior,
+  rejected traversal/unlisted files/invalid ranges and a complete APK download
+  with matching SHA256 pass. Existing sibling servers keep their ports.
+
+Evidence directory: `/home/commander/openoblivion-private/evidence/android-preview`.
+Personal artifact root: `/home/commander/openoblivion-private/sideload`. The
+user service is enabled for the current user's sessions (`Linger=no`); the
+host and Tailscale must remain online. Stop with
+`systemctl --user stop openoblivion-sideload.service`. No remote push occurred.

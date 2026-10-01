@@ -1,8 +1,23 @@
 # Android platform plan
 
+An optional personal APK/launcher now exists under `android/host`, using the
+audited external OpenMW Android 0.51 runtime and OpenGL ES. See
+[personal build instructions](../tools/android/README.md). The user-requested
+private APK bundles a bounded owner-data scene slice and installs it without
+manual file copying. Public APKs must still contain no game data.
+
+Android 14 x86_64 emulator with ARM64 translation: APK installation, SHA256
+verified asset unpacking and the launcher passed. The world-load attempt
+crashed in `libndk_translation_proxy_libGLESv2.so` with a null function target;
+single-threaded OSG rendering did not fix it. A template-only control reached
+world initialization but reported Android Collada model load failures. This
+does not establish phone scene rendering or touch movement. No physical device
+was connected. Preserve these limits when describing the download.
+
 Confirmed: native inspector and Vulkan capability probe compile for
 `arm64-v8a`, API 29, NDK `28.0.13004108`, Clang 19, static libc++. These are
-command-line executables, not an APK. No device run occurred in this checkpoint.
+command-line executables, separate from the preview APK. The founding probes
+were not executed on an Android device.
 
 ## Native app boundary
 
@@ -47,7 +62,7 @@ size/position/sensitivity and left/right-handed placement. Camera prediction
 is local; progression is authoritative. Menus do not pause a multiplayer world.
 
 The first app gate is an original scene with working touch controls and surface
-recovery, followed by one private TES4 scene. APK contents must pass the
-no-game-data check. Emulator evidence proves UI/lifecycle behavior; a physical
+recovery, followed by one private TES4 scene. Public APK contents must pass the
+no-game-data check; personal asset-packed tests stay outside the repository and
+public releases. Emulator evidence proves UI/lifecycle behavior; a physical
 phone run is required for device performance claims.
-

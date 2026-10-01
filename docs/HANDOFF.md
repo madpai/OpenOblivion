@@ -3,6 +3,16 @@
 Founding checkpoint: 2026-09-30. This is a local repository with no remote
 publication. Original project code is GPL-3.0-only; owner content stays private.
 
+Personal sideload checkpoint: 2026-10-01. The user requested an asset-packed
+test APK and a separate server like MegaMod's. The original Android launcher,
+touch overlay and build/server tools are under `android/host` and `tools/android`.
+They stage a pinned external OpenMW Android 0.51 baseline and a private visual
+slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
+`/home/commander/openoblivion-private/sideload`, served only on Tailscale port
+8735 by the user unit `openoblivion-sideload.service`. It is never a public
+release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure;
+physical phone scene rendering and controls still need validation.
+
 ## Decisions and measured state
 
 Read [ADR 0001](decisions/0001-foundation.md). Current OpenMW is selected as the
