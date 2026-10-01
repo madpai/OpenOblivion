@@ -22,9 +22,9 @@ slice and resolves a concrete uncertainty before expanding scope.
    The owner now prioritizes actual player movement. Walking/stopping/ordinary
    collision/jump/look are reported working on the phone. Native 0.5 now has
    owner-reported smooth stairs with liked subtle stepping; swimming and a breath
-   indicator are also observed. Preview 0.8 still measured only walk speed.
-   Fixed `OL_STATIC` strip collision now has a desktop on/off comparison;
-   speed tuning stays blocked until the character body is recovered. See
+   indicator are also observed. Preview 0.8 measured only walk speed. Preview
+   0.9 serves the fixed `OL_STATIC` strip loader and is waiting on the owner's
+   stair walk. Speed tuning stays blocked until the character body is recovered. See
    [Havok collision](research/HAVOK_COLLISION.md) and
    [player movement](PLAYER_MOVEMENT.md).
 3. Use original synthetic override/deletion/master-reference fixtures to verify

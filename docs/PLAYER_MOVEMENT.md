@@ -31,8 +31,9 @@ there are no attached screenshots. Stair comfort comes from the owner's chat
 feedback, independently of the desktop variation measurements.
 
 One-to-one Oblivion movement, including stair contact, is not the current
-target. The pinned runtime still builds static collision from visible geometry
-and skips authored Havok shapes. A read of the owner master found Player
+target. Upstream still builds static collision from visible geometry. Preview
+0.9 can replace a fixed `OL_STATIC` strip with the authored triangles; the
+player body is still the borrowed cylinder. A read of the owner master found Player
 `00000007` (Imperial `00000907`, height 1, Speed 40, Athletics 5, Acrobatics 5)
 and the present settings `fMoveCharWalkMin/Max` 90/130, `fMoveRunMult` 3,
 `fMoveNoWeaponMult` 1.1, `fMoveEncumEffect` 0.4, `fMoveWeightMax` 150,
@@ -59,8 +60,9 @@ the character body dimensions are recovered. See
 [Havok collision](research/HAVOK_COLLISION.md).
 
 Animation and broader viewer work follow the dependable player baseline.
-The 0.8 phone control change is the host overlay and a small settings pin. The movement probe and
-stair filter are unchanged.
+The 0.8 phone control change is the host overlay and a small settings pin.
+Preview 0.9 adds the static-collision switch and leaves the movement probe
+and stair filter unchanged. Owner feedback on 0.9 stairs is not in yet.
 
 The original `--player-movement` desktop probe drives the existing native player
 controls through five seconds of walking, stopping, jumping and landing. It
@@ -119,20 +121,21 @@ with fewer vertices than its visible counterpart. That difference changes the
 sampled surface. It is not yet a character-controller recording of the owner's
 stair issue.
 
-Remaining physical collision/controller work, when a separate defect is reproduced:
+Remaining physical collision/controller work:
 
-1. Reproduce ascent/descent on identified stair placements; compare commanded
-   travel with the solved player path, ground transitions and clearance.
-2. Create original collision fixtures with deliberately different visible and
-   authored surfaces. Audit a bounded static TES4 collision path: strip geometry,
-   node/body transforms, units, layers and unsupported-shape fallback. Reuse
-   existing NIF decoding and Bullet queries; no proprietary physics binary.
-3. Compare that collision path against the stock fallback on the same route.
-   Then change step-up/down or grounded velocity handling when the traces
-   identify a controller defect. Include short/tall steps, ramp, ceiling, wall,
-   descent, jump/landing and stopping regression cases.
-4. Integrate a verified change into the Android native runtime and repeat phone
-   stair traversal. Keep the working walk/stop/jump baseline and measured scope.
+1. Collect the owner's 0.9 stair walk. The desktop evidence is a ray grid on
+   the isolated stair meshes, not a solved player path through Vilverin.
+2. The bounded static strip path is implemented and measured. See
+   [Havok collision](research/HAVOK_COLLISION.md). Do not repeat that audit.
+   Public fixtures still do not contain a visible mesh that differs from its
+   authored surface; the comparison used the owner's stair NIFs outside Git.
+3. Recover the character body radius, height, and step offset from a source
+   other than these stair NIFs. Do not invent the numbers, and do not change
+   the cylinder or the 34/62 step constants until that source exists. Then
+   repeat the stair trace. Short/tall steps, ramp, ceiling, wall, descent,
+   jump/landing, and stopping stay in that later pass.
+4. Preview 0.9 already contains the strip loader. Another phone package waits
+   on a measured body change or on the owner's 0.9 stair report.
 
 Rendering polish and viewer expansion remain lower priority than player travel.
 Skeletal animation remains separate work.

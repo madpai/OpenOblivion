@@ -84,4 +84,17 @@ python3 tools/native/authored_collision.py \
 ```
 
 The Android 0.51 tree uses revision `f4bec41444214a7903bebd178389ca22ca13f646`.
-Apply it to that engine source, not to the donor Android project root.
+Apply it to that engine source, not to the donor Android project root. The
+script refuses a second apply.
+
+Rebuild the desktop loader inside `openoblivion-research-build:founding`,
+with the source mounted at `/source` and the existing build at `/work/build`.
+Override the image entrypoint; the image's default command is the full
+upstream build. The host has no OpenSceneGraph headers. Link Bullet as the
+image's float64 libraries.
+
+On Android, rebuild with `cmake --build <openmw-build> --target openmw`.
+The top-level Makefile does not compile the loader object when that path is
+named directly. If `ld.lld` reports `R_AARCH64_ABS32` out of range in
+`utilpackage.cpp.o`, strip debug info from the new loader object, delete
+`libcomponents.a`, and link again. The phone packager strips the library.

@@ -122,7 +122,8 @@ envelopes were checked against 0.52 `components/esm3/{loadtes3,loadstat,loadcell
 No engine algorithm, resource, donor script or format implementation was copied.
 Fixtures are boxes/treads authored from numeric dimensions, generated outside
 the checkout; no owner geometry is adapted. Native binary/source obligations
-and the future static TES4 collision audit remain unchanged.
+remain unchanged. The static strip loader is the audited insertion described
+above, not a new physics library.
 
 ## Native movement integration (2026-10-01)
 

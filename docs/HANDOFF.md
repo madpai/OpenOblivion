@@ -127,8 +127,10 @@ Use `tools/native/README.md` for the canonical source build and its exact receip
 The source build lives under `/home/commander/openoblivion-private/native-android`,
 desktop integration under `native-desktop`, and private candidate APK staging
 under `android-native-preview-build`. Reader/donor research pins remain clean.
-Audit authored TES4 collision separately and change the motor only when native
-trajectories identify a physical defect. The native movement trace distinguishes
+The fixed `OL_STATIC` strip loader is measured. Do not repeat that patch.
+The next physical change is the character body, and only after its radius,
+height, and step offset are recovered rather than invented. Change the motor
+only when a native trajectory identifies a defect. The native movement trace distinguishes
 horizontal travel,
 stopping, jump/landing and respawn discontinuities. Typed override/master-reference
 fixtures and the content/scene boundary remain required; use the same scenes to

@@ -1,14 +1,14 @@
 # Havok collision and the movement gap
 
-Date: 2026-10-01. This is a movement-blocking investigation. It does not change
-the player motor, the stair filter, or the phone build. Oblivion movement is
-still the borrowed OpenMW controller on collision generated from visible
-meshes. Tuning that controller further, including walk/run speed, is blocked
-until the collision surface and the player body match the serialized Havok
-semantics closely enough to measure.
+Date: 2026-10-01. This began as a movement-blocking investigation. The static
+strip loader and its shape comparison are now done, and phone preview
+`0.9-authored-collision` carries the switch. The player cylinder, step
+constants, and stair filter are unchanged. Tuning walk/run speed is still
+blocked: the character body dimensions are unknown, and the 0.8 log never
+left the borrowed walk. A ray grid is not a character-controller trace.
 
-No Havok binary, MOPP cooker, or decompiled game code is included or required
-for the first step below.
+No Havok binary, MOPP cooker, or decompiled game code is included. The strip
+loader does not need one.
 
 ## What the phone just showed
 
@@ -144,12 +144,13 @@ decorative render surface.
 Required before another movement tune:
 
 1. Static triangle collision from these `bhkNiTriStripsShape` blocks, in the
-   stored units, for fixed `OL_STATIC` bodies. The MOPP bytes stay unused.
+   stored units, for fixed `OL_STATIC` bodies. Done. The MOPP bytes stay unused.
 2. A layer filter so later pick, trigger, and non-collidable shapes do not
-   become floors. These six stairs do not need a special stair layer.
-3. A measured comparison on one of these stairs: the authored triangles
-   versus the current render-mesh collision, then the same player trace on
-   both.
+   become floors. Done for the strip path: the loader accepts layer 1 only.
+   The render-mesh fallback still has no layer filter. These six stairs do
+   not need a special stair layer.
+3. A measured comparison on one of these stairs. The shape comparison is done
+   below. A character-controller trace on both surfaces is not done.
 
 Not required for that comparison:
 
@@ -214,6 +215,49 @@ The Android 0.51 loader compiles with the same switch. Linking
 from the new loader object, which the phone package strips anyway, let the
 link succeed. The cylinder and the stair filter are unchanged. Preview
 `0.9-authored-collision` is the phone package that carries this library.
+
+## Lessons that the next session should not rediscover
+
+- `bhkNiTriStripsShape` vertices in `NiTriStripsData` are already in Gamebryo
+  units on these stairs. The niftools factor of 7 applies to packed Havok
+  vertices, which this slice does not use. Multiplying by 7 makes the mesh
+  about seven times too large.
+- The rigid-body translation must not be applied. On four stairs the collision
+  bounds already match the visible bounds without it.
+- Serialized triangle counts of the form `length - 2` include degenerate strip
+  steps. Bullet, and this loader, omit a step when two of its indices match.
+  `arwhallstairs01` is 1,288 serialized collision triangles and 575 kept.
+- OpenMW's 20.0.0.4 reader does parse these files. `NiGeometryData` has a
+  group id because this version is at least 10.1.0.114. A texture description
+  through 20.0.0.5 still stores a UV-set integer and an optional UV transform,
+  and the pinned reader consumes both because 20.0.0.4 is not above
+  `VER_OB` (20.0.0.5).
+- `bhkPCollisionObject` and `bhkSPCollisionObject` are stored as
+  `bhkCollisionObject` with the same record type, so the block name is gone
+  after parsing. Layer 1 is what keeps a trigger out of this path.
+  `bhkBlendCollisionObject` has its own type and is excluded.
+  `bhkNPCollisionObject` shares the collision-object record type but is a
+  different struct; the loader uses `dynamic_cast` and does not accept it.
+- A non-identity root transform, a non-unit strip or MOPP scale, or any shape
+  other than the strip chain falls back to the visible mesh. Child-node
+  collision is not consulted. Convex, box, capsule, list, clutter, ragdoll,
+  and phantom shapes are unchanged.
+- The desktop tree rebuilds inside `openoblivion-research-build:founding`.
+  Mount the source at `/source` and the existing build at `/work/build`, and
+  override the image entrypoint. The host has no OpenSceneGraph headers, and
+  the ninja file refers to those container paths. Bullet in that image is the
+  float64 build (`BT_USE_DOUBLE_PRECISION`).
+- On Android, `cmake --build ... --target openmw` is the incremental link.
+  The top-level Makefile has no recipe for the loader object path, so a direct
+  `make` of that path does nothing. The first full link failed with
+  `R_AARCH64_ABS32` out of range inside the existing `utilpackage.cpp.o`
+  debug info. Stripping debug from the new loader object, deleting
+  `libcomponents.a`, and linking again succeeded. The phone package strips the
+  library anyway.
+- `tools/native/authored_collision.py` refuses to apply twice. The private
+  desktop and Android engine trees already contain the patch.
+- The sideload server reads `download.json` only at process start. Restart
+  `openoblivion-sideload.service` after replacing the manifest.
 
 ## Smallest next steps
 

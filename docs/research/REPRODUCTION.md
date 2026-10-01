@@ -359,9 +359,9 @@ smoothing workaround is not implemented.
 Private evidence: `evidence/player-movement-{interior,exterior}-01`,
 `player-movement-stairs-descent-01`, `player-movement-stair-{ascent,descent}-02`
 and the validated exterior repeat. Analysis revisions preserve original metrics
-and reject the invalid stair reset. The next implementation gate is a valid
-stair route and original authored-collision fixtures, then a bounded native
-collision/controller change tested against that baseline.
+and reject the invalid stair reset. This checkpoint did not change collision.
+The later static-strip loader and its shape comparison are in
+[Authored static collision](#authored-static-collision-2026-10-01) below.
 
 Twenty-four original tests pass in five CTest suites. The Linux tools rebuild
 with verified unchanged upstream source. The validated exterior repeat retains
