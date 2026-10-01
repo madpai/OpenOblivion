@@ -49,10 +49,9 @@ reports very smooth stairs with subtle stepping they like, plus swimming and
 a visible breath indicator. The uploaded log confirms the native camera filter
 runs on the phone. Desktop Vilverin comparisons reduce measured view-jolt
 variation by about **60% uphill / 76% downhill**, with movement checks passing.
-**Next: recover Oblivion's own player motor from the game.** Phone preview 0.8
-holds Shift for run, with USE and JUMP on their working buttons. Walk speed,
-jump height, and the stair filter stay as in 0.5. Current movement fidelity is
-still the borrowed engine.
+**Next: understand Oblivion's authored Havok collision before changing the
+motor.** Phone preview 0.8 still moves at the borrowed walk speed. The stair
+filter stays as in 0.5. See [Havok collision](docs/research/HAVOK_COLLISION.md).
 The Android engine builds from locked source dependencies; the working 0.3
 phone baseline is archived and the earlier Lua experiment is withheld.
 

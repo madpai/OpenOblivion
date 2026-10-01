@@ -47,11 +47,12 @@ Preview **0.7-controls** does not change walk speed, jump height, gravity,
 collision, or the stair filter. On this engine Space activates and E jumps, so
 the lower-right button is USE and the button above it is JUMP. The 0.7 log
 stays near 151 units per second, so the Caps Lock pulse did not change gait.
-Preview 0.8 holds Shift for run and pins always-run off, because that saved
-setting makes Shift mean walk. It starts on run. 0.6 and 0.7 are withdrawn.
-Water entry,
-breath, and drowning remain untested. The next movement work is to recover
-Oblivion's own player motor from the game, not to retune the stair filter.
+Preview 0.8 holds Shift for run and pins always-run off. Its phone log still
+has no second gait: median 149.9 and maximum 165.1 across 357 grounded moving
+samples. 0.6, 0.7, and further binding experiments are withdrawn. Water entry,
+breath, and drowning remain untested. Further speed and binding changes are
+blocked until authored collision is measured. See
+[Havok collision](research/HAVOK_COLLISION.md).
 
 Animation and broader viewer work follow the dependable player baseline.
 The 0.8 phone control change is the host overlay and a small settings pin. The movement probe and
@@ -203,6 +204,6 @@ Private evidence names are `native-stair-ascent-{raw,smoothed}-05`,
 `native-surface-{stairs,ramp,wall,ceiling}-05`, `native-look-control-05` and
 `native-healthy-tracking-control-05`. Native source/build instructions are in
 [tools/native](../tools/native/README.md). The latest owner phone feedback now
-supports stair comfort on 0.5, separately from these desktop metrics. The next
-movement step is to recover Oblivion's player motor from the game and measure
-it against these fixtures. The 0.5 stair filter stays until that comparison.
+supports stair comfort on 0.5, separately from these desktop metrics. Further
+motor tuning is blocked on [HAVOK_COLLISION.md](research/HAVOK_COLLISION.md).
+The 0.5 stair filter stays until an authored-collision trace exists.

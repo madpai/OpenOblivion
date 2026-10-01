@@ -532,6 +532,12 @@ is pinned off so a controller axis cannot replace the Shift state. USE and
 JUMP are unchanged from the fixed 0.7 mapping. The private sideload objective
 is `OO-ANDROID-008`.
 
+The follow-up report `93db9dd902434ef2bf0e54dc7234dca9` is the same 0.8 build.
+`OPENOBLIVION_RUN_GATE` is present. Grounded moving speed over 25.7 simulation
+seconds has median 149.9 and maximum 165.1, with no sample above 200. The
+Shift hold did not create a run gait. Movement changes are blocked on
+[HAVOK_COLLISION.md](HAVOK_COLLISION.md).
+
 ## Phone controls 0.7 (2026-10-01)
 
 Owner testing of private preview 0.6 reported that the USE and JUMP labels no

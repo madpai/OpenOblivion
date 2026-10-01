@@ -111,10 +111,10 @@ The post-physics camera candidate now passes desktop stair comparisons in both
 directions, and the owner now likes the 0.5 stair feel. One-to-one movement,
 including stair collision, is not the current target: authored Havok shapes are
 still skipped, and several published movement settings are absent from the
-master. Do not retune the 0.5 filter ahead of a motor recovered from the game.
-Preview 0.8-run keeps that motor. USE and JUMP match this engine's Space and E
-bindings. Run holds Shift after pinning always-run off, so Shift is no longer
-the walk gait. Keep 0.5 as the stair
+master. Movement tuning is now blocked on the Havok collision semantics in
+[HAVOK_COLLISION.md](research/HAVOK_COLLISION.md). The 0.8 phone log stayed at
+walk speed, median 149.9 and maximum 165.1, so another run binding is not the
+next change. Keep 0.5 as the stair
 comparison and 0.3 as the recovery baseline. Check swim transitions and breath
 behavior separately; the owner's observation does not prove drowning.
 Use `tools/native/README.md` for the canonical source build and its exact receipt.
