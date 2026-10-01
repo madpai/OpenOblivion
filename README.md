@@ -1,53 +1,103 @@
+<div align="center">
+
 # OpenOblivion
 
-A project foundation for a native, open-source Oblivion runtime on Android
-ARM64 and desktop Linux, with Vulkan rendering and persistent cooperative
-multiplayer as primary design requirements.
+**A native Oblivion runtime, built toward persistent cooperative play.**
 
-The intended experience supports death, respawning, persistent progression,
-alternate starts, cooperative PvE and custom modes. A later classic ruleset
-should support faithful single-player behavior. **This checkout is a tested
-research/tooling foundation, not a playable Oblivion engine.**
+[![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
+[![Foundation checks](https://github.com/madpai/OpenOblivion/actions/workflows/ci.yml/badge.svg)](https://github.com/madpai/OpenOblivion/actions/workflows/ci.yml)
+![Stage: early development](https://img.shields.io/badge/stage-early_development-orange)
+![Targets: Android ARM64 and Linux](https://img.shields.io/badge/targets-Android_ARM64_%7C_Linux-green)
 
-The compatibility foundation selected for the next prototype is **OpenMW**.
-Its existing TES4/BSA/NIF work is substantially closer to the content-loading
-problem than starting with an unrelated engine. Vulkan and multiplayer remain
-separate unresolved integration work. See the [foundation decision](docs/decisions/0001-foundation.md)
-and [upstream comparison](docs/research/FOUNDATION_COMPARISON.md).
+[Progress](#progress-so-far) · [Build](#build-on-linux) · [Roadmap](docs/ROADMAP.md) · [Architecture](docs/ARCHITECTURE.md) · [Research](docs/research/FOUNDATION_COMPARISON.md)
 
-## What works here
+</div>
 
-- A native read-only classic TES4 inspector, compiling a pinned, unchanged
-  OpenMW reader slice. It checks container bounds, scans/decompresses record
-  bodies and reports counts without content names or installation paths.
-- A Vulkan physical-device and graphics-queue capability probe on Linux.
-- Both executables cross-compile for Android `arm64-v8a`, API 29, NDK r28.
-- An optional [personal Android scene APK](tools/android/README.md) packages
-  an audited OpenMW Android baseline and owner-supplied scene assets privately.
-  Emulator installation/unpacking pass. After repairing a missing-head camera
-  stuck at the origin, phone screenshots show textured interiors/exterior and
-  exterior logs verify camera tracking and touch look. The owner reports walk,
-  stop, jump and ordinary collision working; stairs catch and remain unresolved.
-- An original [native-player trajectory probe](docs/PLAYER_MOVEMENT.md) measures
-  horizontal walking, stopping and jump/landing through existing engine controls,
-  with original regression fixtures that reject camera-only motion and respawns.
-- Original generated fixtures, upstream revision/integrity checks and a
-  public-content guard covering working files, staged blobs and Git history.
-- A separate unchanged full OpenMW build and private interior/exterior scene
-  probes, using the public Template and the owner's data with software OpenGL.
-  See the [upstream reproduction recipe](tools/upstream/README.md).
+OpenOblivion is an open-source project exploring a modern engine/runtime for
+**The Elder Scrolls IV: Oblivion**, using the player's own game installation.
+The goal is native Android and desktop play, Vulkan rendering and persistent,
+server-authoritative cooperative RPG modes.
 
-Owner-supplied local `Oblivion.esm`: **1,167,017 records, 85,079 groups and
-41,789 compressed records** scanned successfully. Separate upstream probes
-rendered textured dungeon geometry and an exterior with terrain, water and
-static meshes. These establish a content/viewer baseline; quests, original
-animation, combat, multiplayer, Vulkan scenes, touch traversal and phone
-performance remain unproven. See [reproduction evidence](docs/research/REPRODUCTION.md).
+Think **OpenMW/TES3MP philosophy for Oblivion**, with the cooperative energy of
+**Sven Co-op**: players can die, respawn and keep their progress. Multiplayer
+rules should support shared adventures, dungeon runs, arena survival and
+persistent Cyrodiil, while leaving room for a more faithful classic ruleset.
+
+We start by researching and reproducing existing work. OpenMW is the selected
+compatibility foundation; Vulkan and multiplayer integration remain separate
+engineering milestones. See the [foundation decision](docs/decisions/0001-foundation.md).
+
+## Progress so far
+
+These are **real physical-phone captures from personal preview 0.3**, using
+owner-supplied Oblivion data and our native touch overlay. This preview runs an
+audited **OpenMW Android 0.51 / OpenGL** baseline. The screenshots show the
+current compatibility checkpoint; Vulkan and multiplayer are still planned.
+
+![Vilverin ruins and terrain running on Android with native touch controls](docs/media/android-vilverin-exterior.jpg)
+
+*Vilverin exterior: textured ruins, terrain and sky visible on Android.*
+
+| Vilverin interior | Entrance stairs and NPC |
+| --- | --- |
+| ![Lit Vilverin chamber with textured architecture and props](docs/media/android-vilverin-interior.jpg) | ![Vilverin entrance stairs with a clothed NPC in a T-pose](docs/media/android-vilverin-stairs.jpg) |
+| Architecture, lighting and scene props render. | NPC assets load; original skeletal animation is unresolved. |
+
+The phone playtest reports walking, stopping on release, ordinary collision,
+jumping and looking around working. Stairs are traversable, but the view jolts
+with each tread uphill and downhill. **Smooth player travel is the current
+priority.** An eye-height experiment reduces jolts on original desktop test
+stairs, but a Vilverin ascent comparison exposed a timing problem. It remains
+opt-in research; the working phone APK stays at 0.3.
+
+[Detailed evidence](docs/research/REPRODUCTION.md) · [Player movement work](docs/PLAYER_MOVEMENT.md) · [Screenshot provenance](docs/media/README.md)
+
+## What is implemented
+
+| Area | Current evidence |
+| --- | --- |
+| Classic TES4 inspection | Native read-only scanner using a pinned, unchanged OpenMW reader slice. Owner master scan: **1,167,017 records**, **85,079 groups**, **41,789 compressed records**. |
+| Desktop reproduction | Separate unchanged OpenMW build loads private interior/exterior scenes and renders terrain, water and statics with software OpenGL. |
+| Android preview | Original launcher, touch controls, private asset packaging and screenshot/QA upload tools. Phone scene visibility and look confirmed; basic traversal reported by the owner. |
+| Movement diagnostics | Native walk/stop/jump trajectories, original stair fixtures and separate player/view measurements. Discontinuities cannot count as successful movement. |
+| Android toolchain | Inspector and Vulkan capability probe cross-compile for ARM64/API 29. |
+| Vulkan | Device/graphics-queue enumeration only; no OpenOblivion Vulkan scene renderer yet. |
+| Publication checks | Source, staged files and Git history checked for game data. Only three approved documentation screenshots have exact hash/size exceptions. |
+
+This is an early engineering project. Original quests, combat, animation,
+multiplayer authority and persistence have not passed their implementation
+gates. There is no public playable release or public asset-packed APK.
+
+## Where we are going
+
+- Native **Android ARM64** and Linux development, with touch controls designed
+  for actual player movement.
+- **Vulkan** presentation and streamed Oblivion content from user installations.
+- **Persistent cooperative PvE**, authoritative progression, death and respawn.
+- Multiplayer-friendly alternate starts and original game modes, with Lua/data
+  rules where appropriate.
+- Increasing compatibility with classic Oblivion gameplay and mods, guided by
+  measured content/runtime tests.
+
+The [roadmap](docs/ROADMAP.md) defines acceptance gates rather than release dates.
+The [multiplayer contract](docs/MULTIPLAYER.md) describes world ownership and
+persistence; it is an architecture document, not a running server.
+
+## Bring your own game data
+
+**OpenOblivion distributes code, tools and documentation. You supply Oblivion.**
+
+Game masters/plugins, BSA archives, NIF models, DDS textures, animations, audio,
+game executables and proprietary physics binaries are excluded from public
+history and CI. Personal test packages and raw QA reports remain private.
+The selected progress screenshots are documentation captures, with separate
+[provenance and rights](docs/media/README.md); they are not reusable game assets.
 
 ## Build on Linux
 
 Requirements: C++20 compiler, CMake >= 3.24, Ninja, Python >= 3.10, Git,
-zlib development files and Vulkan development files. No game data is required
+zlib development files, Vulkan development files and LuaJIT for the movement
+presentation fixtures. No game data is required
 to build or run the public tests. The renderer-independent inspector can be
 built with `-DOO_BUILD_VULKAN_PROBE=OFF`.
 
@@ -92,15 +142,20 @@ These are native command-line probes. The new runtime's Storage Access
 Framework integration, touch controls and a Vulkan surface are not implemented.
 Cross-compilation alone does not prove execution on a phone.
 
-## Direction and contribution
+## Contributing and research
 
-Read the [charter](docs/PROJECT_CHARTER.md), [architecture](docs/ARCHITECTURE.md),
-[multiplayer contract](docs/MULTIPLAYER.md), [Android plan](docs/ANDROID.md),
-[format research](docs/research/FORMATS.md), [milestones](docs/ROADMAP.md) and
-[handoff](docs/HANDOFF.md). Milestones have acceptance gates, not promised dates.
+Start with the [charter](docs/PROJECT_CHARTER.md),
+[architecture](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md) and
+[maintainer handoff](docs/HANDOFF.md). Research existing implementations before
+replacing subsystems. Keep upstream revisions, licenses and measured limits
+visible; use original fixtures in public tests and owner content only locally.
 
-Original code is **GPL-3.0-only**; upstream files keep their own licenses.
-The [license matrix](docs/research/LICENSE_MATRIX.md) records exact studied
-revisions, notices, compatibility decisions and actual reuse. No Bethesda
-or Havok game binaries/assets are distributed. Users supply their own classic
-Oblivion installation. Original/public fixtures are generated from source.
+Useful entry points: [format research](docs/research/FORMATS.md),
+[Android preview tools](tools/android/README.md),
+[desktop reproduction](tools/upstream/README.md), and
+[backup/restore](docs/BACKUPS.md).
+
+Original project code is **GPL-3.0-only**. Upstream retains its own licenses;
+see the [license matrix](docs/research/LICENSE_MATRIX.md) and [notices](NOTICE.md).
+Oblivion imagery and trademarks belong to their respective rights holders.
+OpenOblivion is an independent project and is not affiliated with Bethesda.

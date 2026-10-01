@@ -366,3 +366,60 @@ collision/controller change tested against that baseline.
 Twenty-four original tests pass in five CTest suites. The Linux tools rebuild
 with verified unchanged upstream source. The validated exterior repeat retains
 the three movement gates with no discontinuities; its raw trace is private.
+
+
+## Stair eye-height experiment and publication checkpoint (2026-10-01)
+
+The owner clarified that walking up/down stairs works; the primary complaint
+is a vertical view jolt at every tread, in both directions. This supersedes
+interpreting the earlier catching/slowing answer as a demonstrated blocked
+traversal defect. Smooth player travel remains the priority.
+
+An original source-generated cell has twenty 16-unit rises and 24-unit treads,
+with clear landings. No owner data is loaded in these fixture runs. Native
+controls/physics solve the trajectory. At the unchanged 0.52 desktop pin,
+raw/experimental comparisons cover the same 320-unit rise and show:
+
+| Original route | Raw view velocity variation | Filtered | Reduction | Walk/stop/jump |
+| --- | ---: | ---: | ---: | --- |
+| Ascent | 2214.55 | 484.60 | 78.1% | pass |
+| Descent | 2092.43 | 449.61 | 78.5% | pass |
+
+Variation is total absolute change in vertical velocity per walking second,
+measured from the up-to-20-Hz view trace; it is an authored diagnostic, not a
+perceptual comfort score. Walking requested-distance ratios are 0.998..1.000,
+ground states remain true, stopping drift is zero and jumps land. Eye offsets
+stay about -18..+18 units in these runs. Original Lua fixtures cover both
+stair directions, flat/ramp cadence and jump/fall/teleport/pause reset behavior.
+
+Identified Vilverin entrance routes now reproduce physical ascent/descent.
+Both raw and experimental routes pass walking/stopping/jump/landing. Descent
+view variation falls from 2413.96 to 704.33 (70.8%); ascent rises from 1206.67
+to 3008.31. **The real ascent regression prevents deployment.** OpenMW invokes
+Lua `onFrame` before physics and native camera tracking update, confirmed in
+`apps/openmw/engine.cpp` and `apps/openmw/mwlua/luamanagerimp.cpp` at the locked
+0.52 revision. An out-of-phase height offset is the current inference; this
+requires post-physics presentation work rather than claiming a solved motor.
+
+A healthy first-person scene control remains mode 1 with no fallback activation;
+the exterior movement/turn control moves 308.97 units, changes yaw and retains
+native collision. The private experimental 0.4 APK builds, passes CRC/native
+hash checks, but is withheld. The live phone download stays at 0.3. The default
+packager and camera repair source remain the working baseline; the experiment
+requires explicit `--grounded-eye`. Its original fixture/analysis tools are
+public, while generated meshes/plugins, trajectories and images remain private.
+
+Private evidence: `original-stair-{ascent,descent}-{raw,smoothed}-04b`,
+`player-entrance-stairs-{ascent,descent}-{raw,smoothed}-04`,
+`player-look-control-04b`, `player-healthy-tracking-control-04b`.
+Initial origin-centered ascent fixtures did not activate missing-head recovery
+until too late and are excluded from camera comparisons. A healthy-template
+movement attempt on the original fixture fell and is not traversal evidence;
+the separate healthy scene control establishes unchanged tracking only.
+
+The owner authorized public publication to `madpai/OpenOblivion` and explicitly
+requested progress screenshots. Three reviewed, unedited 0.3 phone captures
+are pinned in `docs/media/screenshots.json`. This narrow documentation
+exception is checked independently for worktree, index and historical trees;
+arbitrary images, extracted artwork, game files and personal APKs stay blocked.
+Source/history snapshots are described in [BACKUPS.md](../BACKUPS.md).

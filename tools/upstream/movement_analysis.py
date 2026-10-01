@@ -5,6 +5,8 @@ import re
 
 SAMPLE = re.compile(r'OPENOBLIVION_PLAYER_MOVEMENT t=([\d.eE+-]+) phase=(settle|walk|stop|jump|land) '
                     r'x=([\d.eE+-]+) y=([\d.eE+-]+) z=([\d.eE+-]+) grounded=(true|false) expected_speed=([\d.eE+-]+)')
+VIEW = re.compile(r'OPENOBLIVION_PLAYER_VIEW t=([\d.eE+-]+) camera_z=([\d.eE+-]+) tracked_z=([\d.eE+-]+) '
+                  r'pitch=([\d.eE+-]+) yaw=([\d.eE+-]+)')
 
 
 def analyze(log):
@@ -18,6 +20,12 @@ def analyze(log):
         samples[numbers[0]] = dict(t=numbers[0], phase=phase, x=numbers[1], y=numbers[2],
                                   z=numbers[3], grounded=grounded == 'true', expected_speed=numbers[4])
     ordered = [samples[t] for t in sorted(samples)]
+    for match in VIEW.finditer(log):
+        t, camera_z, tracked_z, pitch, yaw = map(float, match.groups())
+        if not all(math.isfinite(v) for v in (t,camera_z,tracked_z,pitch,yaw)):
+            raise ValueError('Non-finite player view trace')
+        if t in samples:
+            samples[t].update(camera_z=camera_z, tracked_z=tracked_z, pitch=pitch, yaw=yaw)
     discontinuities = []
     for a,b in zip(ordered,ordered[1:]):
         # Authored diagnostic bound, not an engine movement limit. Reject a
@@ -40,6 +48,13 @@ def analyze(log):
     jump_height = max((s['z']-jump_base for s in landing), default=None) if jump_base is not None else None
     complete = all(len(group) >= 3 for group in (walking,stopping,landing)) and ordered[-1]['t'] >= 11.5
     continuous = complete and not discontinuities
+    views = [s for s in walking if 'camera_z' in s]
+    def height_response(axis):
+        if len(views) < 3: return None
+        velocities = [(b[axis]-a[axis])/(b['t']-a['t']) for a,b in zip(views,views[1:])]
+        # Total variation of vertical velocity per second: a diagnostic of
+        # repeated tread jolts, not a general perceptual comfort guarantee.
+        return sum(abs(b-a) for a,b in zip(velocities,velocities[1:]))/(views[-1]['t']-views[0]['t'])
     return {'samples': ordered, 'trajectory_complete': complete,
             'trajectory_discontinuities': discontinuities, 'continuous_trajectory': continuous,
             'walk_seconds': duration, 'walk_horizontal_path': distance,
@@ -48,6 +63,11 @@ def analyze(log):
             'walk_slow_seconds': slow_time,
             'walk_vertical_range': max(s['z'] for s in walking)-min(s['z'] for s in walking) if walking else None,
             'walk_grounded_fraction': sum(s['grounded'] for s in walking)/len(walking) if walking else None,
+            'walk_view_samples': len(views),
+            'walk_player_vertical_velocity_variation': height_response('z'),
+            'walk_camera_vertical_velocity_variation': height_response('camera_z'),
+            'walk_camera_offset_min': min((s['camera_z']-s['tracked_z'] for s in views), default=None),
+            'walk_camera_offset_max': max((s['camera_z']-s['tracked_z'] for s in views), default=None),
             'stop_horizontal_drift': stop_drift, 'jump_height': jump_height,
             'landing_grounded': landing[-1]['grounded'] if landing else None,
             'walk_detected': continuous and distance > 50,

@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-only
 -- Original desktop test of native player movement, not a camera animation.
 local core = require('openmw.core')
+local camera = require('openmw.camera')
 local debug = require('openmw.debug')
 local interfaces = require('openmw.interfaces')
 local self = require('openmw.self')
@@ -45,6 +46,8 @@ return {
                 print(string.format('OPENOBLIVION_PLAYER_MOVEMENT t=%.6f phase=%s x=%.6f y=%.6f z=%.6f grounded=%s expected_speed=%.6f',
                     elapsed, phase(), p.x, p.y, p.z,
                     tostring(types.Actor.isOnGround(self)), types.Actor.getWalkSpeed(self)))
+                print(string.format('OPENOBLIVION_PLAYER_VIEW t=%.6f camera_z=%.6f tracked_z=%.6f pitch=%.6f yaw=%.6f',
+                    elapsed, camera.getPosition().z, camera.getTrackedPosition().z, camera.getPitch(), camera.getYaw()))
             end
             if not captured and elapsed >= 6.5 then
                 captured = true

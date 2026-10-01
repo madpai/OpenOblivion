@@ -99,3 +99,21 @@ blocked-route limitations and collision work.
 This does not test Vulkan, a phone, quests, original animation, multiplayer,
 performance or collision accuracy. Engine/asset support warnings remain part
 of the evidence even when a screenshot is produced.
+
+
+The original native stair fixture needs the public Template but no owner data:
+
+```sh
+python3 tools/upstream/probe_scene.py \
+  --build-work /outside/upstream-work --template /outside/example-suite \
+  --start OpenOblivionStairs --movement-fixture --player-movement \
+  --movement-position 10000 -120 2 --missing-player-model --camera-repair --grounded-eye \
+  --output /outside/evidence/stair-ascent
+```
+
+For descent use position `10000 650 322` and `--movement-heading 180`. Compare
+with `--raw-eye` in a separate output directory to disable only the eye-height
+filter. The generated plugin/COLLADA mesh stays in the external evidence
+folder. Both runs still use native controls/physics, measure physical response
+and report camera-height velocity variation separately. Healthy tracking must
+remain untouched. These desktop comparisons do not replace phone comfort QA.

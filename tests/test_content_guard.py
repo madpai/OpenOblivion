@@ -1,16 +1,50 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
 from pathlib import Path
+import hashlib
+import json
 import subprocess
 import sys
 import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from content_guard import check, reason
+from content_guard import approved_images, check, reason
 
 
 class ContentGuardTests(unittest.TestCase):
+    def test_only_exact_reviewed_screenshot_passes(self):
+        # Original synthetic signature bytes, not a copied game image.
+        image = b'\xff\xd8\xfforiginal-test'
+        name = 'docs/media/fixture.jpg'
+        entry = dict(path=name, kind='runtime-screenshot', scope='documentation',
+                     bytes=len(image), sha256=hashlib.sha256(image).hexdigest(),
+                     publication_authorization='Original fixture', provenance='Original synthetic bytes')
+        images = approved_images(json.dumps(dict(schema=1, screenshots=[entry])))
+        self.assertIsNone(reason(name, image, images=images))
+        self.assertIsNotNone(reason(name, image))
+        self.assertIsNotNone(reason(name, image+b'changed', images=images))
+        self.assertIsNotNone(reason('docs/media/other.jpg', image, images=images))
+        self.assertIsNotNone(reason(name, image, symlink=True, images=images))
+        entry['path'] = 'docs/media/game.dds'
+        with self.assertRaises(ValueError):
+            approved_images(json.dumps(dict(schema=1, screenshots=[entry])))
+
+    def test_staged_media_manifest_cannot_be_hidden_by_worktree(self):
+        with tempfile.TemporaryDirectory() as directory:
+            subprocess.run(['git', 'init', '-q', directory], check=True)
+            root=Path(directory); (root/'docs/media').mkdir(parents=True)
+            image=b'\xff\xd8\xfforiginal-test'; name='docs/media/fixture.jpg'
+            entry=dict(path=name,kind='runtime-screenshot',scope='documentation',bytes=len(image),
+                       sha256='0'*64,publication_authorization='Fixture',provenance='Original synthetic bytes')
+            ledger=root/'docs/media/screenshots.json'
+            ledger.write_text(json.dumps(dict(schema=1,screenshots=[entry])))
+            (root/name).write_bytes(image)
+            subprocess.run(['git','-C',directory,'add','.'],check=True)
+            entry['sha256']=hashlib.sha256(image).hexdigest()
+            ledger.write_text(json.dumps(dict(schema=1,screenshots=[entry])))
+            self.assertTrue(any('index:' in why for _,why in check(root)))
+
     def test_extensions_case_and_renamed_game_data(self):
         self.assertIsNotNone(reason('docs/Oblivion.ESM', b'text'))
         self.assertIsNotNone(reason('fixtures/innocent.txt', b'BSA\0original'))
@@ -51,4 +85,3 @@ class ContentGuardTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -20,9 +20,10 @@ slice and resolves a concrete uncertainty before expanding scope.
 2. Record private install identity/load order. Validate one interior and
    exterior/terrain area; document missing features and exact renderer behavior.
    The owner now prioritizes actual player movement. Walking/stopping/ordinary
-   collision/jump/look are reported working on the phone, while stairs catch
-   and bounce. Reproduce that physical route and audit authored collision before
-   viewer polish; see [player movement priority](PLAYER_MOVEMENT.md).
+   collision/jump/look are reported working on the phone. Stairs are traversable,
+   but the view jolts at each tread. Verify smooth ascent/descent while keeping
+   physical motion and jump behavior correct. Authored TES4 collision remains
+   separate compatibility work; see [player movement priority](PLAYER_MOVEMENT.md).
 3. Use original synthetic override/deletion/master-reference fixtures to verify
    typed data resolution. Cross-check bytes from one BSA/NIF against existing
    NifTools/Asset Lab readers with preserved diagnostics.

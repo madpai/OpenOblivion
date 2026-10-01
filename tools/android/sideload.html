@@ -21,15 +21,15 @@ input[type=file]{border:2px dashed #61727d;padding:20px}textarea{min-height:95px
 <section class="panel">
 <h2>Current QA objective — @@QA_ID@@</h2>
 <p>@@QA_OBJECTIVE@@</p>
-<p><b>Pass:</b> Holding the left pad moves you, releasing it stops movement, and turning changes your heading. You stay on the floor or ground, can use the stairs, and jump returns you to a surface.</p>
-<p><b>Fail:</b> no movement, movement continuing after release, passing through solid walls/floors, falling below the scene, or returning to the launcher. Describe where it happens.</p>
+<p><b>Pass:</b> Walking up and down the stairs feels smooth, without a vertical jolt at each tread. Releasing the pad stops movement. Turning, walls/floors and jumping still work.</p>
+<p><b>Fail:</b> repeated stair bounce, delayed or floaty jumping, movement continuing after release, passing through solid walls/floors, falling below the scene, or returning to the launcher. Describe where it happens.</p>
 <ol>
-<li>Use the same 0.3 APK. Choose <b>Vilverin interior</b> and take a screenshot when the scene is visible.</li>
-<li>Press and hold the upper part of the <b>MOVE</b> circle for five seconds, release for two seconds, then turn and walk back. The center is a resting area. Try the stairs and one jump if you can reach them. Take a second screenshot.</li>
+<li>Install the build shown above. Choose <b>Vilverin interior</b> and take a screenshot when the scene is visible.</li>
+<li>Walk down the entrance stairs, turn and walk back up. Describe the bounce in both directions. Release the pad on a landing, look around and try one jump. Take a second screenshot.</li>
 <li>Exit to the launcher and copy <b>View scene log</b>. Send an <b>interior</b> report below with both screenshots, your phone model, Android version and what worked or failed.</li>
 <li>Repeat with <b>Vilverin exterior</b>, staying near the ruins. Send a separate <b>exterior</b> report. Copy each log before starting another scene.</li>
 </ol>
-<p class="muted">Your playtest reports walking, stopping, ordinary collision, jumping and look working. Stairs still bounce and catch or slow forward movement. Player movement and collision are the current engineering priority. For stair reports, include the location, uphill/downhill direction and where travel catches.</p>
+<p class="muted">You clarified that stairs are traversable, with uncomfortable bounce in both directions. The target is smooth, ramp-like travel. Report any remaining bounce, floaty feeling or actual slowing, and whether it happens uphill or downhill.</p>
 <p class="muted">If movement is blocked, note whether the pad reacts and whether turning or Jump works. Screenshots of failures are useful; you do not need to repeat a failing scene indefinitely.</p>
 </section>
 <h2>Send screenshots and a QA report</h2>

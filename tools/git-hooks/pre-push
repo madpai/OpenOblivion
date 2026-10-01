@@ -1,0 +1,5 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-only
+set -eu
+oo_repo=$(git rev-parse --show-toplevel)
+exec python3 "$oo_repo/tools/content_guard.py" --root "$oo_repo" --history

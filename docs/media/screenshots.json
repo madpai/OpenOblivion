@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "rights": "Documentation captures only. Oblivion game imagery belongs to its respective rights holders and is not relicensed under the engine GPL.",
+  "screenshots": [
+    {
+      "path": "docs/media/android-vilverin-stairs.jpg",
+      "kind": "runtime-screenshot",
+      "scope": "documentation",
+      "bytes": 416777,
+      "sha256": "d6d8bc25e3c3c0227c3f710505e52ebb0c98f40fbc08c6d215f6fc5db9c889ee",
+      "publication_authorization": "Owner explicitly requested public GitHub README progress screenshots on 2026-10-01.",
+      "provenance": "Unedited owner-submitted physical-phone QA capture of personal preview 0.3-camera-repair, received 2026-10-01.",
+      "caption": "Vilverin entrance stairs and a clothed NPC in an unsupported animation pose."
+    },
+    {
+      "path": "docs/media/android-vilverin-interior.jpg",
+      "kind": "runtime-screenshot",
+      "scope": "documentation",
+      "bytes": 547038,
+      "sha256": "c9ad48bbc06733dc5bd0904cce858c6c9ab023d1e1fb87efcd40a90ae3bd6cd3",
+      "publication_authorization": "Owner explicitly requested public GitHub README progress screenshots on 2026-10-01.",
+      "provenance": "Unedited owner-submitted physical-phone QA capture of personal preview 0.3-camera-repair, received 2026-10-01.",
+      "caption": "Textured Vilverin chamber, lighting and props."
+    },
+    {
+      "path": "docs/media/android-vilverin-exterior.jpg",
+      "kind": "runtime-screenshot",
+      "scope": "documentation",
+      "bytes": 467735,
+      "sha256": "a373dbbff5d1a501e3e21e6e038caffdd2812303174936298e55416587466e0c",
+      "publication_authorization": "Owner explicitly requested public GitHub README progress screenshots on 2026-10-01.",
+      "provenance": "Unedited owner-submitted physical-phone QA capture of personal preview 0.3-camera-repair, received 2026-10-01.",
+      "caption": "Vilverin exterior: ruins, terrain and sky."
+    }
+  ]
+}

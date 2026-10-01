@@ -2,18 +2,21 @@
 
 The owner requested that engine work prioritize actual in-game player movement.
 The existing scene preview is a test harness for the player controller and
-content collision. A camera-only stair treatment cannot fix forward movement
-catching on the steps.
+content collision. Smooth, ramp-like travel up and down stairs is the target.
+Keep solved player motion and eye-height presentation measurable separately.
 
 On 2026-10-01 the owner reported walking, stopping, ordinary collision, jumping
-and look working in the tested phone scenes. Stairs have both bounce and forward
-catching/slowing. These are owner observations, not a timed collision corpus or
-an animation/performance pass. Keep 0.3 as the working phone baseline.
+and look working in the tested phone scenes. The earlier answer described some
+catching/slowing; the owner then clarified that ascent/descent works and the
+main problem is a vertical camera jolt on each tread in both directions. This
+clarification supersedes treating failed traversal as the established defect.
+These are owner observations, not a timed collision corpus or animation pass.
+Build 0.3 remains the archived working phone baseline.
 
 The original `--player-movement` desktop probe drives the existing native player
 controls through five seconds of walking, stopping, jumping and landing. It
-records player position, ground state and expected walk speed up to 20 times
-per simulation second. It does not animate the camera or move the actor by
+records player position, ground state, expected walk speed and camera/tracked
+height up to 20 times per simulation second. It does not move the actor by
 teleporting each frame. Optional initial placement selects a particular surface
 before the test starts; the subsequent path is solved by upstream physics.
 
@@ -53,7 +56,7 @@ horizontal distance, with 0.33-unit stopping drift and a 113-unit jump followed
 by landing. The default interior route is obstructed. Initial selected-stair
 placements also give an invalid fall/reset or obstructed route; neither is a
 successful ascent/descent reproduction. Preserve that evidence and correct
-test placement before attributing the owner's catching to a particular solver
+test placement before attributing the owner's issue to a particular solver
 branch.
 
 The pinned 0.51 and 0.52 collision loaders generate TES4 collision from visible
@@ -62,10 +65,10 @@ geometry and skip the authored Bethesda Havok collision shapes. See the
 and [0.52 loader](https://github.com/OpenMW/openmw/blob/46bd4599203ee52ffc0f3e8edb3fc159a0303a49/components/nifbullet/bulletnifloader.cpp#L134).
 Private stair inspection finds separate `bhkMoppBvTreeShape` /
 `bhkNiTriStripsShape` geometry with fewer vertices than its visible counterpart.
-This is a concrete compatibility gap and a candidate contributor to catching;
+This is a concrete compatibility gap and a candidate contributor to uneven physical movement;
 it is not yet a proven explanation of the owner's stair issue.
 
-The next controller work should proceed in this order:
+Remaining physical collision/controller work, when a separate defect is reproduced:
 
 1. Reproduce ascent/descent on identified stair placements; compare commanded
    travel with the solved player path, ground transitions and clearance.
@@ -80,7 +83,38 @@ The next controller work should proceed in this order:
 4. Integrate a verified change into the Android native runtime and repeat phone
    stair traversal. Keep the working walk/stop/jump baseline and measured scope.
 
-Rendering polish, viewer expansion and camera filtering are lower priority than
-these controller/collision gates. Skeletal animation remains separate work.
+Rendering polish and viewer expansion remain lower priority than player travel.
+Skeletal animation remains separate work.
 The eventual server validates movement commands and owns accepted positions;
 this desktop driver is not a multiplayer authority implementation.
+
+## Grounded stair eye-height experiment (unshipped)
+
+The preview's missing-head fallback follows native actor-root height directly;
+head bobbing is already disabled. The original stair generator creates a clear
+route with twenty 16-unit rises and 24-unit treads. Native controls and Bullet
+solve the path; neither the fixture nor the driver supplies per-frame positions.
+Use `--movement-fixture --start OpenOblivionStairs` without owner `--data`, with
+initial position `10000 -120 2` for ascent, or `10000 650 322` and heading 180
+for descent. `--grounded-eye` explicitly enables the experiment; `--raw-eye` supplies the comparison's zero-offset filter. Generated
+plugin/mesh files remain in the external evidence directory.
+
+The independently authored Lua filter applies a bounded vertical focal offset
+only while the missing-head fallback is active and the player is grounded. Its
+100 ms exponential response targets per-tread jolts; lag is capped
+at 48 engine units. Jump intent, airborne motion, swimming, cell changes, large
+position changes, pauses and long frame gaps reset it immediately. Healthy
+first-person tracking is untouched. Native camera collision tests stay active,
+and the filter does not modify player position, movement commands or look.
+
+The player body still traverses physical treads. This is a treatment of the
+reported eye-height bounce, not ramp collision generation or a new stair motor.
+Forward slowing, if reproduced separately, still requires a physical fix. The real
+Vilverin ascent comparison regresses, so this version is withheld from phone
+QA. The engine invokes Lua `onFrame` before physics and the camera update; a
+height correction calculated there can arrive out of phase with the solved
+step. This inference fits the increased ascent variation. A post-physics
+presentation path is required before it can become the default.
+`OPENOBLIVION_STAIR_QA` adds bounded movement/view samples in the opt-in probe; the
+desktop probe compares vertical velocity variation as a diagnostic of tread
+jolts, independently of walking/stopping/jumping acceptance.

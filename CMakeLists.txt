@@ -67,6 +67,7 @@ endif()
 
 include(CTest)
 if(BUILD_TESTING AND NOT ANDROID)
+    find_program(OO_LUA_EXECUTABLE NAMES luajit lua5.1 lua REQUIRED)
     add_test(NAME original-tes4-fixtures COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_inspect.py" "$<TARGET_FILE:openoblivion-inspect>")
     add_test(NAME content-guard-fixtures COMMAND "${Python3_EXECUTABLE}"
@@ -77,4 +78,6 @@ if(BUILD_TESTING AND NOT ANDROID)
         "${CMAKE_SOURCE_DIR}/tests/test_android_preview.py")
     add_test(NAME player-movement-fixtures COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_player_movement.py")
+    add_test(NAME grounded-eye-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_grounded_eye.lua" "${CMAKE_SOURCE_DIR}")
 endif()

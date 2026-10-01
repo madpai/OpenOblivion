@@ -63,5 +63,19 @@ class PlayerMovementAnalysis(unittest.TestCase):
         with self.assertRaises(ValueError):
             analyze(trace().replace('x=100 ', 'x=1e999 ', 1))
 
+    def test_view_diagnostics_do_not_change_physical_acceptance(self):
+        physical = trace()
+        views = '\n'.join(f'OPENOBLIVION_PLAYER_VIEW t={t} camera_z={z} tracked_z={16*t+124} pitch=0 yaw=0'
+                          for t,z in ((1,124),(2,148),(3,156),(4,180),(5,188)))
+        data = analyze(physical+'\n'+views)
+        self.assertEqual(data['walk_view_samples'], 5)
+        self.assertGreater(data['walk_camera_vertical_velocity_variation'], 0)
+        self.assertEqual(data['walk_player_vertical_velocity_variation'], 0)
+        self.assertEqual(data['walk_camera_offset_min'], -16)
+        self.assertTrue(data['walk_response_verified'])
+        self.assertFalse(analyze(trace(walking=False)+'\n'+views)['walk_response_verified'])
+        with self.assertRaises(ValueError):
+            analyze(physical+'\n'+views.replace('camera_z=124 ', 'camera_z=1e999 '))
+
 
 if __name__ == '__main__': unittest.main()

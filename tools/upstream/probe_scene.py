@@ -17,26 +17,40 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
 from check_upstream import check
 from movement_analysis import analyze as analyze_movement
+from movement_fixture import generate as generate_movement_fixture
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--build-work', required=True, type=Path, help='Container work directory containing build/openmw')
 parser.add_argument('--template', required=True, type=Path, help='Pinned external OpenMW Example Suite checkout')
-parser.add_argument('--data', required=True, type=Path, help="Owner's classic Oblivion Data directory")
+parser.add_argument('--data', type=Path, help="Owner's classic Oblivion Data directory; required outside original fixtures")
 parser.add_argument('--start', required=True, help='TES4 cell editor ID')
 parser.add_argument('--output', required=True, type=Path, help='Fresh private evidence directory')
 parser.add_argument('--image', default='openoblivion-research-build:founding')
 parser.add_argument('--scene-data', type=Path, help='Optional private loose visual slice; mount only the master, without full BSAs')
 parser.add_argument('--phone-qa', action='store_true', help='Also exercise the original read-only phone camera/player diagnostics')
 parser.add_argument('--camera-repair', action='store_true', help='Exercise the original preview camera fallback')
+parser.add_argument('--grounded-eye', action='store_true', help='Explicitly enable the unshipped stair eye-height experiment')
 parser.add_argument('--missing-player-model', action='store_true', help='Fault injection: deliberately omit the base player model')
 parser.add_argument('--camera-motion', action='store_true', help='Bounded movement/turning probe; changes controls for two seconds')
 parser.add_argument('--player-movement', action='store_true', help='Native player trajectory: walk, stop, jump and landing; no scripted camera motion')
 parser.add_argument('--movement-turn', type=float, default=0, help='Initial turn in degrees through native player controls')
 parser.add_argument('--movement-position', type=float, nargs=3, help='Optional private test placement X Y Z in the selected cell')
 parser.add_argument('--movement-heading', type=float, default=0, help='World Z rotation in degrees for optional test placement')
+parser.add_argument('--movement-fixture', action='store_true', help='Use the original clear stair cell alongside the public Template')
+parser.add_argument('--raw-eye', action='store_true', help='Diagnostic control: disable only the grounded eye filter')
 args = parser.parse_args()
 if args.player_movement and args.camera_motion:
     parser.error('Player and camera motion drivers cannot run together')
+if args.movement_fixture and (not args.player_movement or args.start != 'OpenOblivionStairs'):
+    parser.error('Original stairs require --player-movement --start OpenOblivionStairs')
+if args.movement_fixture and args.scene_data:
+    parser.error('Original movement fixtures cannot mount an owner scene slice')
+if args.raw_eye and (not args.player_movement or not args.camera_repair):
+    parser.error('--raw-eye requires --player-movement --camera-repair')
+if args.grounded_eye and not args.camera_repair:
+    parser.error('--grounded-eye requires --camera-repair')
+if args.raw_eye and not args.grounded_eye:
+    parser.error('--raw-eye requires the experimental --grounded-eye path')
 if not math.isfinite(args.movement_turn) or abs(args.movement_turn) > 360:
     parser.error('Movement turn must be finite, between -360 and 360 degrees')
 if args.movement_turn and not args.player_movement:
@@ -53,13 +67,15 @@ if output == ROOT or ROOT in output.parents:
 if output.exists():
     parser.error('Output directory already exists')
 work = args.build_work.expanduser().resolve(strict=True)
-data = args.data.expanduser().resolve(strict=True)
+if not args.movement_fixture and not args.data:
+    parser.error('--data is required for owner scenes')
+data = args.data.expanduser().resolve(strict=True) if args.data else None
 template = args.template.expanduser().resolve(strict=True)
 scene_data = args.scene_data.expanduser().resolve(strict=True) if args.scene_data else None
 if scene_data and (scene_data == ROOT or ROOT in scene_data.parents or not scene_data.is_dir()):
     parser.error('Scene slice must be an external private directory')
 check(template, 'OpenMW/example-suite')
-if not (work / 'build/openmw').is_file() or not (data / 'Oblivion.esm').is_file():
+if not (work / 'build/openmw').is_file() or (not args.movement_fixture and not (data / 'Oblivion.esm').is_file()):
     parser.error('A built stock engine and owner Oblivion.esm are required')
 output.mkdir(parents=True, mode=0o700)
 (output / 'runtime').mkdir(mode=0o700)
@@ -67,15 +83,17 @@ config = output / 'config'
 config.mkdir()
 cfg = ['replace=content', 'replace=fallback-archive',
        'resources=/work/build/resources', 'data=/template/game_template/data',
-       *(['data=/scene-master', 'data=/scene-slice'] if scene_data else ['data=/game']),
+       *(['data=/fixture-data'] if args.movement_fixture else
+         ['data=/scene-master', 'data=/scene-slice'] if scene_data else ['data=/game']),
        'data=/probe-data', 'content=template.omwgame',
-       'content=Oblivion.esm',
+       'content=' + ('original_movement.esp' if args.movement_fixture else 'Oblivion.esm'),
        'content=' + ('player_movement_probe.omwscripts' if args.player_movement else 'scene_probe.omwscripts'),
        'encoding=win1252']
 if args.phone_qa or args.camera_repair:
     cfg += ['data=/phone-qa-data']
 if args.phone_qa: cfg += ['content=phone_qa.omwscripts']
-if args.camera_repair: cfg += ['content=camera_repair.omwscripts']
+if args.camera_repair:
+    cfg += ['content=' + ('camera_stairs_candidate.omwscripts' if args.grounded_eye else 'camera_repair.omwscripts')]
 if args.camera_motion: cfg += ['content=camera_motion_probe.omwscripts']
 if args.player_movement:
     movement_data = output / 'movement-data'
@@ -85,7 +103,14 @@ if args.player_movement:
         'return {turn=' + repr(math.radians(args.movement_turn)) + ', position=' + position
         + ', heading=' + repr(math.radians(args.movement_heading)) + '}\n')
     cfg += ['data=/movement-data']
-for archive in ([] if scene_data else sorted(data.glob('*.bsa'))):
+    if args.raw_eye:
+        (movement_data / 'scripts/openoblivion_grounded_eye.lua').write_text(
+            '-- Original diagnostic zero-offset control; never included in the APK.\n'
+            'return {new=function() return {reset=function() end, update=function() return 0 end} end}\n')
+if args.movement_fixture:
+    fixture_data = output / 'fixture-data'
+    generate_movement_fixture(fixture_data)
+for archive in ([] if scene_data or args.movement_fixture else sorted(data.glob('*.bsa'))):
     if archive.name.startswith('Oblivion - '):
         cfg.append('fallback-archive=' + archive.name)
 (config / 'openmw.cfg').write_text('\n'.join(cfg) + '\n')
@@ -105,7 +130,8 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            '--env', 'XDG_RUNTIME_DIR=/evidence/runtime',
            '--env', 'LIBGL_ALWAYS_SOFTWARE=1', '--env', 'ALSOFT_DRIVERS=null',
            '--volume', f'{work}:/work:ro',
-           *(['--volume', f'{data / "Oblivion.esm"}:/scene-master/Oblivion.esm:ro',
+           *(['--volume', f'{fixture_data}:/fixture-data:ro'] if args.movement_fixture else
+             ['--volume', f'{data / "Oblivion.esm"}:/scene-master/Oblivion.esm:ro',
               '--volume', f'{scene_data}:/scene-slice:ro'] if scene_data else ['--volume', f'{data}:/game:ro']),
            *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa or args.camera_repair else []),
            '--volume', f'{template}:/template:ro',
@@ -153,28 +179,49 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'observed_exterior': cell_sample[3] == 'true' if cell_sample else None,
            'requested_cell_matches': cell_matches,
            'docker_image_id': image_id,
-           'master_sha256': hashlib.sha256((data / 'Oblivion.esm').read_bytes()).hexdigest(),
+           'master_sha256': None if args.movement_fixture else hashlib.sha256((data / 'Oblivion.esm').read_bytes()).hexdigest(),
            'engine_sha256': hashlib.sha256((work / 'build/openmw').read_bytes()).hexdigest(),
            'bounded_visual_slice': bool(scene_data), 'phone_qa_enabled': args.phone_qa,
            'camera_repair_enabled': args.camera_repair, 'missing_player_model_injected': args.missing_player_model,
+           'experimental_grounded_eye_enabled': args.grounded_eye,
            'camera_motion_enabled': args.camera_motion,
            'camera_repair_activated': repair_activated, 'camera_motion_verified': motion_verified,
            'motion_distance': float(motion[1]) if motion else None,
            'motion_camera_player_distance': float(motion[2]) if motion else None,
            'player_movement_enabled': args.player_movement, 'movement_initial_turn_degrees': args.movement_turn,
+           'original_stair_fixture': args.movement_fixture,
+           'grounded_eye_disabled_for_control': args.raw_eye,
            'movement_start_position': args.movement_position, 'movement_start_heading_degrees': args.movement_heading,
            'player_movement': movement,
            'screenshots': screens, 'scope': 'Private scene load/screenshot; software OpenGL, not Vulkan or gameplay'}
 probe_sources = [Path(__file__).resolve()]
+if args.camera_repair:
+    probe_sources += [ROOT / 'tools/android/camera_repair.omwscripts',
+                      ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua']
+if args.grounded_eye:
+    probe_sources += [ROOT / 'tools/android/camera_stairs_candidate.omwscripts',
+                      ROOT / 'tools/android/scripts/openoblivion_preview_camera_candidate.lua',
+                      ROOT / 'tools/android/scripts/openoblivion_grounded_eye.lua',
+                      ROOT / 'tools/android/scripts/openoblivion_stair_qa.lua']
+if args.phone_qa:
+    probe_sources += [ROOT / 'tools/android/phone_qa.omwscripts',
+                      ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua']
 if args.player_movement:
     probe_sources += [ROOT / 'tools/upstream/movement_analysis.py',
                       ROOT / 'tools/upstream/player_movement_probe.omwscripts',
                       ROOT / 'tools/upstream/scripts/openoblivion_player_movement_probe.lua',
                       ROOT / 'tools/upstream/scripts/openoblivion_player_movement_setup.lua']
+    if args.movement_fixture: probe_sources.append(ROOT / 'tools/upstream/movement_fixture.py')
     metrics['movement_config_sha256'] = hashlib.sha256(
         (movement_data / 'scripts/openoblivion_movement_config.lua').read_bytes()).hexdigest()
+    if args.raw_eye:
+        metrics['raw_eye_control_sha256'] = hashlib.sha256(
+            (movement_data / 'scripts/openoblivion_grounded_eye.lua').read_bytes()).hexdigest()
 metrics['probe_tools_sha256'] = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                                  for p in probe_sources}
+if args.movement_fixture:
+    metrics['fixture_files_sha256'] = {p.relative_to(fixture_data).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                                       for p in fixture_data.rglob('*') if p.is_file()}
 (output / 'metrics.json').write_text(json.dumps(metrics, indent=2) + '\n')
 print('Private upstream scene probe complete=' + str(complete))
 sys.exit(0 if complete else 1)

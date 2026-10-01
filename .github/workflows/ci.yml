@@ -14,7 +14,7 @@ jobs:
       - name: Public history and publication boundary
         run: python3 tools/content_guard.py --history
       - name: Build prerequisites
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++ python3 git zlib1g-dev libvulkan-dev
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++ python3 git zlib1g-dev libvulkan-dev luajit
       - name: Fetch immutable dependency
         run: python3 tools/fetch_upstream.py --cache "$RUNNER_TEMP/openoblivion-deps"
       - name: Configure and build

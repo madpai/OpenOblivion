@@ -110,3 +110,14 @@ and the locked 0.52 pin (Git blob `0194105efaeed61610edbee0d9400e6059d2b426`).
 Private stair geometry inspection uses the already-listed external PyFFI;
 no schema, game collision mesh or Havok/MOPP binary is redistributed. Adopting a
 native authored-collision path still requires an exact-file reuse audit.
+
+The 0.4 grounded-eye filter, bounded phone movement/view sampling and original
+stair generator are independently authored GPL-3.0-only code. API semantics
+were checked against `apps/openmw/mwlua/camerabindings.cpp`,
+`apps/openmw/mwrender/camera.cpp` and `files/lua_api/openmw/{camera,types}.lua`
+at the exact 0.51 base above and the unchanged locked 0.52 checkout. TES3 fixture
+envelopes were checked against 0.52 `components/esm3/{loadtes3,loadstat,loadcell,cellref}.cpp`.
+No engine algorithm, resource, donor script or format implementation was copied.
+Fixtures are boxes/treads authored from numeric dimensions, generated outside
+the checkout; no owner geometry is adapted. Native binary/source obligations
+and the future static TES4 collision audit remain unchanged.

@@ -82,6 +82,12 @@ and changing look angles. Horizontal player coordinates stay constant in those
 samples, so movement/collision still require a separate test. The visible NPC
 is in a T-pose; this is not animation evidence.
 
+The opt-in desktop stair eye-height experiment is in
+`camera_stairs_candidate.omwscripts` and is excluded from the personal
+packager. Controlled original stairs improve, but real Vilverin ascent exposes
+a frame-timing regression. The private experimental 0.4 APK is withheld, and the
+working phone download remains 0.3. See [movement research](../../docs/PLAYER_MOVEMENT.md).
+
 The packager recreates the generated APK while retaining compilation caches,
 then rejects excessive unused ZIP space. This prevents incremental APK updates
 from retaining a replaced large payload as hundreds of MiB of dead bytes.

@@ -58,19 +58,20 @@ The logged horizontal player coordinates never change, so look/tracking pass
 but traversal and collision fidelity remain unverified. Device/model and
 Android version were left blank; no performance claim is established.
 
-The same 0.3 APK remains live. Objective `OO-ANDROID-004` now checks movement,
-release, stairs/ground and jump. Submit each scene's screenshots/log separately
-before starting the other scene, because the launcher shows the latest scene
-log. Camera visibility is recorded as passed; animation and Collada loading
-remain separate engineering work.
+Build 0.3 is the archived working phone baseline. The owner's subsequent chat
+playtest reports walking, stopping, ordinary collision, jumping and look working.
+The latest clarification says stairs are traversable, but the view bounces at
+each tread uphill and downhill. Smooth, ramp-like travel is the target; the
+earlier catching/slowing answer remains historical evidence.
 
-The owner's subsequent chat playtest reports walking, stopping, ordinary
-collision, jumping and look working. Stairs bounce and also catch/slow forward
-movement. This is a player traversal defect, not just a camera presentation
-complaint. Prioritize the controller/collision work in
-[PLAYER_MOVEMENT.md](PLAYER_MOVEMENT.md); preserve the current APK while
-reproducing the physical stair path. General collision accuracy, lifecycle and
-performance remain unmeasured.
+An unshipped eye-height experiment reduces measured jolts on original desktop
+stairs while walk/stop/jump still pass. Its real Vilverin ascent comparison is
+worse, exposing a frame-timing problem: Lua `onFrame` executes before physics
+and camera tracking update. It is explicitly opt-in via `--grounded-eye` in the
+desktop probe, and is excluded from the personal packager. The experimental
+0.4 APK was built privately but is withheld; the live download remains 0.3.
+See [player movement](PLAYER_MOVEMENT.md). General collision accuracy, animation,
+lifecycle and performance remain unmeasured.
 
 Confirmed: native inspector and Vulkan capability probe compile for
 `arm64-v8a`, API 29, NDK `28.0.13004108`, Clang 19, static libc++. These are

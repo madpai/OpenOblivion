@@ -1,7 +1,8 @@
 # Maintainer handoff
 
-Founding checkpoint: 2026-09-30. This is a local repository with no remote
-publication. Original project code is GPL-3.0-only; owner content stays private.
+Founding checkpoint: 2026-09-30. The owner authorized publication to
+https://github.com/madpai/OpenOblivion on 2026-10-01. Original project code is
+GPL-3.0-only; owner content stays private.
 
 Personal sideload checkpoint: 2026-10-01. The user requested an asset-packed
 test APK and a separate server like MegaMod's. The original Android launcher,
@@ -27,12 +28,17 @@ camera tracking and touch look. The four samples have identical horizontal
 player coordinates; that log does not verify traversal/collision. A clothed NPC is
 visible in a T-pose; original animation and Collada loading remain unresolved.
 The owner subsequently reports walking, stopping, ordinary collision, jumping
-and look working, with stairs bouncing and catching/slowing forward travel.
-This is qualitative phone evidence; stair traversal remains an open movement
-defect. The owner explicitly prioritizes actual player movement over viewer
-work. See [player movement priority](PLAYER_MOVEMENT.md), including the native
-trajectory probe and the authored-TES4-collision gap. No camera-only stair fix
-or new APK is claimed.
+and look working. The latest clarification says stair ascent/descent works, but
+each tread produces an uncomfortable vertical view jolt in both directions.
+The earlier catching/slowing answer is historical. Actual player travel remains
+the priority. The grounded eye-height experiment is explicitly opt-in for
+desktop research
+and excluded from the phone packager. Original native stair comparisons reduce
+view jolts, but real Vilverin ascent worsens the measured variation; the current
+Lua frame hook precedes physics/camera tracking. Do not deploy the private
+experimental 0.4 APK or claim smooth stairs. The working 0.3 download is retained
+and archived. See [player movement](PLAYER_MOVEMENT.md) for evidence and the
+remaining post-physics presentation/collision work.
 The previous 0.2 APK is archived privately, and real QA submissions are retained.
 See `OPENOBLIVION_CAMERA_REPAIR` and mode/distance in `OPENOBLIVION_PHONE_QA` logs.
 
@@ -49,8 +55,9 @@ an independently authored reader-API loop because the pinned upstream
 `ReaderUtils::readItem` can omit the final grouped record. Original fixtures
 reproduce and cover this issue; no upstream file was patched.
 
-Linux tools and Android ARM64 tools build. Twenty-four tests pass in the normal
-build; the founding fourteen also passed ASan/UBSan. The Vulkan probe enumerates
+Linux tools and Android ARM64 tools build. Twenty-seven Python tests and the
+Lua eye-height trajectory suite pass in the normal build; the founding fourteen
+also passed ASan/UBSan. The Vulkan probe enumerates
 a desktop GPU; it does not render.
 Six existing Asset Lab original-fixture tests were reproduced with the private
 PyFFI environment and explicit NIFXMLPATH. Neither sibling checkout was edited.
@@ -78,9 +85,11 @@ COLLADA and some original texture/interpolator errors remain in the logs;
 collision accuracy and animation are not validated. Bounded desktop motion
 passes, and the separate phone preview verifies visibility/look only.
 
-Next prioritize the player controller and collision: reproduce stair catching
-with valid ascent/descent placement and audit authored TES4 collision before
-changing the solver. The native movement trace distinguishes horizontal travel,
+Next resolve the post-physics eye-height timing and reproduce both stair
+directions before asking for another phone build test.
+Audit authored TES4 collision separately and change the motor only when native
+trajectories identify a physical defect. The native movement trace distinguishes
+horizontal travel,
 stopping, jump/landing and respawn discontinuities. Typed override/master-reference
 fixtures and the content/scene boundary remain required; use the same scenes to
 compare Vulkan donor work. Implement a small original
@@ -98,8 +107,9 @@ for ownership/persistence requirements.
 - `XXXX` extended payloads are skipped upstream. This is not complete field
   coverage or a hostile-file parser sandbox.
 - Android API 29 is the initial build target, not a proven device support range.
-- The public-content guard currently permits UTF-8 source/docs only; new public
-  bitmap/binary fixtures need a reviewed provenance policy before admitting them.
+- The public-content guard permits UTF-8 source/docs and three exact approved
+  README screenshots. Additional images require recorded publication
+  authorization, provenance and reviewed hashes; game binaries remain blocked.
 - Dependency source must be clean and immutable; build in another directory.
   The fetcher refuses existing mismatched/dirty caches and never deletes them.
 - Raw reports contain owner paths/hashes; `measure_scan.py` writes outside the
@@ -113,3 +123,17 @@ Before publishing, run the guard with `--history` and inspect exactly what is
 being distributed, including dependency notices/source. No playable engine,
 touch controls, original animation, network authority or persistence should be
 reported as implemented until its corresponding gate passes.
+
+
+## Public repository and backups
+
+The owner explicitly authorized this public GitHub repository and selected
+README progress screenshots. The screenshot manifest is a narrow guard
+exception; APKs/game data/raw QA stay private. The local pre-push hook and CI
+check index, worktree and each historical tree. The GitHub bootstrap commit is
+preserved when merging the existing local founding history.
+
+Verified source archives/Git bundles are in the private `backups` directory.
+`openoblivion-backup.timer` runs daily with persistent catch-up; the host user
+manager must be running. A recovery test clones the bundle, runs `git fsck`
+and checks every archived source hash. See [BACKUPS.md](BACKUPS.md).
