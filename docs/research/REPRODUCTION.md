@@ -440,3 +440,54 @@ were fetched back and matched to the approved size/SHA256 ledger. The daily
 backup service completes successfully; recovery verifies the Git bundle with
 clone/`git fsck` and checks every archived source file. No phone stair fix or
 new public binary release is claimed.
+
+## Native post-physics stair checkpoint (2026-10-01)
+
+An independently authored C++ height filter and small audited GPLv3 camera
+patch are compiled in a separate desktop checkout of the existing 0.52 pin.
+Integrated engine SHA256:
+`4e4c0778bb47fe0000d19c4d21a3efa29ed63c357a8342c58aea860aed7b7eb9`.
+Same-binary enable/disable comparisons improve view vertical-velocity variation
+77.5% on original ascent stairs, 59.5% on actual Vilverin ascent and 75.9% on
+actual descent. Walking response, stopping and jump/landing pass. Independent
+ramp/descent, blocked-wall, low-ceiling, look and healthy-tracking controls
+pass their applicable gates. See [movement details](../PLAYER_MOVEMENT.md) for
+sampled limits and evidence identifiers. No physical solver is replaced.
+
+The canonical `tools/native/prepare_android.py --build --grounded-eye` completes
+against Andiweli source `7c97200966c9cb35a76b74d16d5c76f1a8939612`, engine base
+`f4bec41444214a7903bebd178389ca22ca13f646`, NDK r26b/API21/Clang17, GNU make and
+host CMake 4.4.3. Nineteen archive inputs and three engine FetchContent inputs
+are hash-locked, with inspected notices. The stale bzip2 URL, implicit unused
+GL4ES host configure, script modes and old CMake-policy minimum are repaired
+in an external build recipe; reader and donor research checkouts remain clean.
+This establishes a repeatable source/dependency recipe, not bit-identical donor
+release output or a fully hermetic host toolchain.
+
+Native Android libopenmw SHA256:
+`00e91be09c6af4fb3d5460be1b387f7242854a3c2c0b355d34924e82d307cab0`.
+All six runtime libraries are AArch64; dynamic dependencies resolve to bundled
+or Android system libraries. The receipt records source/patch/tool, native,
+349 resource/default and actual notice hashes. Receipt fixture tests cover
+complete library/resource/notice inventories and prevent failed notice assembly
+from publishing a canonical receipt. Eight CTest suites pass: 29 Python tests,
+the Lua trajectories and 3,817 C++ trajectory assertions. Full history content
+checks also pass.
+
+Personal **0.5-native-stairs / versionCode5** APK: 656,467,659 bytes, SHA256
+`c767a984092f26eeb5c3b75e19c26cbeebf75d8f5b83e35cb52e882b9da23156`.
+Its v2 signature, CRCs, all six native hashes and compiled enable flag pass.
+Private payload ID:
+`1b6deaaec72018f75240ea4ebeced49adee1a1cbfbbcc328584bf55dab5dddcf`;
+863,652,035 unpacked bytes. Emulator upgrade, verified payload readiness and
+`native_stair_qa.omwscripts` configuration pass. The source-built engine loads
+its libraries and begins content loading, then the emulator repeats the known
+null target in `libndk_translation_proxy_libGLESv2.so` before camera creation.
+No emulator scene/filter runtime pass or physical-phone smoothing is claimed.
+
+The complete privately served 0.5 download matches its APK hash and page QA
+objective `OO-ANDROID-005`. Complete 0.3 is retained separately for recovery.
+The rejected pre-physics Lua 0.4 APK remains withheld. Private native logs,
+runtime receipts, APK and emulator images are under `native-android` and
+`android-native-preview-build`, outside public Git/download evidence routes.
+No game assets or public binary release are added by this source checkpoint.

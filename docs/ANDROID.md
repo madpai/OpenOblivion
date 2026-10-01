@@ -69,9 +69,38 @@ stairs while walk/stop/jump still pass. Its real Vilverin ascent comparison is
 worse, exposing a frame-timing problem: Lua `onFrame` executes before physics
 and camera tracking update. It is explicitly opt-in via `--grounded-eye` in the
 desktop probe, and is excluded from the personal packager. The experimental
-0.4 APK was built privately but is withheld; the live download remains 0.3.
+0.4 APK was built privately but is withheld; that checkpoint retained 0.3.
 See [player movement](PLAYER_MOVEMENT.md). General collision accuracy, animation,
 lifecycle and performance remain unmeasured.
+
+Private preview **0.5-native-stairs** now uses a source-built Android engine
+with the independently authored post-physics C++ height filter. Nineteen
+native archive inputs, three engine FetchContent inputs and NDK r26b are
+hash-locked; external donor and reader checkouts stay unchanged. The canonical
+native build command completes, including the baseline and camera integration.
+See [native build recipe](../tools/native/README.md) and
+[dependency inventory](research/android-native.lock.json).
+
+The same-binary desktop comparison improves actual Vilverin ascent/descent
+view variation by 59.5%/75.9%; walking, stopping, jump/landing and separate
+ramp/wall/ceiling/look/healthy-tracking controls pass. Eight CTest suites include
+29 Python fixtures, the original Lua trajectories and 3,817 C++ trajectory
+assertions. These remain desktop/source evidence.
+
+All six compiled libraries are AArch64 with resolved bundled/system dependency
+names. APK signature/CRCs/native hashes pass; versionCode 5 and the compiled
+native-enable flag are verified. Android 14 emulator upgrade, hash-verified
+payload readiness and native stair-QA configuration pass. Native libraries load
+and the engine begins content loading, then scene rendering hits the same
+confirmed `libndk_translation_proxy_libGLESv2.so` null-function target as the
+released baseline, before camera construction. This is not Android scene or
+filter-runtime validation. Physical-phone feel awaits `OO-ANDROID-005`.
+
+The private download is 0.5; the complete working 0.3 APK/page/notes are archived
+for recovery/comparison. The rejected 0.4 Lua-filter APK remains withheld.
+Native 0.5 keeps the original movement and camera collision paths and adds
+bounded read-only QA samples. It remains OpenGL, with animation, general TES4
+collision accuracy, Vulkan and multiplayer unresolved.
 
 Confirmed: native inspector and Vulkan capability probe compile for
 `arm64-v8a`, API 29, NDK `28.0.13004108`, Clang 19, static libc++. These are

@@ -30,6 +30,8 @@ parser.add_argument('--scene-data', type=Path, help='Optional private loose visu
 parser.add_argument('--phone-qa', action='store_true', help='Also exercise the original read-only phone camera/player diagnostics')
 parser.add_argument('--camera-repair', action='store_true', help='Exercise the original preview camera fallback')
 parser.add_argument('--grounded-eye', action='store_true', help='Explicitly enable the unshipped stair eye-height experiment')
+parser.add_argument('--native-manifest', type=Path, help='External recorded native camera integration build')
+parser.add_argument('--native-grounded-eye', action='store_true', help='Enable the post-physics native filter in that build')
 parser.add_argument('--missing-player-model', action='store_true', help='Fault injection: deliberately omit the base player model')
 parser.add_argument('--camera-motion', action='store_true', help='Bounded movement/turning probe; changes controls for two seconds')
 parser.add_argument('--player-movement', action='store_true', help='Native player trajectory: walk, stop, jump and landing; no scripted camera motion')
@@ -37,8 +39,13 @@ parser.add_argument('--movement-turn', type=float, default=0, help='Initial turn
 parser.add_argument('--movement-position', type=float, nargs=3, help='Optional private test placement X Y Z in the selected cell')
 parser.add_argument('--movement-heading', type=float, default=0, help='World Z rotation in degrees for optional test placement')
 parser.add_argument('--movement-fixture', action='store_true', help='Use the original clear stair cell alongside the public Template')
+parser.add_argument('--movement-surface', choices=('stairs', 'ramp', 'wall', 'ceiling'), default='stairs')
 parser.add_argument('--raw-eye', action='store_true', help='Diagnostic control: disable only the grounded eye filter')
 args = parser.parse_args()
+if args.movement_surface != 'stairs' and not args.movement_fixture:
+    parser.error('Original surface selection requires --movement-fixture')
+if args.native_grounded_eye and (not args.native_manifest or not args.camera_repair or args.grounded_eye):
+    parser.error('Native smoothing requires --native-manifest --camera-repair and cannot use the Lua experiment')
 if args.player_movement and args.camera_motion:
     parser.error('Player and camera motion drivers cannot run together')
 if args.movement_fixture and (not args.player_movement or args.start != 'OpenOblivionStairs'):
@@ -67,6 +74,20 @@ if output == ROOT or ROOT in output.parents:
 if output.exists():
     parser.error('Output directory already exists')
 work = args.build_work.expanduser().resolve(strict=True)
+native_manifest = None
+if args.native_manifest:
+    native_path = args.native_manifest.expanduser().resolve(strict=True)
+    if native_path == ROOT or ROOT in native_path.parents:
+        parser.error('Native build evidence must remain external')
+    native_manifest = json.loads(native_path.read_text())
+    if (native_manifest.get('schema') != 1
+            or native_manifest.get('engine_kind') != 'openoblivion-native-integration'
+            or native_manifest.get('base_revision') != json.loads((ROOT / 'docs/research/upstreams.lock.json').read_text())['OpenMW/openmw']['revision']
+            or native_manifest.get('engine_sha256') != hashlib.sha256((work / 'build/openmw').read_bytes()).hexdigest()):
+        parser.error('Native build provenance/binary mismatch')
+    for name, sha in native_manifest['tools_sha256'].items():
+        if name not in ('tools/native/integration.py', 'tools/native/grounded_eye.hpp', 'tools/native/camera_grounded_eye.patch') or hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != sha:
+            parser.error('Native integration tool mismatch')
 if not args.movement_fixture and not args.data:
     parser.error('--data is required for owner scenes')
 data = args.data.expanduser().resolve(strict=True) if args.data else None
@@ -109,7 +130,7 @@ if args.player_movement:
             'return {new=function() return {reset=function() end, update=function() return 0 end} end}\n')
 if args.movement_fixture:
     fixture_data = output / 'fixture-data'
-    generate_movement_fixture(fixture_data)
+    generate_movement_fixture(fixture_data, args.movement_surface)
 for archive in ([] if scene_data or args.movement_fixture else sorted(data.glob('*.bsa'))):
     if archive.name.startswith('Oblivion - '):
         cfg.append('fallback-archive=' + archive.name)
@@ -129,6 +150,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            '--env', 'XDG_CACHE_HOME=/evidence/xdg-cache',
            '--env', 'XDG_RUNTIME_DIR=/evidence/runtime',
            '--env', 'LIBGL_ALWAYS_SOFTWARE=1', '--env', 'ALSOFT_DRIVERS=null',
+           *(['--env', 'OPENOBLIVION_GROUNDED_EYE=1'] if args.native_grounded_eye else []),
            '--volume', f'{work}:/work:ro',
            *(['--volume', f'{fixture_data}:/fixture-data:ro'] if args.movement_fixture else
              ['--volume', f'{data / "Oblivion.esm"}:/scene-master/Oblivion.esm:ro',
@@ -163,6 +185,8 @@ cell_sample = re.search(r'OPENOBLIVION_SCENE_PROBE cell=(\S+) name=(.*?) exterio
 cell_matches = cell_sample is not None and cell_sample[2].casefold() == args.start.casefold()
 complete = ('OPENOBLIVION_SCENE_PROBE_DONE' in log and bool(screens) and result.returncode == 0
             and revision_matches and cell_matches)
+if args.native_grounded_eye and 'OPENOBLIVION_NATIVE_GROUNDED_EYE enabled:' not in log:
+    complete = False
 repair_activated = 'OPENOBLIVION_CAMERA_REPAIR activated:' in log
 motion = re.search(r'OPENOBLIVION_CAMERA_MOTION distance=([\d.eE+-]+) camera_player_distance=([\d.eE+-]+) yaw=([\d.eE+-]+)', log)
 motion_verified = bool(motion and float(motion[1]) > 1 and float(motion[2]) < 256 and abs(float(motion[3])) > 0.1)
@@ -181,6 +205,8 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'docker_image_id': image_id,
            'master_sha256': None if args.movement_fixture else hashlib.sha256((data / 'Oblivion.esm').read_bytes()).hexdigest(),
            'engine_sha256': hashlib.sha256((work / 'build/openmw').read_bytes()).hexdigest(),
+           'engine_kind': 'openoblivion-native-integration' if native_manifest else 'stock-upstream',
+           'native_integration': native_manifest, 'native_grounded_eye_enabled': args.native_grounded_eye,
            'bounded_visual_slice': bool(scene_data), 'phone_qa_enabled': args.phone_qa,
            'camera_repair_enabled': args.camera_repair, 'missing_player_model_injected': args.missing_player_model,
            'experimental_grounded_eye_enabled': args.grounded_eye,
@@ -190,6 +216,7 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'motion_camera_player_distance': float(motion[2]) if motion else None,
            'player_movement_enabled': args.player_movement, 'movement_initial_turn_degrees': args.movement_turn,
            'original_stair_fixture': args.movement_fixture,
+           'original_movement_surface': args.movement_surface if args.movement_fixture else None,
            'grounded_eye_disabled_for_control': args.raw_eye,
            'movement_start_position': args.movement_position, 'movement_start_heading_degrees': args.movement_heading,
            'player_movement': movement,

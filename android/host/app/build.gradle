@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 plugins { id 'com.android.application' }
+def nativeStairs = providers.gradleProperty('ooNativeGroundedEye').orElse('false').get() == 'true'
 android {
     // The unchanged donor SDL Java bridge imports this resource namespace.
     namespace 'com.libopenmw.openmw'
@@ -8,10 +9,12 @@ android {
         applicationId 'org.openoblivion.preview'
         minSdk 29
         targetSdk 32
-        versionCode 3
-        versionName '0.3-camera-repair'
+        versionCode nativeStairs ? 5 : 3
+        versionName nativeStairs ? '0.5-native-stairs' : '0.3-camera-repair'
+        buildConfigField 'boolean', 'NATIVE_GROUNDED_EYE', nativeStairs.toString()
         ndk { abiFilters 'arm64-v8a' }
     }
+    buildFeatures { buildConfig = true }
     packaging { jniLibs { useLegacyPackaging = true; keepDebugSymbols += ['**/*.so'] } }
     androidResources { noCompress += ['zip'] }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }

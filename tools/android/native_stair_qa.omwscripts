@@ -1,0 +1,2 @@
+# Original read-only stair evidence; native smoothing is implemented in C++.
+PLAYER: scripts/openoblivion_stair_qa.lua

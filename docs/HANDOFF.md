@@ -13,7 +13,14 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
 and the owner's failed physical-phone views. The current download is
-`0.3-camera-repair`, with screenshot uploads and QA objective `OO-ANDROID-004`.
+`0.5-native-stairs`, with screenshot uploads and QA objective `OO-ANDROID-005`.
+The complete working 0.3 APK/page/notes are archived privately. Native 0.5
+builds the Android engine from hash-locked sources and applies the small audited
+post-physics camera patch. Same-binary desktop Vilverin comparisons improve
+view variation by 59.5% uphill and 75.9% downhill; movement/control fixtures
+pass. APK integrity/signature and emulator upgrade/payload checks pass.
+The emulator scene retains its confirmed GLES translation crash before camera
+construction; phone smoothing/rendering acceptance awaits owner QA.
 APK signature, emulator upgrade/payload configuration and the complete served
 download checksum pass. Reports live in
 `/home/commander/openoblivion-private/evidence/phone-qa`, outside downloads/Git.
@@ -36,7 +43,7 @@ desktop research
 and excluded from the phone packager. Original native stair comparisons reduce
 view jolts, but real Vilverin ascent worsens the measured variation; the current
 Lua frame hook precedes physics/camera tracking. Do not deploy the private
-experimental 0.4 APK or claim smooth stairs. The working 0.3 download is retained
+experimental 0.4 APK or claim phone-validated smooth stairs. The working 0.3 baseline is retained
 and archived. See [player movement](PLAYER_MOVEMENT.md) for evidence and the
 remaining post-physics presentation/collision work.
 The previous 0.2 APK is archived privately, and real QA submissions are retained.
@@ -55,8 +62,9 @@ an independently authored reader-API loop because the pinned upstream
 `ReaderUtils::readItem` can omit the final grouped record. Original fixtures
 reproduce and cover this issue; no upstream file was patched.
 
-Linux tools and Android ARM64 tools build. Twenty-seven Python tests and the
-Lua eye-height trajectory suite pass in the normal build; the founding fourteen
+Linux tools and Android ARM64 tools build. Twenty-nine Python tests, the
+Lua eye-height trajectory suite and 3,817 native C++ trajectory assertions
+pass in the normal build; the founding fourteen
 also passed ASan/UBSan. The Vulkan probe enumerates
 a desktop GPU; it does not render.
 Six existing Asset Lab original-fixture tests were reproduced with the private
@@ -86,8 +94,12 @@ COLLADA and some original texture/interpolator errors remain in the logs;
 collision accuracy and animation are not validated. Bounded desktop motion
 passes, and the separate phone preview verifies visibility/look only.
 
-Next resolve the post-physics eye-height timing and reproduce both stair
-directions before asking for another phone build test.
+The post-physics camera candidate now passes desktop stair comparisons in both
+directions. Continue with owner phone QA of 0.5; keep 0.3 as the recovery baseline.
+Use `tools/native/README.md` for the canonical source build and its exact receipt.
+The source build lives under `/home/commander/openoblivion-private/native-android`,
+desktop integration under `native-desktop`, and private candidate APK staging
+under `android-native-preview-build`. Reader/donor research pins remain clean.
 Audit authored TES4 collision separately and change the motor only when native
 trajectories identify a physical defect. The native movement trace distinguishes
 horizontal travel,

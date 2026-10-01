@@ -86,7 +86,15 @@ The opt-in desktop stair eye-height experiment is in
 `camera_stairs_candidate.omwscripts` and is excluded from the personal
 packager. Controlled original stairs improve, but real Vilverin ascent exposes
 a frame-timing regression. The private experimental 0.4 APK is withheld, and the
-working phone download remains 0.3. See [movement research](../../docs/PLAYER_MOVEMENT.md).
+working phone baseline 0.3 is archived. See [movement research](../../docs/PLAYER_MOVEMENT.md).
+
+The subsequent native candidate **0.5-native-stairs** is built through
+[tools/native](../native/README.md). Add `--native-runtime /outside/native-android/runtime`
+to the packager command to use its verified six-library set and exact build
+resources/defaults/notices. The host enables the native post-physics filter and
+bounded read-only stair sampling; the rejected Lua filter remains excluded.
+Without that option the released 0.3 path remains available. The current
+private download offers 0.5 for owner QA and preserves 0.3 separately.
 
 The packager recreates the generated APK while retaining compilation caches,
 then rejects excessive unused ZIP space. This prevents incremental APK updates

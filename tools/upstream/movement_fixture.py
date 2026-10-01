@@ -7,7 +7,9 @@ external evidence directory. Nothing is sampled from a game asset.
 import struct
 
 
-def generate(directory):
+def generate(directory, kind='stairs'):
+    if kind not in ('stairs', 'ramp', 'wall', 'ceiling'):
+        raise ValueError('Unknown original movement surface')
     def sub(name, data):
         return name.encode('ascii') + struct.pack('<I', len(data)) + data
 
@@ -27,10 +29,28 @@ def generate(directory):
             a,b,c,d = (base+i for i in face)
             triangles.extend([(a,b,c), (a,c,d)])
 
-    box(-400,400,-400,0,-20,0)
-    for step in range(20):
-        box(-200,200,step*24,(step+1)*24,-20,(step+1)*16)
-    box(-400,400,480,1100,-20,320)
+    if kind == 'wall':
+        box(-400,400,-400,1100,-20,0)
+        box(-400,400,0,24,0,240)
+    else:
+        box(-400,400,-400,0,-20,0)
+        if kind == 'ramp':
+            # A solid wedge; slope 320/480, authored independently of any asset.
+            base = len(vertices)
+            vertices.extend([(-200,0,-20),(200,0,-20),(200,480,-20),(-200,480,-20),
+                             (-200,0,0),(200,0,0),(200,480,320),(-200,480,320)])
+            for face in ((0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
+                a,b,c,d = (base+i for i in face)
+                triangles.extend([(a,b,c),(a,c,d)])
+        else:
+            for step in range(20):
+                box(-200,200,step*24,(step+1)*24,-20,(step+1)*16)
+        box(-400,400,480,1100,-20,320)
+        if kind == 'ceiling':
+            # 150 units above each tread: clearance for the native body, while
+            # descending eye lag can reach the camera's collision envelope.
+            for step in range(20):
+                box(-200,200,step*24,(step+1)*24,(step+1)*16+150,(step+1)*16+170)
     positions = ' '.join(str(v) for p in vertices for v in p)
     indices = ' '.join(str(v) for t in triangles for v in t)
     mesh = f'''<?xml version="1.0" encoding="utf-8"?>
@@ -51,7 +71,7 @@ def generate(directory):
     (directory / 'meshes').mkdir(parents=True)
     (directory / 'meshes/openoblivion_original_stairs.dae').write_text(mesh)
     header = sub('HEDR', struct.pack('<fi32s256sI', 1.3, 0, b'OpenOblivion contributors',
-                                  b'Original controller fixture: 20 steps, rise 16, tread 24.', 2))
+                                  ('Original controller fixture: ' + kind).encode(), 2))
     static = sub('NAME', b'oo_original_stairs\0') + sub('MODL', b'openoblivion_original_stairs.dae\0')
     cell = sub('NAME', b'OpenOblivionStairs\0') + sub('DATA', struct.pack('<Iii', 1, 0, 0))
     cell += sub('AMBI', struct.pack('<IIIf', 0x808080, 0x808080, 0x303030, 0.0))

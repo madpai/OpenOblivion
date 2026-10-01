@@ -1,0 +1,364 @@
+{
+  "schema": 1,
+  "donor_revision": "7c97200966c9cb35a76b74d16d5c76f1a8939612",
+  "engine_base_revision": "f4bec41444214a7903bebd178389ca22ca13f646",
+  "ndk": {
+    "url": "https://dl.google.com/android/repository/android-ndk-r26b-linux.zip",
+    "sha256": "ad73c0370f0b0a87d1671ed2fd5a9ac9acfd1eb5c43a7fbfbd330f85d19dd632",
+    "filename": "ndk-r26b.zip"
+  },
+  "archives": [
+    {
+      "name": "boost",
+      "url": "https://github.com/boostorg/boost/releases/download/boost-1.83.0/boost-1.83.0.tar.gz",
+      "sha256": "0c6049764e80aa32754acd7d4f179fd5551d8172a83b71532ae093e7384e98da",
+      "declared_sha256": "0c6049764e80aa32754acd7d4f179fd5551d8172a83b71532ae093e7384e98da",
+      "bytes": 123695390,
+      "filename": "boost.tar.gz",
+      "license": "BSL-1.0",
+      "notice_sha256": {
+        "boost-1.83.0/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/tools/build/LICENSE.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/tools/inspect/license_check.cpp": "9ff54c34e5db5121c98ec80b3cb9dd9539090589a4bd201ac45e88cf62423fbc",
+        "boost-1.83.0/tools/inspect/copyright_check.cpp": "c31b259287510e3c04f78bb7b36796d45834dc1d86f528eff59381d2a3746e0f",
+        "boost-1.83.0/tools/inspect/license_check.hpp": "f1598455d2cb69634f6db48596e010fcf49db8f25a5d21ed3fcb2a402f0a485f",
+        "boost-1.83.0/tools/inspect/copyright_check.hpp": "5f5945fabdc65a3444bd858fc5088d9042ceaafa062ef2883acc61d6e676483b",
+        "boost-1.83.0/tools/docca/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/tools/bcp/licence_info.cpp": "6f14780680ad88b0961ca38cc42a6932559ca2417d0ff3d7af5ca9a84621e518",
+        "boost-1.83.0/tools/bcp/licence_info.hpp": "ea35f89f0810bf38316bf6f6615ddade662d0b9ca1b7a6d5ef8630045e61ca16",
+        "boost-1.83.0/libs/safe_numerics/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/numeric/interval/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/dynamic_bitset/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/callable_traits/LICENSE.md": "754f0d4ecb5f254feaa1b0d3e4180696a8af2abcc2969e5abf590834a63610e5",
+        "boost-1.83.0/libs/locale/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/iostreams/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/math/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/move/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/container/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/qvm/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/static_string/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/uuid/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/multiprecision/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/algorithm/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/test/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/contract/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/histogram/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/tokenizer/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/nowide/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/hana/LICENSE.md": "367ef0a8422dcd9cf3285610f6eb2a499de12e8b1c7af6154009addf088c903d",
+        "boost-1.83.0/libs/yap/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/stl_interfaces/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/format/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/rational/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/leaf/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/signals2/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/pfr/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/mpl/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/gil/LICENSE.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/pool/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/compute/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/assign/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/mysql/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/logic/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/ptr_container/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/hof/LICENSE.md": "859bddbbef21decf692e6bd16bd8a6c96cde1b989fa88ddd63bd2bde98b58b2e",
+        "boost-1.83.0/libs/date_time/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/date_time/xmldoc/license.xml": "477ea844df37c895dbf0aa39f935631965b0bc963024d6ca36215294cf0ed7ee",
+        "boost-1.83.0/libs/json/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/concept_check/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/python/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/url/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/exception/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/property_map/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/geometry/doc/copyright_note_policy.txt": "521a8764f0025b076bc492805d4b2bb3d8f9eceb0bc781b61611c18c8c77af09",
+        "boost-1.83.0/libs/geometry/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/unordered/LICENSE": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+        "boost-1.83.0/libs/beast/LICENSE_1_0.txt": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+      }
+    },
+    {
+      "name": "bullet",
+      "url": "https://codeload.github.com/bulletphysics/bullet3/tar.gz/3.25",
+      "sha256": "c45afb6399e3f68036ddb641c6bf6f552bf332d5ab6be62f7e6c54eda05ceb77",
+      "filename": "bullet.tar.gz",
+      "bytes": 139789551,
+      "declared_sha256": null,
+      "license": "Zlib core; Extras excluded",
+      "notice_sha256": {
+        "bullet3-3.25/LICENSE.txt": "885cd516a8420acb7c3e0b1a7119913b686495001ae564e3229740460e8cff59"
+      }
+    },
+    {
+      "name": "bzip2",
+      "url": "https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz",
+      "sha256": "ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269",
+      "filename": "bzip2.tar.gz",
+      "bytes": 810029,
+      "declared_sha256": null,
+      "license": "bzip2 license (Julian Seward)",
+      "notice_sha256": {
+        "bzip2-1.0.8/LICENSE": "c6dbbf828498be844a89eaa3b84adbab3199e342eb5cb2ed2f0d4ba7ec0f38a3"
+      }
+    },
+    {
+      "name": "ffmpeg",
+      "url": "https://ffmpeg.org/releases/ffmpeg-6.1.tar.bz2",
+      "sha256": "eb7da3de7dd3ce48a9946ab447a7346bd11a3a85e6efb8f2c2ce637e7f547611",
+      "declared_sha256": null,
+      "bytes": 12637240,
+      "filename": "ffmpeg.tar.bz2",
+      "license": "LGPL-3.0-or-later for configured non-GPL codecs",
+      "notice_sha256": {
+        "ffmpeg-6.1/COPYING.LGPLv2.1": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe",
+        "ffmpeg-6.1/COPYING.GPLv2": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "ffmpeg-6.1/COPYING.LGPLv3": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+        "ffmpeg-6.1/COPYING.GPLv3": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+        "ffmpeg-6.1/LICENSE.md": "cb48bf09a11f5fb576cddb0431c8f5ed0a60157a9ec942adffc13907cbe083f2"
+      }
+    },
+    {
+      "name": "freetype2",
+      "url": "https://download.savannah.gnu.org/releases/freetype/freetype-2.13.2.tar.gz",
+      "sha256": "1ac27e16c134a7f2ccea177faba19801131116fd682efc1f5737037c5db224b5",
+      "declared_sha256": "1ac27e16c134a7f2ccea177faba19801131116fd682efc1f5737037c5db224b5",
+      "bytes": 3875020,
+      "filename": "freetype2.tar.gz",
+      "license": "FTL (chosen), retain credit",
+      "notice_sha256": {
+        "freetype-2.13.2/docs/FTL.TXT": "08c135755dd589039470f1fdbb400daaabaaa50d0b366d19cebff4d22986baa1",
+        "freetype-2.13.2/LICENSE.TXT": "2e3bbb7d7c5c396368dd0853a790ec29ce5b8647163dde42a0493fb0d6556b2b"
+      }
+    },
+    {
+      "name": "gl4es",
+      "url": "https://codeload.github.com/sisah2/gl4es/tar.gz/5ac069d82ad8ca2cc3c574484e4c5bad880db83e",
+      "sha256": "60ee788c2b43a5a25cd1a8a0071a77e957f2d5ff070eda5c39eb120d1ad2c3ea",
+      "declared_sha256": null,
+      "bytes": 50995733,
+      "filename": "gl4es.tar.gz",
+      "license": "MIT",
+      "notice_sha256": {
+        "gl4es-5ac069d82ad8ca2cc3c574484e4c5bad880db83e/LICENSE": "69a3049c77abd88658f6ad7cf6a5b6ceb5cf03b80e60f7c4657d90322cfab7bd",
+        "gl4es-5ac069d82ad8ca2cc3c574484e4c5bad880db83e/debian/copyright": "dc249251d23aa80b14400509565d2c17f459fbf1f4d3911c04fe47738e20c065"
+      }
+    },
+    {
+      "name": "libcollada",
+      "url": "https://codeload.github.com/rdiankov/collada-dom/tar.gz/v2.5.0",
+      "sha256": "3be672407a7aef60b64ce4b39704b32816b0b28f61ebffd4fbd02c8012901e0d",
+      "declared_sha256": "3be672407a7aef60b64ce4b39704b32816b0b28f61ebffd4fbd02c8012901e0d",
+      "bytes": 4509266,
+      "filename": "libcollada.tar.gz",
+      "license": "MIT-style SCEA license; embedded PCRE BSD, minizip Zlib",
+      "notice_sha256": {
+        "collada-dom-2.5.0/dom/external-libs/pcre-8.02/COPYING": "17abe1dbb92b21ab173cf9757dd57b0b15cd8d863b2ccdef635fdbef03077fb0",
+        "collada-dom-2.5.0/dom/external-libs/pcre-8.02/LICENCE": "942d60d50dde09ac6746836d39b1871fc419d85e6b3e80e61c464af62fb718a8",
+        "collada-dom-2.5.0/licenses/license_e.txt": "c5b5a57099bf192d28bff5cd2c59667581397a55b5360fda976f8e35040a5be3"
+      }
+    },
+    {
+      "name": "libicu",
+      "url": "https://codeload.github.com/unicode-org/icu/zip/refs/tags/release-70-1",
+      "sha256": "4013d7aff8a34bae410664bdb16554d7eda03654b22627b9284ab55a685492d4",
+      "declared_sha256": "4013d7aff8a34bae410664bdb16554d7eda03654b22627b9284ab55a685492d4",
+      "bytes": 70539707,
+      "filename": "libicu.zip",
+      "license": "Unicode/ICU permissive with bundled notices",
+      "notice_sha256": {
+        "icu-release-70-1/icu4c/LICENSE": "861671f8c712aa046f8f5ac89239e6c33821636516c5d0cc8c4e1973085f27a6",
+        "icu-release-70-1/icu4c/license.html": "c62d7697c03979f5056d28b338fafc7a1152820f7b379adf4a9d88cd37160f96",
+        "icu-release-70-1/tools/unicodetools/license.html": "eccd9d05b25e26a29b6b868c777b73b1c6399ca318d857e606c2e06a90527f4c",
+        "icu-release-70-1/vendor/double-conversion/upstream/COPYING": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca",
+        "icu-release-70-1/vendor/double-conversion/upstream/LICENSE": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca"
+      }
+    },
+    {
+      "name": "libjpeg-turbo",
+      "url": "https://sourceforge.net/projects/libjpeg-turbo/files/1.5.3/libjpeg-turbo-1.5.3.tar.gz",
+      "sha256": "b24890e2bb46e12e72a79f7e965f409f4e16466d00e1dd15d93d73ee6b592523",
+      "declared_sha256": "b24890e2bb46e12e72a79f7e965f409f4e16466d00e1dd15d93d73ee6b592523",
+      "bytes": 1658672,
+      "filename": "libjpeg-turbo.tar.gz",
+      "license": "IJG, BSD-3-Clause and Zlib",
+      "notice_sha256": {
+        "libjpeg-turbo-1.5.3/LICENSE.md": "5c08657eda60b7946a913ee22ac73603335a468a6aa95204506a1586a8d677ee",
+        "libjpeg-turbo-1.5.3/release/License.rtf": "d26120ab237f87dea10aa4fa7fd4243cadffd26e54eb2f3903d5fb0f8ed336b2"
+      }
+    },
+    {
+      "name": "libpng",
+      "url": "https://prdownloads.sourceforge.net/libpng/libpng-1.6.42.tar.xz",
+      "sha256": "c919dbc11f4c03b05aba3f8884d8eb7adfe3572ad228af972bb60057bdb48450",
+      "declared_sha256": null,
+      "bytes": 1035484,
+      "filename": "libpng.tar.xz",
+      "license": "libpng license",
+      "notice_sha256": {
+        "libpng-1.6.42/LICENSE": "7317e078e2d3b5d7ba5a6159e650945153262b44b76f6700f8e9edb261c5143e",
+        "libpng-1.6.42/ci/LICENSE_MIT.txt": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1",
+        "libpng-1.6.42/contrib/gregbook/COPYING": "d6cb0e9e560f51085556949a84af12b79a00f10ab8b66c752537faf7cd665572",
+        "libpng-1.6.42/contrib/gregbook/LICENSE": "b6a03c1803eb58ffb1f1278d5c7d4096c4c116e66dce8a7553e8c77d163c3438",
+        "libpng-1.6.42/contrib/pngminus/LICENSE.txt": "eeb50cca0bf0537aeeef00874e1e22f0de50cb035f5db37e36036dc9b8218e8d"
+      }
+    },
+    {
+      "name": "libxml",
+      "url": "https://codeload.github.com/GNOME/libxml2/tar.gz/refs/tags/v2.12.5",
+      "sha256": "042c7b161e58ca59d816eee69fc36774dcc8ab7b88a2b9a6e3d4f5e454a9474a",
+      "declared_sha256": null,
+      "bytes": 3798198,
+      "filename": "libxml.tar.gz",
+      "license": "MIT with covered-file notices",
+      "notice_sha256": {
+        "libxml2-2.12.5/Copyright": "7fb0a66f3989f9bd5c7e5438a3de02cd4a7a47dde0aea2f7ea2ba2ff454ee6a4"
+      }
+    },
+    {
+      "name": "luajit",
+      "url": "https://codeload.github.com/LuaJIT/LuaJIT/tar.gz/505e2c03de35e2718eef0d2d3660712e06dadf1f",
+      "sha256": "67c88399b901a22e9a236f4b77e6fe39af00f6b7144ce9dd6f51141d921f1076",
+      "declared_sha256": null,
+      "bytes": 1075264,
+      "filename": "luajit.tar.gz",
+      "license": "MIT and Lua notices",
+      "notice_sha256": {
+        "LuaJIT-505e2c03de35e2718eef0d2d3660712e06dadf1f/COPYRIGHT": "52fc5b15ac968ed81aabb4c1e23ab3bce50f57a5764e9cdca86b463a11072921"
+      }
+    },
+    {
+      "name": "lz4",
+      "url": "https://codeload.github.com/lz4/lz4/tar.gz/v1.9.3",
+      "sha256": "030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1",
+      "declared_sha256": "030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1",
+      "bytes": 320958,
+      "filename": "lz4.tar.gz",
+      "license": "BSD-2-Clause library; tools excluded",
+      "notice_sha256": {
+        "lz4-1.9.3/LICENSE": "2ba56d6195e9bb84500784a49099edae53eb103785b25928c194809dba5a025c",
+        "lz4-1.9.3/contrib/debian/copyright": "4f6ef9d0e844bf432d6a0abb2623f5a61175ae40f7f0e3665490311d89e3af87",
+        "lz4-1.9.3/contrib/djgpp/LICENSE": "d011d1e02cb32b71c1ce2922ab41a2e2ad30f4ecf8de22c078d53618205abc05",
+        "lz4-1.9.3/examples/COPYING": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "lz4-1.9.3/lib/LICENSE": "d15d99c8dc6b0ec22174c0e563a95bc40f9363ca7f9d9d793bb5c5a8e8d0af71",
+        "lz4-1.9.3/programs/COPYING": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+        "lz4-1.9.3/tests/COPYING": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      }
+    },
+    {
+      "name": "mygui",
+      "url": "https://codeload.github.com/MyGUI/mygui/tar.gz/MyGUI3.4.3",
+      "sha256": "33c91b531993047e77cace36d6fea73634b8c17bd0ed193d4cd12ac7c6328abd",
+      "declared_sha256": "33c91b531993047e77cace36d6fea73634b8c17bd0ed193d4cd12ac7c6328abd",
+      "bytes": 18797995,
+      "filename": "mygui.tar.gz",
+      "license": "MIT core; media excluded",
+      "notice_sha256": {
+        "mygui-MyGUI3.4.3/COPYING.MIT": "b1f990c5e6b217bd96b8b83be4627201cd0c566cb691b65140f8bdcb6c4397ee",
+        "mygui-MyGUI3.4.3/Docs/src/license.txt": "50b6a3b1ea78bab0df7be5c3b78b16bb94cc45e0b594d386b5e25d5f27fbb18a"
+      }
+    },
+    {
+      "name": "openal",
+      "url": "https://codeload.github.com/kcat/openal-soft/tar.gz/1.23.1",
+      "sha256": "dfddf3a1f61059853c625b7bb03de8433b455f2f79f89548cbcbd5edca3d4a4a",
+      "declared_sha256": null,
+      "bytes": 840185,
+      "filename": "openal.tar.gz",
+      "license": "LGPL-2.0-or-later",
+      "notice_sha256": {
+        "openal-soft-1.23.1/COPYING": "d808ce217e5b611854da622b57ec29fe545584c48bc5352fae72a4b6e5074a15"
+      }
+    },
+    {
+      "name": "openmw",
+      "url": "https://codeload.github.com/OpenMW/openmw/tar.gz/f4bec41444214a7903bebd178389ca22ca13f646",
+      "sha256": "85234e45409ee60153f73b53bc106e2671fc12a02f3bfa39ac2b41d9c81213f6",
+      "declared_sha256": null,
+      "bytes": 6328234,
+      "filename": "openmw.tar.gz",
+      "license": "GPL-3.0 with per-file licenses",
+      "notice_sha256": {
+        "openmw-f4bec41444214a7903bebd178389ca22ca13f646/LICENSE": "a187395428b34e87a0279ba67f1dba3c929eec303bea0d2200a2effd55787829",
+        "openmw-f4bec41444214a7903bebd178389ca22ca13f646/cmake/COPYING-CMAKE-SCRIPTS": "f374b5ba2961a15add060d92cff6bc9d7bcc3148c593166d4a23f713293c6d76",
+        "openmw-f4bec41444214a7903bebd178389ca22ca13f646/extern/osg-ffmpeg-videoplayer/License.txt": "9d31b8ecaf8941649c75ead319c354e82b3c2e7db4472a96b77c3218ff7e2612"
+      }
+    },
+    {
+      "name": "osg",
+      "url": "https://codeload.github.com/openmw/osg/tar.gz/69cfecebfb6dc703b42e8de39eed750a84a87489",
+      "sha256": "f47cc77e1e17ab98e0edf26ad0bcface37af0bcd49677e3d4afe1bcb3b2d734d",
+      "declared_sha256": null,
+      "bytes": 5789008,
+      "filename": "osg.tar.gz",
+      "license": "OSGPL-1.0, LGPL-2.1 with linking exceptions; audited plugins only",
+      "notice_sha256": {
+        "osg-69cfecebfb6dc703b42e8de39eed750a84a87489/LICENSE.txt": "71a26c322ba253aea9c6d6982291ea86ddf3bf317bfe3eca0fdf49a9ebc8eb56",
+        "osg-69cfecebfb6dc703b42e8de39eed750a84a87489/src/osgPlugins/lwo/COPYING": "512d2d21b6b3384ba64781abb0208a1b87740bc31e2df48e2b206ddb7e4d5779",
+        "osg-69cfecebfb6dc703b42e8de39eed750a84a87489/src/osgPlugins/txp/license.txt": "55a9a69bb6daaaffe667c2bf3388390504d63f316b6467a8c7d06914f686b7a0",
+        "osg-69cfecebfb6dc703b42e8de39eed750a84a87489/src/osgPlugins/x/LICENSE": "fda19750542df9f65d0d95a771a96b1337ff40e9610d63d6785d920f5124090a"
+      }
+    },
+    {
+      "name": "sdl2",
+      "url": "https://www.libsdl.org/release/SDL2-2.0.22.tar.gz",
+      "sha256": "fe7cbf3127882e3fc7259a75a0cb585620272c51745d3852ab9dd87960697f2e",
+      "declared_sha256": "fe7cbf3127882e3fc7259a75a0cb585620272c51745d3852ab9dd87960697f2e",
+      "bytes": 7250633,
+      "filename": "sdl2.tar.gz",
+      "license": "Zlib; bundled HIDAPI alternative BSD selected",
+      "notice_sha256": {
+        "SDL2-2.0.22/LICENSE.txt": "fcb07e07ac6bc8b2fcf047b50431ef4ebe5b619d7ca7c82212018309a9067426",
+        "SDL2-2.0.22/src/hidapi/LICENSE-orig.txt": "fb5436aa63d1b71a8dfbf74ecaf1a5b4e1ec4df7f80074d11fec99284f69ca5f",
+        "SDL2-2.0.22/src/hidapi/LICENSE-gpl3.txt": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+        "SDL2-2.0.22/src/hidapi/LICENSE.txt": "7d3b087c34f35d4d538e3bcddd1ff8f66e92f9ef336881999482800ddf840913",
+        "SDL2-2.0.22/src/hidapi/LICENSE-bsd.txt": "30eb1bef29b46f8ba7ab8b416035dbd93cb034a45481dd97815b944284582cd2",
+        "SDL2-2.0.22/src/video/yuv2rgb/LICENSE": "f7d74004cc75778cae46c5f0139f244d67c07ef64cf51937e8272352197dcb18",
+        "SDL2-2.0.22/test/COPYING": "d5a549e4a7b88cb696d0db15b21830061131ed361257ab399a33ca08ce0b33d5"
+      }
+    },
+    {
+      "name": "zlib",
+      "url": "https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.3.1",
+      "sha256": "17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c",
+      "declared_sha256": null,
+      "bytes": 1572744,
+      "filename": "zlib.tar.gz",
+      "license": "Zlib",
+      "notice_sha256": {
+        "zlib-1.3.1/LICENSE": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243",
+        "zlib-1.3.1/contrib/dotzlib/LICENSE_1_0.txt": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+      }
+    }
+  ],
+  "engine_fetchcontent": [
+    {
+      "name": "recastnavigation",
+      "url": "https://codeload.github.com/OpenMW/recastnavigation/zip/03259f3287ff8330f0d66fcd98d022edddffaa97",
+      "sha512": "63db2ac90904764d7f1466d3c95994ec51d777cddd870b70f8ef674c09ed166b3d16ffc4ac1d18d0eab865fda4bf51b6ea17049025b66a338d3cadd0f48dc712",
+      "sha256": "b337d8ceebd66641e1a9b9ca2c3dbaebc5aa68a3a30f09435e5c420c177b2c62",
+      "filename": "recastnavigation.zip",
+      "license": "Zlib",
+      "notice_path": "recastnavigation-03259f3287ff8330f0d66fcd98d022edddffaa97/License.txt",
+      "notice_sha256": "ffad87821cce7cfd3be00b63ffadd01b04e83a4c6a0bcc68f06362ffd42d705e"
+    },
+    {
+      "name": "sqlite3",
+      "url": "https://www.sqlite.org/2023/sqlite-amalgamation-3410100.zip",
+      "sha512": "7de291709e88fffc693cf24ac675950cfc35c1bf7631cfea95167105720a05cf37fb943c57c5c985db2eeaa57b31894b3c0df98a7bd2939b5746fc5a24b5ae87",
+      "sha256": "df0d54bf246521360c8148f64e7e5ad07a4665b4f902339e844f4c493d535ff5",
+      "filename": "sqlite3.zip",
+      "license": "Public domain dedication in sqlite3.c",
+      "notice_path": "sqlite-amalgamation-3410100/sqlite3.c",
+      "notice_sha256": "0808df573bff9813c2f0b7b0caa26b7807b7d2de62de821fd625dc6a6d3bb315"
+    },
+    {
+      "name": "yaml-cpp",
+      "url": "https://codeload.github.com/jbeder/yaml-cpp/zip/c2680200486572baf8221ba052ef50b58ecd816e",
+      "sha512": "9eb328e37ff547e7f681d64e3a8f268a8a5645cb1c258106d1d9f959eec498dfc7c466690c56f210ad7d5fb95b806a30c87ccbb019cccf5c3c6135cfc3c13fe1",
+      "sha256": "9cbd53685951e13eaa3257dd33b9f2cdcdda144488ce93c7f438c72533faf303",
+      "filename": "yaml-cpp.zip",
+      "license": "MIT",
+      "notice_path": "yaml-cpp-c2680200486572baf8221ba052ef50b58ecd816e/LICENSE",
+      "notice_sha256": "aa6fcc27be034e41e21dd832f9175bfe694a48491d9e14ff0fa278e19ad14f1b"
+    }
+  ]
+}

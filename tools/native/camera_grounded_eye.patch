@@ -1,0 +1,92 @@
+diff --git a/apps/openmw/mwrender/camera.cpp b/apps/openmw/mwrender/camera.cpp
+index 8f0cf6f..c8d4533 100644
+--- a/apps/openmw/mwrender/camera.cpp
++++ b/apps/openmw/mwrender/camera.cpp
+@@ -1,5 +1,9 @@
+ #include "camera.hpp"
+ 
++#include <cstdlib>
++#include <string_view>
++#include <components/debug/debuglog.hpp>
++
+ #include <osg/Camera>
+ 
+ #include <components/misc/mathutil.hpp>
+@@ -75,6 +79,10 @@ namespace MWRender
+         , mDeferredRotation(osg::Vec3f())
+         , mDeferredRotationDisabled(false)
+     {
++        const char* groundedEye = std::getenv("OPENOBLIVION_GROUNDED_EYE");
++        mGroundedEyeEnabled = groundedEye && std::string_view(groundedEye) == "1";
++        if (mGroundedEyeEnabled)
++            Log(Debug::Info) << "OPENOBLIVION_NATIVE_GROUNDED_EYE enabled: post-physics actor-root view";
+         mUpdateCallback = new UpdateRenderCameraCallback(this);
+         mCamera->addUpdateCallback(mUpdateCallback);
+     }
+@@ -143,7 +151,7 @@ namespace MWRender
+ 
+         if (!paused)
+             updateFocalPointOffset(duration);
+-        updatePosition();
++        updatePosition(duration, paused);
+     }
+ 
+     osg::Vec3d Camera::calculateFirstPersonPosition(const osg::Vec3d& trackedPosition) const
+@@ -157,9 +165,11 @@ namespace MWRender
+         return res;
+     }
+ 
+-    void Camera::updatePosition()
++    void Camera::updatePosition(float duration, bool paused)
+     {
+         mTrackedPosition = calculateTrackedPosition();
++        if (paused || mMode != Mode::ThirdPerson || mPreferredCameraDistance != 0 || mTrackingPtr.isEmpty())
++            mGroundedEye.reset();
+         if (mMode == Mode::Static)
+             return;
+         if (mMode == Mode::FirstPerson)
+@@ -176,6 +186,19 @@ namespace MWRender
+ 
+         // Adjust focal point to prevent clipping.
+         osg::Vec3d focalOffset = getFocalPointOffset();
++        // Physics and actor transforms have been updated before this call.
++        // Apply the correction before native focal/camera collision queries.
++        if (mGroundedEyeEnabled && !paused && mMode == Mode::ThirdPerson
++            && mPreferredCameraDistance == 0 && !mTrackingPtr.isEmpty())
++        {
++            auto world = MWBase::Environment::get().getWorld();
++            const auto& movement = mTrackingPtr.getClass().getMovementSettings(mTrackingPtr);
++            focalOffset.z() += mGroundedEye.update({ mTrackedPosition.x(), mTrackedPosition.y(),
++                mTrackedPosition.z(), mTrackingPtr.getCell(), world->isOnGround(mTrackingPtr),
++                movement.mPosition[2] > 0, world->isSwimming(mTrackingPtr) }, duration);
++        }
++        else
++            mGroundedEye.reset();
+         osg::Vec3d focal = mTrackedPosition + focalOffset;
+         focalOffset.z() += 10.f; // Needed to avoid camera clipping through the ceiling because
+                                  // character's head can be a bit higher than the collision area.
+diff --git a/apps/openmw/mwrender/camera.hpp b/apps/openmw/mwrender/camera.hpp
+index 2d0633b..f463140 100644
+--- a/apps/openmw/mwrender/camera.hpp
++++ b/apps/openmw/mwrender/camera.hpp
+@@ -10,6 +10,7 @@
+ #include <osg/ref_ptr>
+ 
+ #include "../mwworld/ptr.hpp"
++#include "openoblivion_grounded_eye.hpp"
+ 
+ namespace osg
+ {
+@@ -164,7 +165,11 @@ namespace MWRender
+         osg::Vec3d calculateFirstPersonPosition(const osg::Vec3d& trackedPosition) const;
+         osg::Vec3d getFocalPointOffset() const;
+         void updateFocalPointOffset(float duration);
+-        void updatePosition();
++        void updatePosition(float duration, bool paused);
++
++        // Original OpenOblivion integration; opt-in, actor-root eye view only.
++        bool mGroundedEyeEnabled = false;
++        OpenOblivion::GroundedEye mGroundedEye;
+ 
+         osg::ref_ptr<osg::Callback> mUpdateCallback;
+ 

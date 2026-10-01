@@ -67,6 +67,12 @@ endif()
 
 include(CTest)
 if(BUILD_TESTING AND NOT ANDROID)
+    add_executable(oo_native_grounded_eye_test tests/test_native_grounded_eye.cpp)
+    target_include_directories(oo_native_grounded_eye_test PRIVATE tools/native)
+    target_compile_options(oo_native_grounded_eye_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    add_test(NAME native-grounded-eye-fixtures COMMAND oo_native_grounded_eye_test)
+    add_test(NAME native-build-receipt-fixtures COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_native_build.py")
     find_program(OO_LUA_EXECUTABLE NAMES luajit lua5.1 lua REQUIRED)
     add_test(NAME original-tes4-fixtures COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_inspect.py" "$<TARGET_FILE:openoblivion-inspect>")

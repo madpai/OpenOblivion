@@ -39,6 +39,7 @@ def main():
     parser.add_argument('--work', required=True, type=Path, help='Private staging/build directory')
     parser.add_argument('--sdk', required=True, type=Path)
     parser.add_argument('--gradle', required=True, type=Path)
+    parser.add_argument('--native-runtime', type=Path, help='External audited native source-build runtime directory')
     args = parser.parse_args()
     work, data, template, donor, apk = map(outside, (args.work, args.data, args.template, args.donor, args.upstream_apk))
     lock = json.loads((ROOT / 'docs/research/upstreams.lock.json').read_text())['Andiweli/OpenMW-Android']
@@ -73,6 +74,39 @@ def main():
                     out = stage / relative
                     out.parent.mkdir(parents=True, exist_ok=True)
                     out.write_bytes(archive.read(name))
+    native_build = None
+    if args.native_runtime:
+        runtime = outside(args.native_runtime)
+        native_build = json.loads((runtime / 'build-manifest.json').read_text())
+        native_lock = ROOT / 'docs/research/android-native.lock.json'
+        if (native_build.get('schema') != 1 or native_build.get('engine_kind') != 'openoblivion-native-integration'
+                or native_build.get('base_revision') != lock['engine_base_revision']
+                or native_build.get('donor_revision') != lock['revision']
+                or native_build.get('dependency_lock_sha256') != digest(native_lock)):
+            raise ValueError('Native source-build provenance differs from the audited Android baseline')
+        for name, sha in native_build['tools_sha256'].items():
+            if name not in ('tools/native/integration.py', 'tools/native/grounded_eye.hpp', 'tools/native/camera_grounded_eye.patch') or digest(ROOT / name) != sha:
+                raise ValueError('Native integration source tools have changed')
+        if set(native_build['native_sha256']) != set(native_hashes):
+            raise ValueError('Native source build must contain the exact six open-source runtime libraries')
+        for name, sha in native_build['native_sha256'].items():
+            if digest(runtime / name) != sha:
+                raise ValueError('Native source library hash mismatch: ' + name)
+            shutil.copyfile(runtime / name, jni / name)
+        native_hashes = native_build['native_sha256']
+        resources = outside(Path(native_build['resources']))
+        for name, sha in native_build['resources_sha256'].items():
+            path = Path(name)
+            if path.is_absolute() or '..' in path.parts or digest(resources / path) != sha:
+                raise ValueError('Native source resource mismatch: ' + name)
+        # Use the resources produced by this exact engine build, without
+        # carrying obsolete files from the released resource tree.
+        shutil.rmtree(stage / 'resources')
+        shutil.copytree(resources, stage / 'resources')
+        defaults = outside(Path(native_build['defaults']))
+        if digest(defaults) != native_build['defaults_sha256']:
+            raise ValueError('Native source defaults mismatch')
+        shutil.copyfile(defaults, stage / 'base/defaults.bin')
     java = host / 'app/src/main/java/org/libsdl/app'
     java.mkdir(parents=True, exist_ok=True)
     bridge = donor / 'source/app/src/main/java/org/libsdl/app'
@@ -87,6 +121,10 @@ def main():
                          (template / 'LICENSE', 'Template-LICENSE.txt'), (template / 'AUTHORS.md', 'Template-AUTHORS.md'),
                          (ROOT / 'LICENSE', 'OpenOblivion-GPL.txt'), (ROOT / 'NOTICE.md', 'OpenOblivion-NOTICE.md')]:
         shutil.copyfile(source, notices / name)
+    if native_build:
+        if digest(runtime / 'third-party-notices.txt') != native_build['notices_sha256']:
+            raise ValueError('Native source notices mismatch')
+        shutil.copyfile(runtime / 'third-party-notices.txt', notices / 'native-source-third-party.txt')
     shutil.copyfile(template / 'settings.cfg', stage / 'template-settings.cfg')
     paths = [(file, 'template/' + file.relative_to(template / 'game_template/data').as_posix())
              for file in sorted((template / 'game_template/data').rglob('*')) if file.is_file()]
@@ -96,6 +134,10 @@ def main():
               (ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua', 'qa/scripts/openoblivion_phone_qa.lua'),
               (ROOT / 'tools/android/camera_repair.omwscripts', 'qa/camera_repair.omwscripts'),
               (ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua', 'qa/scripts/openoblivion_preview_camera.lua')]
+    if native_build:
+        # Read-only QA sampling, without the rejected pre-physics Lua filter.
+        paths += [(ROOT / 'tools/android/native_stair_qa.omwscripts', 'qa/native_stair_qa.omwscripts'),
+                  (ROOT / 'tools/android/scripts/openoblivion_stair_qa.lua', 'qa/scripts/openoblivion_stair_qa.lua')]
     selection = work / 'scene-data'
     if selection.exists():
         if selection.is_symlink(): raise ValueError('Selection directory must not be a symlink')
@@ -125,6 +167,7 @@ def main():
                   'donor': lock, 'java_sha256': java_hashes, 'native_sha256': native_hashes,
                   'payload_id': identity, 'payload_bytes': payload.stat().st_size,
                   'unpacked_bytes': manifest['unpacked_bytes'], 'template_revision': check(template, 'OpenMW/example-suite')}
+    provenance['native_source_build'] = native_build
     provenance['host_source_sha256'] = {file.relative_to(ROOT / 'android/host').as_posix(): digest(file)
                                        for file in sorted((ROOT / 'android/host').rglob('*')) if file.is_file()}
     provenance['preview_tools_sha256'] = {file.relative_to(ROOT).as_posix(): digest(file) for file in
@@ -139,7 +182,8 @@ def main():
     # space. Recreate only this generated APK; keep compilation caches.
     if result.is_symlink(): raise ValueError('Generated APK must not be a symlink')
     result.unlink(missing_ok=True)
-    subprocess.run([str(args.gradle.resolve()), '--no-daemon', '--console=plain', 'assembleDebug'], cwd=host, check=True)
+    subprocess.run([str(args.gradle.resolve()), '--no-daemon', '--console=plain',
+                    '-PooNativeGroundedEye=' + ('true' if native_build else 'false'), 'assembleDebug'], cwd=host, check=True)
     with zipfile.ZipFile(result) as built:
         if result.stat().st_size > sum(entry.compress_size for entry in built.infolist()) + 16*1024*1024:
             raise ValueError('APK contains excessive unused ZIP space; regenerate the APK')

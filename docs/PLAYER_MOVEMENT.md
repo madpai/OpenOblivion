@@ -118,3 +118,45 @@ presentation path is required before it can become the default.
 `OPENOBLIVION_STAIR_QA` adds bounded movement/view samples in the opt-in probe; the
 desktop probe compares vertical velocity variation as a diagnostic of tread
 jolts, independently of walking/stopping/jumping acceptance.
+
+## Native post-physics comparison
+
+The independent filter now has a C++ implementation applied by a small audited
+camera patch in an external integration checkout. It samples the tracked root
+inside the camera position update, after physics/world transforms, and adds
+its vertical correction before the original native focal/camera sphere casts.
+An environment switch enables it only for zero-distance actor-root views.
+The unchanged reader and stock desktop baselines remain separate.
+
+Native desktop comparisons use the same integrated binary with smoothing
+enabled/disabled, the existing controls driver and the same initial placement.
+Measured 2026-10-01:
+
+| Route | Raw view velocity variation | Native smoothed variation | Reduction |
+| --- | ---: | ---: | ---: |
+| Original 20-step ascent | 2347.48 | 528.79 | 77.5% |
+| Actual Vilverin entrance ascent | 1321.40 | 535.69 | 59.5% |
+| Actual Vilverin entrance descent | 2266.39 | 546.82 | 75.9% |
+
+The three paired routes pass walking response, stopping and jump/landing.
+Real Vilverin walking ratios are 1.009/1.016 uphill and 0.995/0.994 downhill
+(raw/native). Runtime cadence varies; these diagnostics are not perceptual
+comfort scores or Android performance measurements. The native correction
+does not show the earlier real-ascent Lua regression in these comparisons.
+
+Separate original descent/ramp routes pass movement gates. An original wall
+stops the body 10.26 units before its front face, while stopping and jumping
+remain valid; blocked walking correctly fails its walking-response gate.
+On low-ceiling stairs, 58 walking samples retain at least 10 units of vertical
+view clearance. This verifies those fixtures, not all TES4 collision shapes.
+Native fallback look motion covers about 301 units with changing yaw; healthy
+first-person tracking does not activate the fallback. The C++ trajectory suite
+checks 3,817 assertions across stair directions, frame cadences, ramp response
+and transition resets.
+
+Private evidence names are `native-stair-ascent-{raw,smoothed}-05`,
+`native-vilverin-{ascent,descent}-{raw,smoothed}-05`,
+`native-surface-{stairs,ramp,wall,ceiling}-05`, `native-look-control-05` and
+`native-healthy-tracking-control-05`. Native source/build instructions are in
+[tools/native](../tools/native/README.md). Phone acceptance remains a separate
+QA gate; do not infer it from the desktop results.

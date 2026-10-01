@@ -121,3 +121,51 @@ No engine algorithm, resource, donor script or format implementation was copied.
 Fixtures are boxes/treads authored from numeric dimensions, generated outside
 the checkout; no owner geometry is adapted. Native binary/source obligations
 and the future static TES4 collision audit remain unchanged.
+
+## Native movement integration (2026-10-01)
+
+Before applying native changes, audited the GPLv3 project grant and exact files
+`apps/openmw/mwrender/{camera.cpp,camera.hpp}` at desktop revision
+`46bd4599203ee52ffc0f3e8edb3fc159a0303a49` (Git blobs
+`8f0cf6f7d80a04576950826461a5d851c378cdfd` and
+`2d0633b09d45ee48005cedc2cd1b3f7ac416075a`). These files have no narrower
+file-level grant. The integration will modify only an external checkout;
+published patch context retains OpenMW's GPL and attribution through NOTICE.md
+and this ledger. The bounded C++ height filter is independently authored
+OpenOblivion code, not a copy of an upstream controller or camera algorithm.
+
+The Android build reproduction uses an external worktree of the already-audited
+Andiweli revision `7c97200966c9cb35a76b74d16d5c76f1a8939612`.
+`source/buildscripts/CMakeLists.txt` is Git blob
+`39cfa5c6574b5d09d8ab9c03ce1e65d6a073ba1e`;
+`source/3rdparty-licenses.txt` is `6fdf9d0139ce8d7df31c9ddf9e3e6c615bca14f0`.
+Its GPLv3 build scripts and patches remain external with their notices.
+Intended changes are locked download inputs and build-host compatibility;
+the engine base remains `f4bec41444214a7903bebd178389ca22ca13f646`.
+Every source archive must receive a recorded SHA256 and license inventory before
+its resulting native runtime is packaged. This source build does not promise
+bit-for-bit identity with the donor's Windows/WSL release.
+
+Exact dependency archive SHA256s and inspected notice hashes are recorded in
+[android-native.lock.json](android-native.lock.json). Nineteen archives are
+external build inputs: JPEG 1.5.3 (IJG/BSD/Zlib), PNG 1.6.42 (libpng license),
+FreeType 2.13.2 (FTL chosen, include its credit), OpenAL 1.23.1 (LGPL-2.0-or-later),
+Boost 1.83 (BSL-1.0), FFmpeg 6.1 (LGPLv3 for this codec configuration), SDL 2.0.22
+(Zlib, HIDAPI BSD alternative), Bullet 3.25 (Zlib core), MyGUI 3.4.3 (MIT core),
+LZ4 1.9.3 (BSD library), LuaJIT (MIT/Lua notices), zlib 1.3.1 (Zlib), libxml
+2.12.5 (MIT with per-file notices), Collada DOM 2.5 (SCEA MIT-style plus embedded
+PCRE BSD/minizip Zlib), ICU 70.1 (Unicode/ICU notices) and exact GL4ES/OSG/engine
+revisions. OSG uses OSGPL/LGPL with linking exceptions; disabled unrelated
+plugins/media are excluded. Each archive keeps all original notices externally.
+The donor's retired Duron27 bzip2 URL is replaced by canonical bzip2 1.0.8
+(Julian Seward's permissive license), with an independently authored build
+adapter. NDK r26b is hash-verified; its libc++ notices remain separate.
+
+The same camera-only integration targets Android engine base
+`f4bec41444214a7903bebd178389ca22ca13f646`: camera.cpp Git blob
+`9a2240915854f7ce693a20bf2a01c26c79dabdec`, camera.hpp
+`e09a26529335f95183ead56138f01bcc9aec03d8`, GPLv3 as above. The patch preserves
+existing camera collision queries, actor motion, look and first-person behavior.
+It is opt-in and is not a general OpenMW camera rewrite. Nested engine
+FetchContent and bundled notices must also enter the corresponding-source
+inventory before any binary is distributed publicly.
