@@ -45,14 +45,16 @@ the owner left it.
 
 Preview **0.7-controls** does not change walk speed, jump height, gravity,
 collision, or the stair filter. On this engine Space activates and E jumps, so
-the lower-right button is USE and the button above it is JUMP. The top button
-pulses the always-run control and starts on run. Holding Shift inverted that
-control and could leave the player walking, so 0.6 is withdrawn. Water entry,
+the lower-right button is USE and the button above it is JUMP. The 0.7 log
+stays near 151 units per second, so the Caps Lock pulse did not change gait.
+Preview 0.8 holds Shift for run and pins always-run off, because that saved
+setting makes Shift mean walk. It starts on run. 0.6 and 0.7 are withdrawn.
+Water entry,
 breath, and drowning remain untested. The next movement work is to recover
 Oblivion's own player motor from the game, not to retune the stair filter.
 
 Animation and broader viewer work follow the dependable player baseline.
-The 0.7 phone control change is the host overlay only. The movement probe and
+The 0.8 phone control change is the host overlay and a small settings pin. The movement probe and
 stair filter are unchanged.
 
 The original `--player-movement` desktop probe drives the existing native player

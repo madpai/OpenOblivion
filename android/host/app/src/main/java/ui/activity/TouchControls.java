@@ -15,6 +15,7 @@ final class TouchControls extends View {
     private int move = -1, look = -1;
     private float lx, ly;
     private boolean running = true;
+    private boolean shiftSent;
     private final int[] directions = {KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_D};
     TouchControls(GameActivity a) { super(a); activity = a; setFocusable(false); }
     private float radius() { return Math.min(getWidth(), getHeight()) * .16f; }
@@ -43,18 +44,25 @@ final class TouchControls extends View {
         if (down && keys.add(k)) SDLActivity.onNativeKeyDown(k);
         else if (!down && keys.remove(k)) SDLActivity.onNativeKeyUp(k);
     }
-    private void pulse(int k) {
-        SDLActivity.onNativeKeyDown(k);
-        SDLActivity.onNativeKeyUp(k);
+    void syncRun() {
+        if (running) SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_SHIFT_LEFT);
+        else if (shiftSent) SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_SHIFT_LEFT);
+        shiftSent = running;
     }
-    void release() { for (int k : new HashSet<>(keys)) key(k, false); actions.clear(); move = look = -1; }
+    void release() {
+        for (int k : new HashSet<>(keys)) key(k, false);
+        if (shiftSent) SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_SHIFT_LEFT);
+        shiftSent = false;
+        actions.clear();
+        move = look = -1;
+    }
     @Override public boolean onTouchEvent(MotionEvent e) {
         int a = e.getActionMasked(), ix = e.getActionIndex(), id = e.getPointerId(ix);
         if (a == MotionEvent.ACTION_CANCEL) { release(); return true; }
         if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_POINTER_DOWN) {
             float x = e.getX(ix), y = e.getY(ix);
             if (rect(2).contains(x, y)) { release(); activity.finish(); return true; }
-            if (rect(3).contains(x, y)) { running = !running; pulse(KeyEvent.KEYCODE_CAPS_LOCK); invalidate(); return true; }
+            if (rect(3).contains(x, y)) { running = !running; syncRun(); invalidate(); return true; }
             int k = rect(0).contains(x,y) ? KeyEvent.KEYCODE_SPACE : rect(1).contains(x,y) ? KeyEvent.KEYCODE_E : 0;
             if (k != 0) { if (!actions.containsValue(k)) { actions.put(id, k); key(k, true); } }
             else if (x < getWidth() * .4f && move == -1) move = id;
@@ -74,6 +82,7 @@ final class TouchControls extends View {
                 SDLActivity.sendRelativeMouseMotion(Math.round((x-lx)*.6f), Math.round((y-ly)*.6f)); lx=x; ly=y;
             }
         }
+        syncRun();
         return true;
     }
 }

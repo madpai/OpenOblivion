@@ -132,7 +132,7 @@ public final class MainActivity extends Activity {
         base = base.replace("resources=./resources", "resources=" + resourcePath).replace("data=./resources/vfs-mw", "data=" + resourcePath + "/vfs-mw");
         write(new File(global, "openmw.cfg"), base);
         String cfg = "replace=content\nreplace=fallback-archive\nresources=" + resourcePath
-            + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ncontent=template.omwgame\ncontent=Oblivion.esm\ncontent=phone_qa.omwscripts\ncontent=camera_repair.omwscripts\n"
+            + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ncontent=template.omwgame\ncontent=Oblivion.esm\ncontent=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\n"
             + (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE ? "content=native_stair_qa.omwscripts\n" : "")
             + "encoding=win1252\n"
             ;

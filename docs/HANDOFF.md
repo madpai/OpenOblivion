@@ -13,9 +13,10 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
 and the owner's earlier failed physical-phone views. The current download is
-`0.7-controls`, with screenshot uploads and QA objective `OO-ANDROID-007`.
+`0.8-run`, with screenshot uploads and QA objective `OO-ANDROID-008`.
 It keeps the 0.5 engine and stair filter. USE is the lower-right button, JUMP
-is above it, and the run control starts on run. `0.6-run-toggle` is withdrawn.
+is above it, and run is a held Shift with always-run pinned off. It starts on
+run. `0.6-run-toggle` and `0.7-controls` are withdrawn.
 `0.5-native-stairs` remains archived for the stair comparison.
 The complete working 0.3 APK/page/notes are archived privately. Native 0.5
 builds the Android engine from hash-locked sources and applies the small audited
@@ -111,9 +112,9 @@ directions, and the owner now likes the 0.5 stair feel. One-to-one movement,
 including stair collision, is not the current target: authored Havok shapes are
 still skipped, and several published movement settings are absent from the
 master. Do not retune the 0.5 filter ahead of a motor recovered from the game.
-Preview 0.7-controls keeps that motor. USE and JUMP match this engine's
-Space and E bindings, and the run control pulses always-run instead of holding
-Shift. Keep 0.5 as the stair
+Preview 0.8-run keeps that motor. USE and JUMP match this engine's Space and E
+bindings. Run holds Shift after pinning always-run off, so Shift is no longer
+the walk gait. Keep 0.5 as the stair
 comparison and 0.3 as the recovery baseline. Check swim transitions and breath
 behavior separately; the owner's observation does not prove drowning.
 Use `tools/native/README.md` for the canonical source build and its exact receipt.

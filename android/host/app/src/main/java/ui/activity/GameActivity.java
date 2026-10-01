@@ -40,7 +40,10 @@ public final class GameActivity extends SDLActivity {
         mLayout.addView(controls, new ViewGroup.LayoutParams(-1, -1));
     }
     @Override protected void onPause() { if (controls != null) controls.release(); super.onPause(); }
-    @Override public void onWindowFocusChanged(boolean focus) { if (!focus && controls != null) controls.release(); super.onWindowFocusChanged(focus); }
+    @Override public void onWindowFocusChanged(boolean focus) {
+        if (controls != null) { if (focus) controls.syncRun(); else controls.release(); }
+        super.onWindowFocusChanged(focus);
+    }
     @Override public void onBackPressed() { finish(); }
     @Override protected void onDestroy() { if (controls != null) controls.release(); super.onDestroy(); android.os.Process.killProcess(android.os.Process.myPid()); }
 }

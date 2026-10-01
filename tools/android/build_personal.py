@@ -132,6 +132,8 @@ def main():
     # Original read-only camera/player diagnostics; no donor scripts modified.
     paths += [(ROOT / 'tools/android/phone_qa.omwscripts', 'qa/phone_qa.omwscripts'),
               (ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua', 'qa/scripts/openoblivion_phone_qa.lua'),
+              (ROOT / 'tools/android/run_gate.omwscripts', 'qa/run_gate.omwscripts'),
+              (ROOT / 'tools/android/scripts/openoblivion_run_gate.lua', 'qa/scripts/openoblivion_run_gate.lua'),
               (ROOT / 'tools/android/camera_repair.omwscripts', 'qa/camera_repair.omwscripts'),
               (ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua', 'qa/scripts/openoblivion_preview_camera.lua')]
     if native_build:

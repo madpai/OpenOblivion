@@ -521,6 +521,17 @@ At this checkpoint the liked 0.5 stair feel stayed in place and the runtime
 was unchanged. The later control correction and the current engine follow-up
 are in the next section and in [player movement](../PLAYER_MOVEMENT.md).
 
+## Phone controls 0.8 (2026-10-01)
+
+The 0.7 log, report `472a8828bfc742a4bac5fc80c653b358`, stays near 151 units
+per second while moving. That is the borrowed walk speed. The Caps Lock pulse
+changed the button label and not the gait. Preview 0.8 holds Shift for run and
+a player script pins `alwaysRun` off, because the borrowed control formula
+treats Shift as the opposite of that saved setting. `smoothControllerMovement`
+is pinned off so a controller axis cannot replace the Shift state. USE and
+JUMP are unchanged from the fixed 0.7 mapping. The private sideload objective
+is `OO-ANDROID-008`.
+
 ## Phone controls 0.7 (2026-10-01)
 
 Owner testing of private preview 0.6 reported that the USE and JUMP labels no

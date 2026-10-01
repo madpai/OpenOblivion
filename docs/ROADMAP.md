@@ -22,8 +22,9 @@ slice and resolves a concrete uncertainty before expanding scope.
    The owner now prioritizes actual player movement. Walking/stopping/ordinary
    collision/jump/look are reported working on the phone. Native 0.5 now has
    owner-reported smooth stairs with liked subtle stepping; swimming and a breath
-   indicator are also observed. Preview 0.7 corrects the phone USE, JUMP, and
-   run controls without changing the 0.5 motor or stair filter. Next, recover
+   indicator are also observed. Preview 0.8 holds Shift for run after the 0.7
+   Caps Lock toggle left the phone at walk speed. The 0.5 motor and stair filter
+   are unchanged. Next, recover
    Oblivion's own walk, run, and jump motor from the game and measure it before
    retuning stairs. Authored TES4 collision remains separate compatibility work;
    see [player movement priority](PLAYER_MOVEMENT.md).
