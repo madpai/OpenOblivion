@@ -79,12 +79,14 @@ executed, and the proprietary cooker does not have to be shipped, if the child
 strip vertices and triangles are translated. That translation is the missing
 static-world path.
 
-Open-source NIF tooling treats Oblivion Havok coordinates as Gamebryo units
-divided by 7 (`bhkScaleFactor = 7` in niftools `MaxNifTools.ini`; PyFFI writes
-packed vertices as `nif / 7`). Skyrim's scale is a different constant. The
-factor 7 is a published format convention, not yet a measurement on these six
-stairs. A wrong scale would make the authored mesh useless, so it has to be
-checked before any runtime switch.
+Open-source NIF tooling uses a factor of 7 when it writes packed Havok
+vertices (`bhkScaleFactor = 7` in niftools `MaxNifTools.ini`; PyFFI stores
+packed vertices as `nif / 7`). That factor does not apply to these stairs.
+Their collision vertices live in `NiTriStripsData` referenced by
+`bhkNiTriStripsShape`, and the measured extents are already in the same units
+as the visible mesh. Multiplying by 7 makes the collision about seven times
+too large. `bhkMoppBvTreeShape.scale` is 1 and the strip shape scale is
+`(1, 1, 1, 0)` on all six.
 
 ## Layers, materials, and the player body
 
@@ -99,11 +101,29 @@ for walking are separate from the surface material:
   (`OL_CAMERA_PICK` 24 through `OL_PATH_PICK` 27) are present in the file and
   must not become solid player collision.
 - `OL_CHAR_CONTROLLER` (20) is the live character body.
-- `OblivionHavokMaterial` value 15 is `OB_HAV_MAT_STONE_STAIRS`, and the same
-  pattern exists for the other surface types. That is a material id inside the
-  shape. It is not the same field as `OL_STAIRS`. Materials are the evidence
-  for footstep surfaces. The layer is the evidence for what the body collides
-  with. This census did not decode either field on the six stairs.
+- `OblivionHavokMaterial` value 15 is `OB_HAV_MAT_STONE_STAIRS`. That is a
+  material id inside the shape, not the same field as `OL_STAIRS`.
+
+The six stair bodies were then decoded with the 20.0.0.4 layout used by the
+pinned reader. Each one is the same kind of static body:
+
+| Mesh | Visible verts / tris | Collision verts / tris | Layer | Material | Motion | Quality |
+|---|---:|---:|---|---|---|---|
+| `arnhallstairs01` | 889 / 1,612 | 402 / 624 | `OL_STATIC` | stone | fixed | fixed |
+| `arnhallstairsentrance01` | 667 / 1,252 | 312 / 480 | `OL_STATIC` | stone | fixed | fixed |
+| `arnhalluturnstairs02` | 4,083 / 7,984 | 2,108 / 3,495 | `OL_STATIC` | stone | fixed | fixed |
+| `arwhallstairs01` | 1,390 / 2,618 | 756 / 1,288 | `OL_STATIC` | stone | fixed | fixed |
+| `arwhallstairsbridge01` | 1,965 / 3,602 | 1,026 / 1,714 | `OL_STATIC` | stone | fixed | fixed |
+| `arpitstairs02` | 903 / 1,613 | 487 / 782 | `OL_STATIC` | stone | fixed | fixed |
+
+World-object layer and rigid-body layer are both 1. The strip subshape filters
+are also layer 1. None of these stairs uses `OL_STAIRS` or the stone-stairs
+material. Mass is 0. Friction and restitution are both 0.3. Collision-object
+flags are 1. On four stairs the collision bounds match the visible bounds on
+every axis, so the unit scale is 1. The U-turn and pit meshes differ by a few
+percent on some axes because the collision mesh is not the render mesh, not
+because of a factor of 7. The collision meshes have about half as many
+triangles as the visible meshes.
 
 `HkMotionType::Motion_Fixed` (7) and `Quality_Fixed` (1) are the static
 architecture combination described by the Construction Set physics notes.
@@ -123,13 +143,13 @@ decorative render surface.
 
 Required before another movement tune:
 
-1. Static triangle collision from `bhkNiTriStripsShape` under
-   `bhkMoppBvTreeShape`, transformed by the rigid body and the checked Havok
-   scale, for fixed bodies on the standable layers.
-2. A layer filter so pick, trigger, and non-collidable shapes do not become
-   floors or walls.
-3. A measured comparison on one stair: authored triangles versus the current
-   render-mesh collision, then the same player trace on both.
+1. Static triangle collision from these `bhkNiTriStripsShape` blocks, in the
+   stored units, for fixed `OL_STATIC` bodies. The MOPP bytes stay unused.
+2. A layer filter so later pick, trigger, and non-collidable shapes do not
+   become floors. These six stairs do not need a special stair layer.
+3. A measured comparison on one of these stairs: the authored triangles
+   versus the current render-mesh collision, then the same player trace on
+   both.
 
 Not required for that comparison:
 
@@ -144,18 +164,19 @@ Not required for that comparison:
 
 ## Smallest next steps
 
-1. A read-only report, outside this repository, for the six stair NIFs:
-   layer, material, motion type, quality, collision vertex/triangle counts,
-   visible vertex counts, and the collision bounds multiplied by 7 compared
-   with the visible bounds. No physics world.
-2. If that report shows a stable scale and standable layers, add a bounded
-   static loader behind a switch. It builds Bullet triangle meshes from those
-   strip shapes and leaves every other shape on the current fallback. Compare
-   one desktop stair trace with the switch off and on. Do not change the
-   cylinder, the step constants, or the camera filter in that change.
+1. The read-only stair report above is done. Scale is 1, layer is static,
+   motion is fixed, and the collision mesh is the simpler triangle strip.
+2. Add a bounded static loader behind a switch. For a fixed `bhkRigidBody`
+   whose shape is `bhkMoppBvTreeShape` over `bhkNiTriStripsShape`, build a
+   Bullet triangle mesh from those strips in the stored units and use it
+   instead of the render mesh. Leave every other shape on the current
+   fallback. Compare one desktop trace of `arwhallstairs01` with the switch
+   off and on. Do not change the cylinder, the step constants, or the camera
+   filter in that change.
 3. Only if that trace changes contact, recover the character body dimensions
-   and step offset, then repeat the trace. Speed and jump constants come after
-   the body is standing on the authored surface.
+   and step offset, then repeat the trace. Oblivion's normal run speed comes
+   after the body is standing on the authored surface. The 0.8 log already
+   shows that another key binding does not create that speed.
 
 Inference, not a measurement: the render mesh is a likely source of tread
 snags because it is denser than the Havok mesh and has no stair layer. The
