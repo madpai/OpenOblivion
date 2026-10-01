@@ -13,10 +13,12 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
 and the owner's earlier failed physical-phone views. The current download is
-`0.8-run`, with screenshot uploads and QA objective `OO-ANDROID-008`.
-It keeps the 0.5 engine and stair filter. USE is the lower-right button, JUMP
+`0.9-authored-collision`, with screenshot uploads and QA objective `OO-ANDROID-009`.
+It keeps the 0.5 stair filter and adds fixed `OL_STATIC` strip collision.
+USE is the lower-right button, JUMP
 is above it, and run is a held Shift with always-run pinned off. It starts on
-run. `0.6-run-toggle` and `0.7-controls` are withdrawn.
+run. Run speed is still the borrowed walk. `0.8-run` is archived.
+`0.6-run-toggle` and `0.7-controls` are withdrawn.
 `0.5-native-stairs` remains archived for the stair comparison.
 The complete working 0.3 APK/page/notes are archived privately. Native 0.5
 builds the Android engine from hash-locked sources and applies the small audited
@@ -109,12 +111,16 @@ basic movement/stair comfort, with no original movement calibration yet.
 
 The post-physics camera candidate now passes desktop stair comparisons in both
 directions, and the owner now likes the 0.5 stair feel. One-to-one movement,
-including stair collision, is not the current target: authored Havok shapes are
-still skipped, and several published movement settings are absent from the
-master. Movement tuning is now blocked on the Havok collision semantics in
+including stair collision, is not the current target: several published
+movement settings are absent from the master, and the character body dimensions
+are still unknown. The desktop loader can use fixed `OL_STATIC` strip shapes
+when `OPENOBLIVION_AUTHORED_COLLISION=1`; the `arwhallstairs01` ray grid changes
+contact, and the cylinder was not retuned. See
 [HAVOK_COLLISION.md](research/HAVOK_COLLISION.md). The 0.8 phone log stayed at
 walk speed, median 149.9 and maximum 165.1, so another run binding is not the
-next change. Keep 0.5 as the stair
+next change. Phone preview 0.9 carries that library. Its APK SHA256 is
+`281685ea5663bc4d0783c940b915a3805daa49e44e0b29aecf66370dec9664b9`.
+Keep 0.5 as the stair
 comparison and 0.3 as the recovery baseline. Check swim transitions and breath
 behavior separately; the owner's observation does not prove drowning.
 Use `tools/native/README.md` for the canonical source build and its exact receipt.

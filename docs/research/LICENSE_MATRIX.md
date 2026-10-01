@@ -103,13 +103,15 @@ libraries and their notice/source requirements remain unchanged.
 
 The native-player trajectory driver, one-time test placement, analysis and
 synthetic trajectory fixtures are independently authored GPL-3.0-only code.
-No controller or collision implementation is copied or modified. Behavior
-research inspected `components/nifbullet/bulletnifloader.cpp` at the 0.51 base
-above (SHA256 `6cafec42e7f0231331656d88fdb47b730b4bb4c0e707fbd9377d200884abf2be`)
-and the locked 0.52 pin (Git blob `0194105efaeed61610edbee0d9400e6059d2b426`).
-Private stair geometry inspection uses the already-listed external PyFFI;
-no schema, game collision mesh or Havok/MOPP binary is redistributed. Adopting a
-native authored-collision path still requires an exact-file reuse audit.
+No controller implementation is copied. Behavior research inspected
+`components/nifbullet/bulletnifloader.cpp` at the 0.51 base above (SHA256
+`6cafec42e7f0231331656d88fdb47b730b4bb4c0e707fbd9377d200884abf2be`) and the
+locked 0.52 pin (Git blob `0194105efaeed61610edbee0d9400e6059d2b426`, file
+SHA256 `d6eb13007b07c03e359c40f6bd29e596804b7f812167c904883779f7d342fbc2`).
+The static-collision patches are original insertions against those exact files.
+Their context remains OpenMW's. The strip expander is original. No Havok or
+MOPP binary is redistributed. Private stair geometry inspection uses the
+already-listed external PyFFI; no schema or game collision mesh is copied.
 
 The 0.4 grounded-eye filter, bounded phone movement/view sampling and original
 stair generator are independently authored GPL-3.0-only code. API semantics

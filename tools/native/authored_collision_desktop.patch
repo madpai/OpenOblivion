@@ -1,0 +1,144 @@
+diff --git a/components/nifbullet/bulletnifloader.cpp b/components/nifbullet/bulletnifloader.cpp
+index 0194105..36e9dae 100644
+--- a/components/nifbullet/bulletnifloader.cpp
++++ b/components/nifbullet/bulletnifloader.cpp
+@@ -1,12 +1,22 @@
+ #include "bulletnifloader.hpp"
++#include "openoblivion_authored_strips.hpp"
++
+ #include <memory>
+ 
+ #include <cassert>
++#include <cmath>
++#include <cstdlib>
++#include <cstring>
+ #include <sstream>
+ #include <tuple>
+ #include <variant>
+ #include <vector>
+ 
++#include <BulletCollision/CollisionShapes/btTriangleMesh.h>
++
++#include <components/nif/data.hpp>
++#include <components/nif/physics.hpp>
++
+ #include <components/debug/debuglog.hpp>
+ #include <components/files/conversion.hpp>
+ #include <components/misc/convert.hpp>
+@@ -26,6 +36,105 @@ namespace
+         return letterPos < path.size() && (path[letterPos] == 'x' || path[letterPos] == 'X');
+     }
+ 
++    bool nearUnit(float value)
++    {
++        return std::abs(value - 1.f) <= 1e-4f;
++    }
++
++    bool openoblivionAuthoredCollisionRequested()
++    {
++        static const bool enabled = [] {
++            const char* value = std::getenv("OPENOBLIVION_AUTHORED_COLLISION");
++            const bool on = value != nullptr && std::strcmp(value, "1") == 0;
++            if (on)
++                Log(Debug::Info) << "OPENOBLIVION_AUTHORED_COLLISION enabled";
++            return on;
++        }();
++        return enabled;
++    }
++
++    // Fixed OL_STATIC body whose shape is a MOPP around bhkNiTriStripsShape, or the strips
++    // shape itself. Vertices stay in the stored Gamebryo units. The rigid-body translation
++    // is not applied: on the measured stairs it shifts the mesh off the visible bounds.
++    // MOPP bytes are not executed. Any other shape returns false so the caller keeps the
++    // render-mesh fallback. A non-identity root transform also falls back.
++    bool addOpenOblivionAuthoredStaticStrips(const Nif::NiAVObject& node,
++        std::unique_ptr<btCompoundShape, Resource::DeleteCollisionShape>& compound, const std::string& fileName)
++    {
++        if (!node.mTransform.isIdentity() || node.mCollision.empty())
++            return false;
++        const auto* collision = dynamic_cast<const Nif::bhkCollisionObject*>(node.mCollision.getPtr());
++        if (collision == nullptr || collision->mRecordType == Nif::RC_bhkBlendCollisionObject || collision->mBody.empty())
++            return false;
++        const auto bodyType = collision->mBody->mRecordType;
++        if (bodyType != Nif::RC_bhkRigidBody && bodyType != Nif::RC_bhkRigidBodyT)
++            return false;
++        const auto* body = static_cast<const Nif::bhkRigidBody*>(collision->mBody.getPtr());
++        if (body->mInfo.mMotionType != Nif::HkMotionType::Motion_Fixed
++            || body->mInfo.mQualityType != Nif::HkQualityType::Quality_Fixed
++            || body->mInfo.mHavokFilter.mLayer != OpenOblivion::kOblivionStaticLayer
++            || body->mHavokFilter.mLayer != OpenOblivion::kOblivionStaticLayer || body->mShape.empty())
++            return false;
++
++        const Nif::bhkNiTriStripsShape* strips = nullptr;
++        const Nif::bhkShape* shape = body->mShape.getPtr();
++        if (shape->mRecordType == Nif::RC_bhkMoppBvTreeShape)
++        {
++            const auto* mopp = static_cast<const Nif::bhkMoppBvTreeShape*>(shape);
++            if (!nearUnit(mopp->mScale) || mopp->mShape.empty() || mopp->mShape->mRecordType != Nif::RC_bhkNiTriStripsShape)
++                return false;
++            strips = static_cast<const Nif::bhkNiTriStripsShape*>(mopp->mShape.getPtr());
++        }
++        else if (shape->mRecordType == Nif::RC_bhkNiTriStripsShape)
++            strips = static_cast<const Nif::bhkNiTriStripsShape*>(shape);
++        else
++            return false;
++        if (!nearUnit(strips->mScale.x()) || !nearUnit(strips->mScale.y()) || !nearUnit(strips->mScale.z()))
++            return false;
++        for (const Nif::HavokFilter& filter : strips->mHavokFilters)
++            if (filter.mLayer != OpenOblivion::kOblivionStaticLayer)
++                return false;
++
++        auto mesh = std::make_unique<btTriangleMesh>(true, false);
++        for (const auto& dataRef : strips->mData)
++        {
++            if (dataRef.empty())
++                return false;
++            const Nif::NiTriStripsData& data = dataRef.get();
++            const std::vector<osg::Vec3f>& vertices = data.mVertices;
++            bool rejected = false;
++            for (const std::vector<unsigned short>& strip : data.mStrips)
++            {
++                OpenOblivion::expandTriangleStrip(strip.data(), strip.size(),
++                    [&](unsigned short a, unsigned short b, unsigned short c) {
++                        if (rejected)
++                            return;
++                        if (a >= vertices.size() || b >= vertices.size() || c >= vertices.size())
++                        {
++                            rejected = true;
++                            return;
++                        }
++                        mesh->addTriangle(Misc::Convert::toBullet(vertices[a]), Misc::Convert::toBullet(vertices[b]),
++                            Misc::Convert::toBullet(vertices[c]), false);
++                    });
++                if (rejected)
++                    return false;
++            }
++        }
++        const int triangles = mesh->getNumTriangles();
++        if (triangles == 0)
++            return false;
++
++        auto child = std::make_unique<Resource::TriangleMeshShape>(mesh.get(), true);
++        std::ignore = mesh.release();
++        if (!compound)
++            compound.reset(new btCompoundShape);
++        compound->addChildShape(btTransform::getIdentity(), child.get());
++        std::ignore = child.release();
++        Log(Debug::Info) << "OPENOBLIVION_AUTHORED_COLLISION triangles=" << triangles << " file=" << fileName;
++        return true;
++    }
++
+ }
+ 
+ namespace NifBullet
+@@ -131,6 +240,10 @@ namespace NifBullet
+             if (bsxFlags->mData & 32)
+                 args.mHasMarkers = true;
+ 
++            if (openoblivionAuthoredCollisionRequested()
++                && addOpenOblivionAuthoredStaticStrips(node, mCompoundShape, mShape->mFileName.value()))
++                return;
++
+             // FIXME: hack, using rendered geometry instead of Bethesda Havok data
+             args.mGenerateCollision = true;
+         }

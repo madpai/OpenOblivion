@@ -66,3 +66,22 @@ Original fixtures support `--movement-surface stairs|ramp|wall|ceiling`.
 The wall route deliberately fails the walking-response gate because the wall
 correctly blocks the body; assess its clearance separately. Probe completion,
 movement acceptance, camera metrics and device validation remain separate.
+
+## Authored static collision
+
+`authored_strips.hpp` expands a Gamebryo triangle strip. Degenerate steps are
+omitted. `authored_collision_desktop.patch` and
+`authored_collision_android.patch` teach the external Bullet loader to use a
+fixed `OL_STATIC` `bhkNiTriStripsShape` when `OPENOBLIVION_AUTHORED_COLLISION=1`.
+MOPP bytes are not executed. The rigid-body translation is not applied. Every
+other shape, including clutter, ragdolls and phantoms, stays on the render-mesh
+fallback. The player cylinder, step constants and camera filter are unchanged.
+
+```sh
+python3 tools/native/authored_collision.py \
+  --source /outside/native-desktop/source \
+  --revision 46bd4599203ee52ffc0f3e8edb3fc159a0303a49
+```
+
+The Android 0.51 tree uses revision `f4bec41444214a7903bebd178389ca22ca13f646`.
+Apply it to that engine source, not to the donor Android project root.

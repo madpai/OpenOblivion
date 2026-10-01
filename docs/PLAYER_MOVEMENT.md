@@ -50,8 +50,12 @@ stays near 151 units per second, so the Caps Lock pulse did not change gait.
 Preview 0.8 holds Shift for run and pins always-run off. Its phone log still
 has no second gait: median 149.9 and maximum 165.1 across 357 grounded moving
 samples. 0.6, 0.7, and further binding experiments are withdrawn. Water entry,
-breath, and drowning remain untested. Further speed and binding changes are
-blocked until authored collision is measured. See
+breath, and drowning remain untested. A desktop static loader can now replace
+fixed `OL_STATIC` strip collision when `OPENOBLIVION_AUTHORED_COLLISION=1`.
+On `arwhallstairs01` the authored surface changes ray-hit height (median
+absolute difference 2.32). The cylinder, step constants and camera filter are
+unchanged. Phone preview 0.9 carries the switch. Speed stays blocked until
+the character body dimensions are recovered. See
 [Havok collision](research/HAVOK_COLLISION.md).
 
 Animation and broader viewer work follow the dependable player baseline.
@@ -108,10 +112,12 @@ The pinned 0.51 and 0.52 collision loaders generate TES4 collision from visible
 geometry and skip the authored Bethesda Havok collision shapes. See the
 [0.51 loader](https://github.com/OpenMW/openmw/blob/f4bec41444214a7903bebd178389ca22ca13f646/components/nifbullet/bulletnifloader.cpp#L121)
 and [0.52 loader](https://github.com/OpenMW/openmw/blob/46bd4599203ee52ffc0f3e8edb3fc159a0303a49/components/nifbullet/bulletnifloader.cpp#L134).
-Private stair inspection finds separate `bhkMoppBvTreeShape` /
-`bhkNiTriStripsShape` geometry with fewer vertices than its visible counterpart.
-This is a concrete compatibility gap and a candidate contributor to uneven physical movement;
-it is not yet a proven explanation of the owner's stair issue.
+An optional external patch can replace fixed `OL_STATIC` strips; the measured
+result is in [Havok collision](research/HAVOK_COLLISION.md). Private stair
+inspection finds separate `bhkMoppBvTreeShape` / `bhkNiTriStripsShape` geometry
+with fewer vertices than its visible counterpart. That difference changes the
+sampled surface. It is not yet a character-controller recording of the owner's
+stair issue.
 
 Remaining physical collision/controller work, when a separate defect is reproduced:
 
@@ -205,5 +211,6 @@ Private evidence names are `native-stair-ascent-{raw,smoothed}-05`,
 `native-healthy-tracking-control-05`. Native source/build instructions are in
 [tools/native](../tools/native/README.md). The latest owner phone feedback now
 supports stair comfort on 0.5, separately from these desktop metrics. Further
-motor tuning is blocked on [HAVOK_COLLISION.md](research/HAVOK_COLLISION.md).
-The 0.5 stair filter stays until an authored-collision trace exists.
+motor tuning is blocked on the still-unknown character body. The static
+surface comparison is in [HAVOK_COLLISION.md](research/HAVOK_COLLISION.md).
+The 0.5 stair filter stays.

@@ -23,8 +23,9 @@ slice and resolves a concrete uncertainty before expanding scope.
    collision/jump/look are reported working on the phone. Native 0.5 now has
    owner-reported smooth stairs with liked subtle stepping; swimming and a breath
    indicator are also observed. Preview 0.8 still measured only walk speed.
-   Movement tuning is blocked until authored `bhk` collision is understood and
-   compared; see [Havok collision](research/HAVOK_COLLISION.md) and
+   Fixed `OL_STATIC` strip collision now has a desktop on/off comparison;
+   speed tuning stays blocked until the character body is recovered. See
+   [Havok collision](research/HAVOK_COLLISION.md) and
    [player movement](PLAYER_MOVEMENT.md).
 3. Use original synthetic override/deletion/master-reference fixtures to verify
    typed data resolution. Cross-check bytes from one BSA/NIF against existing

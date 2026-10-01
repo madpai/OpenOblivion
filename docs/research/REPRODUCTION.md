@@ -535,8 +535,26 @@ is `OO-ANDROID-008`.
 The follow-up report `93db9dd902434ef2bf0e54dc7234dca9` is the same 0.8 build.
 `OPENOBLIVION_RUN_GATE` is present. Grounded moving speed over 25.7 simulation
 seconds has median 149.9 and maximum 165.1, with no sample above 200. The
-Shift hold did not create a run gait. Movement changes are blocked on
-[HAVOK_COLLISION.md](HAVOK_COLLISION.md).
+Shift hold did not create a run gait.
+
+## Authored static collision (2026-10-01)
+
+`tools/native/authored_collision.py` patches the audited 0.51 and 0.52
+`bulletnifloader.cpp` files. With `OPENOBLIVION_AUTHORED_COLLISION=1`, the
+desktop loader builds one identity compound child from fixed `OL_STATIC`
+strip data. Degenerate strip steps are omitted. On the six stair NIFs the
+authored counts are 213, 165, 1,522, 575, 751 and 268 triangles. The render
+path on the same files is 866, 700, 4,632, 1,486, 2,066 and 756. A 20 by 20
+downward ray grid on `arwhallstairs01` has median absolute height difference
+2.32. The cylinder, step constants and camera filter were not changed. The phone
+package `0.9-authored-collision` (versionCode 9, QA `OO-ANDROID-009`) carries
+the same switch. Its APK SHA256 is
+`281685ea5663bc4d0783c940b915a3805daa49e44e0b29aecf66370dec9664b9`
+and the stripped `libopenmw.so` SHA256 is
+`77a6b4baeb3db3e67aab6d02be080b7b67adf4215e1a2c0c7344ddab09713c0e`.
+Linking required stripping debug info from the new loader object after
+`ld.lld` reported an out-of-range `R_AARCH64_ABS32` debug relocation in the
+existing `utilpackage.cpp.o`. Detail is in [HAVOK_COLLISION.md](HAVOK_COLLISION.md).
 
 ## Phone controls 0.7 (2026-10-01)
 

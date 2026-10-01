@@ -162,21 +162,69 @@ Not required for that comparison:
   [player movement](../PLAYER_MOVEMENT.md) stays on record. Applying it on the
   render-mesh collision would mix two unmeasured differences.
 
+## Static loader measurement
+
+The bounded loader is now in the external Bullet NIF loaders behind
+`OPENOBLIVION_AUTHORED_COLLISION=1`. See
+[tools/native](../../tools/native/README.md). It accepts only a root
+`bhkCollisionObject` whose body is fixed, quality-fixed, layer `OL_STATIC` on
+both the world filter and the body filter, and whose shape is a
+`bhkMoppBvTreeShape` over `bhkNiTriStripsShape` or that strip shape directly.
+Strip scale and MOPP scale must be 1. The root Gamebryo transform must be
+identity. Triangles are built in the stored units and added as one compound
+child at the origin. The rigid-body translation is not applied. MOPP bytes are
+not executed. Anything else, including a non-identity root, keeps the
+render-mesh fallback. The player cylinder, the 34/62 step constants and the
+camera filter were not changed.
+
+The desktop 0.52 loader was rebuilt and run on the six stair NIFs. Bullet's
+triangle count omits degenerate strip steps, the same rule the render-mesh
+path already uses. The earlier table counted every step (`length - 2`), so
+those larger numbers remain the serialized counts. The counts Bullet keeps are:
+
+| Mesh | Render triangles | Authored triangles | Compound children | Child origin |
+|---|---:|---:|---:|---|
+| `arnhallstairs01` | 866 | 213 | 1 | 0,0,0 |
+| `arnhallstairsentrance01` | 700 | 165 | 1 | 0,0,0 |
+| `arnhalluturnstairs02` | 4,632 | 1,522 | 1 | 0,0,0 |
+| `arwhallstairs01` | 1,486 | 575 | 1 | 0,0,0 |
+| `arwhallstairsbridge01` | 2,066 | 751 | 1 | 0,0,0 |
+| `arpitstairs02` | 756 | 268 | 1 | 0,0,0 |
+
+With the switch off, the same files produce the render counts and several
+compound children, also at the origin. Four stairs have the same Bullet AABB
+either way: `arnhallstairs01`, `arnhallstairsentrance01`, `arwhallstairs01`
+and `arwhallstairsbridge01`. The U-turn mesh is larger on the authored shape
+by about 32 units on X and Y. The pit mesh differs on its lower Z bound
+(-31.7 render, -11.8 authored). That matches the earlier finding that those
+two collision meshes are not the render mesh.
+
+A 20 by 20 downward ray grid on each shape's own AABB shows the surfaces are
+not the same. On `arwhallstairs01`, where the AABBs match, 245 rays hit both
+shapes. The median absolute height difference is 2.32 units, 188 rays differ
+by more than 1, 19 differ by more than 16, and the maximum is 372.73. The
+bridge median is 2.44 (maximum 29.3). `arnhallstairs01` median is 0.55
+(maximum 12.4). The entrance median is 0 (maximum 6.86). The pit median is 0
+(maximum 2.84). The U-turn grid is not paired, because its AABBs differ.
+Contact changes. This is a shape trace, not a character-controller recording.
+
+The Android 0.51 loader compiles with the same switch. Linking
+`libopenmw.so` first failed on a debug relocation in the existing
+`utilpackage.cpp.o` (`R_AARCH64_ABS32` out of range). Stripping debug info
+from the new loader object, which the phone package strips anyway, let the
+link succeed. The cylinder and the stair filter are unchanged. Preview
+`0.9-authored-collision` is the phone package that carries this library.
+
 ## Smallest next steps
 
-1. The read-only stair report above is done. Scale is 1, layer is static,
-   motion is fixed, and the collision mesh is the simpler triangle strip.
-2. Add a bounded static loader behind a switch. For a fixed `bhkRigidBody`
-   whose shape is `bhkMoppBvTreeShape` over `bhkNiTriStripsShape`, build a
-   Bullet triangle mesh from those strips in the stored units and use it
-   instead of the render mesh. Leave every other shape on the current
-   fallback. Compare one desktop trace of `arwhallstairs01` with the switch
-   off and on. Do not change the cylinder, the step constants, or the camera
-   filter in that change.
-3. Only if that trace changes contact, recover the character body dimensions
-   and step offset, then repeat the trace. Oblivion's normal run speed comes
-   after the body is standing on the authored surface. The 0.8 log already
-   shows that another key binding does not create that speed.
+1. The stair report and this static loader comparison are done.
+2. The character body is still unknown. Radius, height and step offset are
+   not in these NIFs. Do not invent them, and do not change the cylinder or
+   the step constants until a source for those values is identified. Repeat
+   the stair trace with that body before tuning speed.
+3. Oblivion's normal run speed comes after the body is standing on the
+   authored surface. The 0.8 log already shows that another key binding does
+   not create that speed.
 
 Inference, not a measurement: the render mesh is a likely source of tread
 snags because it is denser than the Havok mesh and has no stair layer. The

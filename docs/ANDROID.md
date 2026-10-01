@@ -107,13 +107,14 @@ activation and sampled movement, not a controlled stair or performance compariso
 The owner separately reports very smooth stairs with subtle stepping they like,
 swimming working and a breath indicator appearing. Preserve the current feel.
 One-to-one speed, jump and stair collision is not the current target. Preview
-**0.8-run** keeps the 0.5 motor and stair filter. USE is the lower-right
+**0.9-authored-collision** keeps the 0.5 motor and stair filter and turns on
+fixed `OL_STATIC` strip collision. USE is the lower-right
 button and JUMP is above it, matching this engine's Space and E bindings. The
 top button holds Shift for run after always-run is pinned off, and starts on
 run. The 0.7 log stayed at walk speed. Swimming and the meter are observations;
 depletion/recovery and drowning remain untested.
 
-The private download is 0.8-run; 0.6 and 0.7 are withdrawn, 0.5 remains the stair comparison, and the complete working 0.3 APK/page/notes are archived
+The private download is 0.9-authored-collision; 0.8-run is archived, 0.6 and 0.7 are withdrawn, 0.5 remains the stair comparison, and the complete working 0.3 APK/page/notes are archived
 for recovery/comparison. The rejected 0.4 Lua-filter APK remains withheld.
 Native 0.5 keeps the original movement and camera collision paths and adds
 bounded read-only QA samples. It remains OpenGL, with animation, general TES4

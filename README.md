@@ -49,9 +49,11 @@ reports very smooth stairs with subtle stepping they like, plus swimming and
 a visible breath indicator. The uploaded log confirms the native camera filter
 runs on the phone. Desktop Vilverin comparisons reduce measured view-jolt
 variation by about **60% uphill / 76% downhill**, with movement checks passing.
-**Next: understand Oblivion's authored Havok collision before changing the
-motor.** Phone preview 0.8 still moves at the borrowed walk speed. The stair
-filter stays as in 0.5. See [Havok collision](docs/research/HAVOK_COLLISION.md).
+**Next: recover the character body before changing the motor.** A desktop
+switch can load fixed static Havok strip meshes, and `arwhallstairs01` contact
+changes with that switch on. Phone preview 0.9 carries that switch. Travel
+speed is still the borrowed walk. The stair filter stays as in 0.5. See
+[Havok collision](docs/research/HAVOK_COLLISION.md).
 The Android engine builds from locked source dependencies; the working 0.3
 phone baseline is archived and the earlier Lua experiment is withheld.
 

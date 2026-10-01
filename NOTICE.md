@@ -11,9 +11,11 @@ license notices. Other linked files retain the OpenMW project license or their
 individual grants. The linked reader source remains unmodified and external.
 The optional native movement integration distributes a small GPLv3 camera
 patch against audited OpenMW revisions; it modifies only external builds.
-Patch context belongs to OpenMW and its contributors. The C++ height filter
-is independently authored OpenOblivion code. See tools/native and the exact-file
-license ledger; this is not an official OpenMW engine release.
+A second optional patch loads fixed static `bhkNiTriStripsShape` triangles into
+Bullet. Patch context belongs to OpenMW and its contributors. The C++ height
+filter and the strip expander are independently authored OpenOblivion code.
+See tools/native and the exact-file license ledger; this is not an official
+OpenMW engine release.
 
 No source from TES3MP, vsgopenmw, NifTools, xEdit, xOBSE, SDL, ENet, Bullet,
 MegaMod or Asset Lab is copied into this checkout. Those projects are studied

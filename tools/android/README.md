@@ -88,11 +88,12 @@ packager. Controlled original stairs improve, but real Vilverin ascent exposes
 a frame-timing regression. The private experimental 0.4 APK is withheld, and the
 working phone baseline 0.3 is archived. See [movement research](../../docs/PLAYER_MOVEMENT.md).
 
-Personal preview **0.8-run** uses the same native 0.5 engine. USE is the
+Personal preview **0.9-authored-collision** uses the native engine with fixed
+`OL_STATIC` strip collision enabled. USE is the
 lower-right button and JUMP is above it. The top button holds Shift for run
 and starts on run. A player script pins always-run off so Shift is not inverted
-into a walk. Walk speed, jump, collision, and the stair filter are unchanged
-from 0.5.
+into a walk. Walk speed, jump, the player cylinder, and the stair filter are
+unchanged from 0.5. `0.8-run` is archived.
 
 The subsequent native candidate **0.5-native-stairs** is built through
 [tools/native](../native/README.md). Add `--native-runtime /outside/native-android/runtime`
@@ -100,9 +101,9 @@ to the packager command to use its verified six-library set and exact build
 resources/defaults/notices. The host enables the native post-physics filter and
 bounded read-only stair sampling; the rejected Lua filter remains excluded.
 Without that option the released 0.3 path remains available. The current
-private download offers 0.8-run for owner QA. It uses the 0.5 native
-engine. 0.5 remains archived for the stair comparison, and 0.3 is preserved
-separately.
+private download offers 0.9-authored-collision for owner QA. It uses the
+native engine with the static-collision switch on. 0.8-run and 0.5 remain
+archived, and 0.3 is preserved separately.
 
 The packager recreates the generated APK while retaining compilation caches,
 then rejects excessive unused ZIP space. This prevents incremental APK updates

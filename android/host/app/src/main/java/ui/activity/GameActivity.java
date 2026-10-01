@@ -18,8 +18,10 @@ public final class GameActivity extends SDLActivity {
             Os.setenv("OPENMW_GLES_VERSION", "2", true); Os.setenv("LIBGL_ES", "2", true);
             Os.setenv("OSG_VERTEX_BUFFER_HINT", "VBO", true);
             Os.setenv("OSG_THREADING", "SingleThreaded", true);
-            if (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE)
+            if (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE) {
                 Os.setenv("OPENOBLIVION_GROUNDED_EYE", "1", true);
+                Os.setenv("OPENOBLIVION_AUTHORED_COLLISION", "1", true);
+            }
             Os.setenv("OPENMW_USER_FILE_STORAGE", new File(getFilesDir(), "preview-user").getPath() + "/", true);
         } catch (android.system.ErrnoException e) { throw new RuntimeException(e); }
         for (String lib : new String[]{"c++_shared", "openal", "SDL2", "GL", "collada-dom2.5-dp", "openmw"}) System.loadLibrary(lib);
