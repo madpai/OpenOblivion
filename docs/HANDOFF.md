@@ -64,8 +64,9 @@ PyFFI environment and explicit NIFXMLPATH. Neither sibling checkout was edited.
 
 Source/revisions/licenses: [license matrix](research/LICENSE_MATRIX.md),
 [lock](research/upstreams.lock.json). Raw evidence is external; public results
-are in [REPRODUCTION.md](research/REPRODUCTION.md). The first GitHub run passes the Linux build/tests; the
-Android runner setup is being corrected to use its explicit SDK-manager path. No physical Android device was available through ADB;
+are in [REPRODUCTION.md](research/REPRODUCTION.md). GitHub CI now passes Linux build/tests and Android ARM64 cross-compilation
+at `a09dd12`, after correcting the SDK-manager path. This is compile/test
+evidence, separate from Android runtime/device validation. No physical Android device was available through ADB;
 the owner supplied failing 0.1/0.2 evidence and visible 0.3 scene screenshots/logs.
 
 ## Continue here

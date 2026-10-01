@@ -431,3 +431,12 @@ The runner-image's [pinned installation script](https://github.com/actions/runne
 locates it at `$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager`; the workflow
 now uses that explicit path while retaining the exact NDK version. This is
 runner setup work, separate from phone/runtime validation.
+
+
+The [corrected public CI run](https://github.com/madpai/OpenOblivion/actions/runs/36896855361)
+at `a09dd1244b36c3acdc10a895e47e414e9d82da9d` passes both Linux build/fixture
+checks and Android ARM64 cross-compilation. All three published README images
+were fetched back and matched to the approved size/SHA256 ledger. The daily
+backup service completes successfully; recovery verifies the Git bundle with
+clone/`git fsck` and checks every archived source file. No phone stair fix or
+new public binary release is claimed.
