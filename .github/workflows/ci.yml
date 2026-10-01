@@ -31,7 +31,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Pinned NDK
-        run: sdkmanager 'ndk;28.0.13004108'
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.0.13004108'
       - name: Fetch immutable dependency
         run: python3 tools/fetch_upstream.py --cache "$RUNNER_TEMP/openoblivion-deps"
       - name: Cross-compile probes

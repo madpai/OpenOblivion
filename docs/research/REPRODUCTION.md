@@ -423,3 +423,11 @@ are pinned in `docs/media/screenshots.json`. This narrow documentation
 exception is checked independently for worktree, index and historical trees;
 arbitrary images, extracted artwork, game files and personal APKs stay blocked.
 Source/history snapshots are described in [BACKUPS.md](../BACKUPS.md).
+
+
+First public CI run: Linux build and all six CTest suites pass at `61702ec`.
+Android setup fails before compilation because `sdkmanager` is absent from PATH.
+The runner-image's [pinned installation script](https://github.com/actions/runner-images/blob/57b93f2cf7eda14a6a71f3175d15218626cdbd4c/images/ubuntu/scripts/build/install-android-sdk.sh#L38)
+locates it at `$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager`; the workflow
+now uses that explicit path while retaining the exact NDK version. This is
+runner setup work, separate from phone/runtime validation.
