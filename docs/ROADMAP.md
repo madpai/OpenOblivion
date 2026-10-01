@@ -7,7 +7,7 @@ slice and resolves a concrete uncertainty before expanding scope.
 |---|---|---|---|
 | M0: founding research | License-aware foundation and reproducible native tools | Exact upstream pins, original tests, owner master scan, Linux/ARM64 builds, publication guard | Implemented locally; see reproduction |
 | M1: existing desktop world | Reproduce OpenMW TES4 interior/exterior traversal before changing it | Build full upstream with documented dependencies; inspect static world/terrain/collision against owner installation; save private screenshots/traces | Partially reproduced: full build, real BSA/NIF agreement, interior/exterior screenshots; collision accuracy/typed catalogue boundary remain |
-| M2: native Vulkan/mobile scene | One private TES4 scene plus an original public debug scene | Choose a licensed renderer slice, verify materials/axes/scale and collision; APK + touch + lifecycle; physical ARM64 phone frame time/memory evidence | Vulkan gate not implemented; separate OpenGL phone preview verifies scene visibility/look; traversal, lifecycle and performance remain |
+| M2: native Vulkan/mobile scene | One private TES4 scene plus an original public debug scene | Choose a licensed renderer slice, verify materials/axes/scale and collision; APK + touch + lifecycle; physical ARM64 phone frame time/memory evidence | Vulkan gate not implemented; OpenGL phone preview has visibility/look evidence and owner-reported basic movement/smooth stairs. Original movement fidelity, lifecycle and performance remain |
 | M3: authoritative original co-op slice | Two players fight an original enemy, die and respawn | Headless authority, command validation, late join, no duplicate XP/loot, restart/reconnect and content mismatch rejection | Not implemented |
 | M4: Oblivion dungeon co-op | Owner-supplied dungeon, animated enemy, melee/casting, inventory/equipment | Native NIF/KF/physics/record subset, server-owned combat/progression, private desktop + Android/LAN playtest | Not implemented |
 | M5: persistent modes | Arena, Gatebound-like PvE and staged persistent Cyrodiil | Transactional saves/migrations, bounded Lua rules, instance/reset behavior, multi-hour soak and crash recovery | Not implemented |
@@ -20,10 +20,13 @@ slice and resolves a concrete uncertainty before expanding scope.
 2. Record private install identity/load order. Validate one interior and
    exterior/terrain area; document missing features and exact renderer behavior.
    The owner now prioritizes actual player movement. Walking/stopping/ordinary
-   collision/jump/look are reported working on the phone. Stairs are traversable,
-   but the view jolts at each tread. Verify smooth ascent/descent while keeping
-   physical motion and jump behavior correct. Authored TES4 collision remains
-   separate compatibility work; see [player movement priority](PLAYER_MOVEMENT.md).
+   collision/jump/look are reported working on the phone. Native 0.5 now has
+   owner-reported smooth stairs with liked subtle stepping; swimming and a breath
+   indicator are also observed. Next, measure original Oblivion walk/run speeds
+   and jump behavior with fixed character stats, calibrate native movement, then
+   repeat stair and water checks at those settings. Preserve the current stair
+   feel until that comparison. Authored TES4 collision remains separate
+   compatibility work; see [player movement priority](PLAYER_MOVEMENT.md).
 3. Use original synthetic override/deletion/master-reference fixtures to verify
    typed data resolution. Cross-check bytes from one BSA/NIF against existing
    NifTools/Asset Lab readers with preserved diagnostics.

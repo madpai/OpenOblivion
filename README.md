@@ -44,14 +44,15 @@ current compatibility checkpoint; Vulkan and multiplayer are still planned.
 | Architecture, lighting and scene props render. | NPC assets load; original skeletal animation is unresolved. |
 
 The phone playtest reports walking, stopping on release, ordinary collision,
-jumping and looking around working. Stairs are traversable, but the view jolts
-with each tread uphill and downhill. **Smooth player travel is the current
-priority.** A native post-physics eye-height candidate now reduces the measured
-view-jolt variation by about **60% uphill / 76% downhill** on desktop Vilverin
-stairs, with movement checks passing. The Android engine builds from locked
-source dependencies, and private preview **0.5** is available for owner phone QA.
-The working 0.3 phone baseline is archived. Phone stair smoothness remains
-unconfirmed; the earlier Lua experiment is withheld.
+jumping and looking around working. On private preview **0.5**, the owner now
+reports very smooth stairs with subtle stepping they like, plus swimming and
+a visible breath indicator. The uploaded log confirms the native camera filter
+runs on the phone. Desktop Vilverin comparisons reduce measured view-jolt
+variation by about **60% uphill / 76% downhill**, with movement checks passing.
+**Next: match original Oblivion's movement speeds and jump behavior, then retest
+stair flow at those settings.** Current movement fidelity is uncalibrated.
+The Android engine builds from locked source dependencies; the working 0.3
+phone baseline is archived and the earlier Lua experiment is withheld.
 
 [Detailed evidence](docs/research/REPRODUCTION.md) · [Player movement work](docs/PLAYER_MOVEMENT.md) · [Screenshot provenance](docs/media/README.md)
 
@@ -62,7 +63,7 @@ unconfirmed; the earlier Lua experiment is withheld.
 | Classic TES4 inspection | Native read-only scanner using a pinned, unchanged OpenMW reader slice. Owner master scan: **1,167,017 records**, **85,079 groups**, **41,789 compressed records**. |
 | Desktop reproduction | Separate unchanged OpenMW build loads private interior/exterior scenes and renders terrain, water and statics with software OpenGL. |
 | Android preview | Original launcher, touch controls, private asset packaging and screenshot/QA upload tools. Phone scene visibility and look confirmed; basic traversal reported by the owner. |
-| Native stair candidate | Source-built Android 0.51 engine with an opt-in camera patch; desktop stairs/ramp/wall/ceiling checks, package integrity and emulator launcher upgrade pass. Physical-phone smoothing awaits QA. |
+| Native stair smoothing | Source-built Android 0.51 engine with an opt-in camera patch; desktop stairs/ramp/wall/ceiling checks pass. Phone log confirms activation; owner reports smooth stairs with subtle stepping. Original movement calibration remains. |
 | Movement diagnostics | Native walk/stop/jump trajectories, original stair fixtures and separate player/view measurements. Discontinuities cannot count as successful movement. |
 | Android toolchain | Inspector and Vulkan capability probe cross-compile for ARM64/API 29. |
 | Vulkan | Device/graphics-queue enumeration only; no OpenOblivion Vulkan scene renderer yet. |

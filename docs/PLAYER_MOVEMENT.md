@@ -2,7 +2,8 @@
 
 The owner requested that engine work prioritize actual in-game player movement.
 The existing scene preview is a test harness for the player controller and
-content collision. Smooth, ramp-like travel up and down stairs is the target.
+content collision. Smooth travel up and down stairs is the target; the owner's
+latest feedback accepts subtle stepping when it feels comfortable.
 Keep solved player motion and eye-height presentation measurable separately.
 
 On 2026-10-01 the owner reported walking, stopping, ordinary collision, jumping
@@ -12,6 +13,43 @@ main problem is a vertical camera jolt on each tread in both directions. This
 clarification supersedes treating failed traversal as the established defect.
 These are owner observations, not a timed collision corpus or animation pass.
 Build 0.3 remains the archived working phone baseline.
+
+## Latest phone feedback and next steps (2026-10-01)
+
+On **0.5-native-stairs**, the owner now describes stairs as very smooth, with
+almost realistic stepping they like. Preserve that feel as the current
+reference. They also report swimming working and a breath indicator appearing.
+These are qualitative observations; swim transitions, breath depletion/recovery
+and drowning behavior have not been systematically tested.
+
+The latest `OO-ANDROID-005` upload matches the served 0.5 APK hash and logs
+native grounded-eye enablement, actor-root fallback activation, changing player
+positions and touch look. Its selector says interior, but the log starts in
+VilverinExterior and records exterior travel. Its 400 bounded samples are not
+a controlled stair comparison. Device/model and Android fields are blank;
+there are no attached screenshots. Stair comfort comes from the owner's chat
+feedback, independently of the desktop variation measurements.
+
+The next engine work should establish original Oblivion player movement before
+further stair tuning:
+
+1. Record a reference route in original Oblivion with a fixed character and
+   documented movement-relevant stats, equipment, encumbrance and frame cadence.
+   Measure walk/run and strafe speeds, input/release response, and jump height,
+   airtime, horizontal travel and landing. Study the existing TES4 records and
+   pinned implementations first; current Template/TES3 defaults are not a
+   demonstrated Oblivion baseline. Recover constants/formulas from evidence.
+2. Calibrate the native player controller against that reference, keeping TES4
+   compatibility values separate from future server/mode rules. Measure solved
+   body motion separately from the camera. Preserve 0.5's filter while testing
+   walk/run, stop, jump/landing, ramps, walls and low ceilings on original fixtures.
+3. Repeat phone ascent/descent at matched walk/run speeds, including stops,
+   turns and jumps at landings. Retune stair presentation only if those tests
+   identify a remaining problem. Also check water entry/exit, swimming and
+   underwater breath behavior; a visible meter alone does not establish drowning.
+
+Animation and broader viewer work follow the dependable player baseline.
+This documentation checkpoint makes no runtime changes or new APK.
 
 The original `--player-movement` desktop probe drives the existing native player
 controls through five seconds of walking, stopping, jumping and landing. It
@@ -158,5 +196,6 @@ Private evidence names are `native-stair-ascent-{raw,smoothed}-05`,
 `native-vilverin-{ascent,descent}-{raw,smoothed}-05`,
 `native-surface-{stairs,ramp,wall,ceiling}-05`, `native-look-control-05` and
 `native-healthy-tracking-control-05`. Native source/build instructions are in
-[tools/native](../tools/native/README.md). Phone acceptance remains a separate
-QA gate; do not infer it from the desktop results.
+[tools/native](../tools/native/README.md). The latest owner phone feedback now
+supports stair comfort on 0.5, separately from these desktop metrics. Original
+movement calibration and repeat phone QA at matched speeds remain required.

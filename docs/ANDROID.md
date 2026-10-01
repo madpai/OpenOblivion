@@ -60,9 +60,9 @@ Android version were left blank; no performance claim is established.
 
 Build 0.3 is the archived working phone baseline. The owner's subsequent chat
 playtest reports walking, stopping, ordinary collision, jumping and look working.
-The latest clarification says stairs are traversable, but the view bounces at
-each tread uphill and downhill. Smooth, ramp-like travel is the target; the
-earlier catching/slowing answer remains historical evidence.
+The 0.3 clarification says stairs are traversable, but the view bounces at each
+tread uphill and downhill. The earlier catching/slowing answer remains
+historical evidence; the subsequent 0.5 feedback is recorded below.
 
 An unshipped eye-height experiment reduces measured jolts on original desktop
 stairs while walk/stop/jump still pass. Its real Vilverin ascent comparison is
@@ -94,7 +94,21 @@ payload readiness and native stair-QA configuration pass. Native libraries load
 and the engine begins content loading, then scene rendering hits the same
 confirmed `libndk_translation_proxy_libGLESv2.so` null-function target as the
 released baseline, before camera construction. This is not Android scene or
-filter-runtime validation. Physical-phone feel awaits `OO-ANDROID-005`.
+filter-runtime validation from the emulator.
+
+The subsequent `OO-ANDROID-005` physical-phone report, received
+2026-10-01 19:13 UTC, matches the served 0.5 APK SHA256. It logs native grounded-eye
+enablement, missing-head fallback activation and changing player/look positions.
+The selector says interior, but the log begins in VilverinExterior and records
+exterior travel. It contains 400 bounded movement/view samples and no attached
+screenshots; device/model and Android version are blank. This verifies phone
+activation and sampled movement, not a controlled stair or performance comparison.
+
+The owner separately reports very smooth stairs with subtle stepping they like,
+swimming working and a breath indicator appearing. Preserve the current feel.
+Next, calibrate walk/run speed and jump behavior against original Oblivion with
+fixed character stats, then retest stair flow and water transitions. Swimming
+and the meter are observations; depletion/recovery and drowning remain untested.
 
 The private download is 0.5; the complete working 0.3 APK/page/notes are archived
 for recovery/comparison. The rejected 0.4 Lua-filter APK remains withheld.

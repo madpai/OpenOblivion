@@ -483,7 +483,8 @@ Private payload ID:
 `native_stair_qa.omwscripts` configuration pass. The source-built engine loads
 its libraries and begins content loading, then the emulator repeats the known
 null target in `libndk_translation_proxy_libGLESv2.so` before camera creation.
-No emulator scene/filter runtime pass or physical-phone smoothing is claimed.
+No emulator scene/filter runtime pass is claimed. Subsequent physical-phone
+evidence is recorded in the following checkpoint.
 
 The complete privately served 0.5 download matches its APK hash and page QA
 objective `OO-ANDROID-005`. Complete 0.3 is retained separately for recovery.
@@ -491,3 +492,33 @@ The rejected pre-physics Lua 0.4 APK remains withheld. Private native logs,
 runtime receipts, APK and emulator images are under `native-android` and
 `android-native-preview-build`, outside public Git/download evidence routes.
 No game assets or public binary release are added by this source checkpoint.
+
+## Native 0.5 phone feedback and movement priority (2026-10-01)
+
+Private `OO-ANDROID-005` report `505b52e80f8a4869a9068a5b1e53eeee` was received
+2026-10-01 19:13:02 UTC. Its tested/server build is `0.5-native-stairs` and both
+page/server APK hashes match the 0.5 hash above. Device/model and Android fields
+are blank; notes and screenshot attachments are empty. The selector says
+interior, but the actual log loads VilverinExterior and neighboring exterior
+cells. Treat the selected label and recorded scene separately.
+
+At 15:10:59.202 the log records `OPENOBLIVION_NATIVE_GROUNDED_EYE` enabled; at
+15:11:03.770 it records missing-head actor-root fallback activation. Five phone
+samples include changing horizontal player coordinates and pitch/yaw, mode 2
+and camera collision enabled. There are 400 bounded stair-QA samples spanning
+26.397 simulation seconds from initialization; those exterior samples do not
+identify a controlled interior ascent/descent route. No phone percentage
+improvement or timing/performance result is inferred from them.
+
+The owner's subsequent chat feedback describes stairs as very smooth with
+almost realistic stepping they like. They also observe swimming working and
+a breath indicator appearing. This is physical-phone qualitative evidence,
+separate from the native desktop metrics. Water transitions, breath
+depletion/recovery, drowning and original Oblivion movement fidelity remain
+unverified; existing Collada/animation limitations remain.
+
+Next: preserve the liked 0.5 stair feel, measure original Oblivion walk/run and
+jump behavior with fixed character stats, calibrate the native player controller,
+then repeat phone stair and water checks at matched movement settings. See
+[player movement next steps](../PLAYER_MOVEMENT.md). This pass updates documents
+only: the runtime, private APK and sideload objective remain unchanged.

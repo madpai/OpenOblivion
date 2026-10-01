@@ -12,7 +12,7 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 `/home/commander/openoblivion-private/sideload`, served only on Tailscale port
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
-and the owner's failed physical-phone views. The current download is
+and the owner's earlier failed physical-phone views. The current download is
 `0.5-native-stairs`, with screenshot uploads and QA objective `OO-ANDROID-005`.
 The complete working 0.3 APK/page/notes are archived privately. Native 0.5
 builds the Android engine from hash-locked sources and applies the small audited
@@ -20,7 +20,10 @@ post-physics camera patch. Same-binary desktop Vilverin comparisons improve
 view variation by 59.5% uphill and 75.9% downhill; movement/control fixtures
 pass. APK integrity/signature and emulator upgrade/payload checks pass.
 The emulator scene retains its confirmed GLES translation crash before camera
-construction; phone smoothing/rendering acceptance awaits owner QA.
+construction. The subsequent phone upload confirms native filter enablement,
+actor-root fallback and movement/look in exterior cells. The owner now reports
+very smooth stairs with liked subtle stepping, plus swimming and a visible
+breath indicator. Original movement speed/jump fidelity remains uncalibrated.
 APK signature, emulator upgrade/payload configuration and the complete served
 download checksum pass. Reports live in
 `/home/commander/openoblivion-private/evidence/phone-qa`, outside downloads/Git.
@@ -35,7 +38,7 @@ camera tracking and touch look. The four samples have identical horizontal
 player coordinates; that log does not verify traversal/collision. A clothed NPC is
 visible in a T-pose; original animation and Collada loading remain unresolved.
 The owner subsequently reports walking, stopping, ordinary collision, jumping
-and look working. The latest clarification says stair ascent/descent works, but
+and look working. The 0.3 clarification says stair ascent/descent works, but
 each tread produces an uncomfortable vertical view jolt in both directions.
 The earlier catching/slowing answer is historical. Actual player travel remains
 the priority. The grounded eye-height experiment is explicitly opt-in for
@@ -43,9 +46,10 @@ desktop research
 and excluded from the phone packager. Original native stair comparisons reduce
 view jolts, but real Vilverin ascent worsens the measured variation; the current
 Lua frame hook precedes physics/camera tracking. Do not deploy the private
-experimental 0.4 APK or claim phone-validated smooth stairs. The working 0.3 baseline is retained
+experimental 0.4 APK or attribute the 0.5 phone result to that Lua experiment.
+The working 0.3 baseline is retained
 and archived. See [player movement](PLAYER_MOVEMENT.md) for evidence and the
-remaining post-physics presentation/collision work.
+original movement calibration and separate collision work.
 The previous 0.2 APK is archived privately, and real QA submissions are retained.
 See `OPENOBLIVION_CAMERA_REPAIR` and mode/distance in `OPENOBLIVION_PHONE_QA` logs.
 
@@ -73,9 +77,13 @@ PyFFI environment and explicit NIFXMLPATH. Neither sibling checkout was edited.
 Source/revisions/licenses: [license matrix](research/LICENSE_MATRIX.md),
 [lock](research/upstreams.lock.json). Raw evidence is external; public results
 are in [REPRODUCTION.md](research/REPRODUCTION.md). GitHub CI now passes Linux build/tests and Android ARM64 cross-compilation
-at `a09dd12`, after correcting the SDK-manager path. This is compile/test
+at `7599b1b` ([run](https://github.com/madpai/OpenOblivion/actions/runs/36912085741)). This is compile/test
 evidence, separate from Android runtime/device validation. No physical Android device was available through ADB;
-the owner supplied failing 0.1/0.2 evidence and visible 0.3 scene screenshots/logs.
+the owner supplied failing 0.1/0.2 evidence, visible 0.3 scene screenshots/logs
+and the subsequent 0.5 native runtime log/comfort feedback. The latest report
+is `505b52e80f8a4869a9068a5b1e53eeee`, received 2026-10-01 19:13 UTC. It is
+labeled interior, but its log records exterior travel; no screenshots or device
+details are attached. See the reproduction ledger for scope.
 
 ## Continue here
 
@@ -92,10 +100,15 @@ exit cleanly. Screenshots were inspected: textured dungeon geometry and exterior
 terrain/water/statics are present. Software llvmpipe was used. Template/UI,
 COLLADA and some original texture/interpolator errors remain in the logs;
 collision accuracy and animation are not validated. Bounded desktop motion
-passes, and the separate phone preview verifies visibility/look only.
+passes; phone evidence includes visibility/look and subsequent owner-reported
+basic movement/stair comfort, with no original movement calibration yet.
 
 The post-physics camera candidate now passes desktop stair comparisons in both
-directions. Continue with owner phone QA of 0.5; keep 0.3 as the recovery baseline.
+directions, and the owner now likes the 0.5 stair feel. Continue by measuring
+original Oblivion walk/run and jump behavior at fixed character stats, calibrating
+the native player movement, then repeating stairs at matched speeds. Keep 0.5
+as the current comparison and 0.3 as the recovery baseline. Check swim transitions
+and breath behavior separately; the owner's observation does not prove drowning.
 Use `tools/native/README.md` for the canonical source build and its exact receipt.
 The source build lives under `/home/commander/openoblivion-private/native-android`,
 desktop integration under `native-desktop`, and private candidate APK staging
