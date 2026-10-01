@@ -21,16 +21,16 @@ input[type=file]{border:2px dashed #61727d;padding:20px}textarea{min-height:95px
 <section class="panel">
 <h2>Current QA objective — @@QA_ID@@</h2>
 <p>@@QA_OBJECTIVE@@</p>
-<p><b>Pass:</b> Vilverin shows textured walls and floor; the exterior shows ground and ruins. Looking changes the view, and movement changes your position without dropping below the world.</p>
-<p><b>Fail:</b> blank interior, sky with no ground, falling through the scene, or returning to the launcher. Also record any missing objects or error markers.</p>
+<p><b>Pass:</b> Holding the left pad moves you, releasing it stops movement, and turning changes your heading. You stay on the floor or ground, can use the stairs, and jump returns you to a surface.</p>
+<p><b>Fail:</b> no movement, movement continuing after release, passing through solid walls/floors, falling below the scene, or returning to the launcher. Describe where it happens.</p>
 <ol>
-<li>Open the build listed above. Choose <b>Vilverin interior</b> and wait up to 30 seconds.</li>
-<li>Take a screenshot, then drag on the right to look around. Hold forward on the left pad for five seconds and take another shot if the view changes.</li>
-<li>Exit to the launcher and repeat with <b>Vilverin exterior</b>.</li>
-<li>Open <b>View scene log</b>. Paste its text below, along with screenshots and your phone model.</li>
+<li>Use the same 0.3 APK. Choose <b>Vilverin interior</b> and take a screenshot when the scene is visible.</li>
+<li>Press and hold the upper part of the <b>MOVE</b> circle for five seconds, release for two seconds, then turn and walk back. The center is a resting area. Try the stairs and one jump if you can reach them. Take a second screenshot.</li>
+<li>Exit to the launcher and copy <b>View scene log</b>. Send an <b>interior</b> report below with both screenshots, your phone model, Android version and what worked or failed.</li>
+<li>Repeat with <b>Vilverin exterior</b>, staying near the ruins. Send a separate <b>exterior</b> report. Copy each log before starting another scene.</li>
 </ol>
-<p class="muted">The log now includes camera mode and distance from the player. A repaired camera should stay near the player; seeing <code>OPENOBLIVION_CAMERA_REPAIR</code> records when the fallback activates. Player/sky model-loader errors remain a separate issue.</p>
-<p class="muted">An empty view or sky alone does not pass. Screenshots of failures are useful; you do not need to repeat a failing scene indefinitely.</p>
+<p class="muted">The latest phone report confirms visible interiors/exterior and repaired camera tracking. NPCs may still stand in a T-pose; animation is separate work. The new check is movement and contact with the world.</p>
+<p class="muted">If movement is blocked, note whether the pad reacts and whether turning or Jump works. Screenshots of failures are useful; you do not need to repeat a failing scene indefinitely.</p>
 </section>
 <h2>Send screenshots and a QA report</h2>
 <p>Pick screenshots from your gallery. Reports travel over Tailscale to this desktop and stay private.</p>
@@ -42,8 +42,8 @@ input[type=file]{border:2px dashed #61727d;padding:20px}textarea{min-height:95px
 <label for="android">Android version</label><input id="android" maxlength="80" placeholder="For example, Android 15">
 <label for="tested">APK/build tested</label><input id="tested" maxlength="160" value="@@BUILD@@">
 <p class="muted">Change this if you tested an older APK.</p>
-<label for="scene">Scene</label><select id="scene"><option value="both">Both scenes</option><option value="interior">Vilverin interior</option><option value="exterior">Vilverin exterior</option><option value="other">Other</option></select>
-<label for="result">What happened?</label><select id="result"><option value="empty">Blank / no world geometry</option><option value="sky-only">Sky only / no ground</option><option value="falling">Falling / below the world</option><option value="crash">Crash / returned to launcher</option><option value="geometry">Geometry visible</option><option value="other">Other</option></select>
+<label for="scene">Scene</label><select id="scene"><option value="interior">Vilverin interior</option><option value="exterior">Vilverin exterior</option><option value="both">Both scenes</option><option value="other">Other</option></select>
+<label for="result">What happened?</label><select id="result"><option value="empty">Blank / no world geometry</option><option value="sky-only">Sky only / no ground</option><option value="falling">Falling / below the world</option><option value="crash">Crash / returned to launcher</option><option value="geometry">Geometry visible — describe movement below</option><option value="other">Other / movement issue</option></select>
 <label for="notes">What you saw and tried</label><textarea id="notes" maxlength="8000" placeholder="Describe the view, movement, look controls, and how long you waited."></textarea>
 <label for="log">Scene log</label><textarea id="log" maxlength="131072" placeholder="Paste the text from View scene log."></textarea>
 <button id="send" type="submit">Send QA report</button>

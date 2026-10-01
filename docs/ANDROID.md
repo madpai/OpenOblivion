@@ -43,11 +43,26 @@ bounded movement/turning. Healthy first-person tracking remains unchanged.
 The visual bundle now covers the initial 5x5 exterior grid and persistent
 references selected by position; all 38 missing owner mesh paths in the follow-up
 log are selected. The Collada loader remains unresolved. This is a preview
-workaround, with physical-phone rendering and controls awaiting another report.
-The live download is 0.3 with objective `OO-ANDROID-003`: check both scenes,
-look around, move for five seconds, then upload screenshots and the new log.
+workaround. Objective `OO-ANDROID-003` requested scenery, look and movement
+screenshots/logs in both scenes.
 The emulator upgrade verifies the payload ID, installed scripts/configuration
 and ready launcher. The complete served APK matches the build SHA256.
+
+The owner's 0.3 phone submission now establishes **scene visibility**: two
+screenshots show textured interior stairway/chamber geometry, props and a clothed
+NPC; a third shows textured exterior ground and ruins. The NPC is in a T-pose.
+Only the exterior log is supplied. It records fallback activation and four
+samples at 1, 3, 8 and 15 simulation seconds with camera/tracked positions
+124 units above the player, mode 2, changing pitch/yaw and collision enabled.
+The logged horizontal player coordinates never change, so look/tracking pass
+but traversal and collision fidelity remain unverified. Device/model and
+Android version were left blank; no performance claim is established.
+
+The same 0.3 APK remains live. Objective `OO-ANDROID-004` now checks movement,
+release, stairs/ground and jump. Submit each scene's screenshots/log separately
+before starting the other scene, because the launcher shows the latest scene
+log. Camera visibility is recorded as passed; animation and Collada loading
+remain separate engineering work.
 
 Confirmed: native inspector and Vulkan capability probe compile for
 `arm64-v8a`, API 29, NDK `28.0.13004108`, Clang 19, static libc++. These are

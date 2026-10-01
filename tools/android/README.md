@@ -65,7 +65,8 @@ player position, camera/tracked position, pitch/yaw and collision state after
 scene log. It does not change the camera, spawn, collision or gameplay rules.
 The user's 0.1 phone report loaded the cell but showed incorrect interior/
 exterior views and Collada player-model failures. The expanded visual bundle
-fixes missing NPC dependencies; a phone rendering fix is not yet established.
+fixes missing NPC dependencies. The later 0.3 report establishes phone visibility
+after repairing camera tracking.
 
 Build 0.3 adds a separately authored preview camera workaround. If first-person
 tracking stays more than 512 units from the player for 0.25 seconds, it selects
@@ -74,8 +75,12 @@ the engine's look/movement and collision paths while avoiding a missing
 Camera/Head bone. Healthy tracking is left alone. Camera mode and measured
 camera/player distance appear in the diagnostic log; activation prints
 `OPENOBLIVION_CAMERA_REPAIR`. This repairs a reproduced camera condition, not
-the Collada loader, original animation or RPG gameplay. Phone verification of
-the new APK is still required.
+the Collada loader, original animation or RPG gameplay. The owner's 0.3 phone
+screenshots show textured interiors, an NPC and exterior ground/ruins. Its
+exterior log confirms activation, four samples at 124 units above the player
+and changing look angles. Horizontal player coordinates stay constant in those
+samples, so movement/collision still require a separate test. The visible NPC
+is in a T-pose; this is not animation evidence.
 
 The packager recreates the generated APK while retaining compilation caches,
 then rejects excessive unused ZIP space. This prevents incremental APK updates

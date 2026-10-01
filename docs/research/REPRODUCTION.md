@@ -278,3 +278,35 @@ private workspace. The latest exterior probe uses only the selected loose data
 and owner master, verifies movement/camera bounds and exits zero. Model-loader
 errors and unsupported animation remain; the new APK requires another phone
 visibility/touch report. Nineteen original tests pass in four CTest suites.
+
+## Phone visibility and camera tracking confirmed on 0.3 (2026-10-01)
+
+The owner submitted a new report at 14:52 UTC, selecting build
+`0.3-camera-repair` and result "Geometry visible" for both scenes. The report's
+page/server APK hashes match the served 0.3 artifact. Three screenshot receipts
+match their private files' sizes and SHA256 hashes. Inspected images show a
+textured interior stairway with a clothed NPC, a textured chamber with lighting
+and props, and exterior textured ground/ruins. The NPC is in a T-pose; frozen
+appearance does not establish skeletal animation. No raw owner image/log is
+added to the public repository.
+
+Only the exterior log is attached. It records `OPENOBLIVION_CAMERA_REPAIR`
+activation and four `OPENOBLIVION_PHONE_QA` samples at 1, 3, 8 and 15 simulation
+seconds. All show mode 2, camera/tracked position 124 units above the player and
+collision enabled. Pitch/yaw change; yaw ranges from -1.00390625 to
+2.24021649 radians. Horizontal player coordinates stay constant across all
+four samples. This verifies the repaired phone camera and look control plus
+scene visibility, **not horizontal movement or collision fidelity**. The two
+interior views support scene visibility; they do not provide a timed motion
+trace. Device/model and Android version were omitted.
+
+Player/sky Collada failures, missing Groin attachment, unsupported controllers,
+a path interpolator and template/weather resources remain. The log shows no
+new game-mesh "Resource not found" failures for this exterior run. No FPS,
+thermal, lifecycle, original gameplay, Vulkan or multiplayer claim is made.
+
+Private evidence remains in `evidence/phone-qa`; the derived, original analysis
+is `evidence/android-preview/phone-03-analysis.json`. The APK is unchanged.
+The page records this visibility/look checkpoint and advances to
+`OO-ANDROID-004`, testing movement/release, stairs/ground and jump. Each scene
+gets a separate report before the next launch, retaining its own latest log.

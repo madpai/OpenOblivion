@@ -12,7 +12,7 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
 and the owner's failed physical-phone views. The current download is
-`0.3-camera-repair`, with screenshot uploads and QA objective `OO-ANDROID-003`.
+`0.3-camera-repair`, with screenshot uploads and QA objective `OO-ANDROID-004`.
 APK signature, emulator upgrade/payload configuration and the complete served
 download checksum pass. Reports live in
 `/home/commander/openoblivion-private/evidence/phone-qa`, outside downloads/Git.
@@ -21,7 +21,13 @@ normally positioned player. The missing Camera/Head bone condition reproduces
 the blank view on desktop. Build 0.3 adds a conditional native actor-root camera
 fallback at zero orbit distance and includes the initial 5x5 exterior grid plus
 persistent references by position. Desktop fault/motion and healthy controls
-pass; the next phone QA must establish visibility and touch movement there.
+pass. The owner's 0.3 submission now shows textured interiors and exterior
+ground/ruins on the phone. Exterior logs verify fallback activation, 124-unit
+camera tracking and touch look. The four samples have identical horizontal
+player coordinates; traversal/collision remain unverified. A clothed NPC is
+visible in a T-pose; original animation and Collada loading remain unresolved.
+The next objective tests movement/release, stairs/ground and jump on this APK,
+with a separate screenshot/log report for each scene and device/Android details.
 The previous 0.2 APK is archived privately, and real QA submissions are retained.
 See `OPENOBLIVION_CAMERA_REPAIR` and mode/distance in `OPENOBLIVION_PHONE_QA` logs.
 
@@ -48,7 +54,7 @@ Source/revisions/licenses: [license matrix](research/LICENSE_MATRIX.md),
 [lock](research/upstreams.lock.json). Raw evidence is external; public results
 are in [REPRODUCTION.md](research/REPRODUCTION.md). GitHub workflow is authored,
 not remotely executed. No physical Android device was available through ADB;
-the owner supplied a phone log and failure description.
+the owner supplied failing 0.1/0.2 evidence and visible 0.3 scene screenshots/logs.
 
 ## Continue here
 
@@ -64,7 +70,8 @@ Private interior/exterior probes now enter the requested cells, render and
 exit cleanly. Screenshots were inspected: textured dungeon geometry and exterior
 terrain/water/statics are present. Software llvmpipe was used. Template/UI,
 COLLADA and some original texture/interpolator errors remain in the logs;
-collision accuracy, motion and animation are not validated.
+collision accuracy and animation are not validated. Bounded desktop motion
+passes, and the separate phone preview verifies visibility/look only.
 
 Next verify collision/traversal and typed override/master-reference fixtures,
 then measure the content/scene boundary and use the same private scenes to

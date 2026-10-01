@@ -24,9 +24,9 @@ and [upstream comparison](docs/research/FOUNDATION_COMPARISON.md).
 - Both executables cross-compile for Android `arm64-v8a`, API 29, NDK r28.
 - An optional [personal Android scene APK](tools/android/README.md) packages
   an audited OpenMW Android baseline and owner-supplied scene assets privately.
-  Emulator installation/unpacking pass. Phone QA identified a missing-head
-  camera stuck at the origin; a conditional repair passes desktop fault tests
-  and still needs phone visibility/touch validation.
+  Emulator installation/unpacking pass. After repairing a missing-head camera
+  stuck at the origin, phone screenshots show textured interiors/exterior and
+  exterior logs verify camera tracking and touch look. Traversal remains unverified.
 - Original generated fixtures, upstream revision/integrity checks and a
   public-content guard covering working files, staged blobs and Git history.
 - A separate unchanged full OpenMW build and private interior/exterior scene
@@ -37,7 +37,7 @@ Owner-supplied local `Oblivion.esm`: **1,167,017 records, 85,079 groups and
 41,789 compressed records** scanned successfully. Separate upstream probes
 rendered textured dungeon geometry and an exterior with terrain, water and
 static meshes. These establish a content/viewer baseline; quests, original
-animation, combat, multiplayer, Vulkan scenes, touch controls and phone
+animation, combat, multiplayer, Vulkan scenes, touch traversal and phone
 performance remain unproven. See [reproduction evidence](docs/research/REPRODUCTION.md).
 
 ## Build on Linux
