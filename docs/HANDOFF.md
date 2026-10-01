@@ -16,8 +16,9 @@ an independently authored reader-API loop because the pinned upstream
 `ReaderUtils::readItem` can omit the final grouped record. Original fixtures
 reproduce and cover this issue; no upstream file was patched.
 
-Linux tools and Android ARM64 tools build. Fourteen tests pass in normal and
-ASan/UBSan builds. The Vulkan probe enumerates a desktop GPU; it does not render.
+Linux tools and Android ARM64 tools build. Fifteen tests pass in the normal
+build; the founding fourteen also passed ASan/UBSan. The Vulkan probe enumerates
+a desktop GPU; it does not render.
 Six existing Asset Lab original-fixture tests were reproduced with the private
 PyFFI environment and explicit NIFXMLPATH. Neither sibling checkout was edited.
 
@@ -28,15 +29,23 @@ not remotely executed. No physical Android device was available.
 
 ## Continue here
 
-M1 is the next goal: reproduce full upstream TES4 world viewing in an isolated
-build environment. The host lacks several engine development dependencies.
-System configuration failed at yaml-cpp; the upstream bundled-dependency route
-got past that but failed at missing Boost headers/config. A container build can
-resolve host dependency drift without modifying the user's installed system.
-Do not change or silently patch the pinned reader to make a baseline pass.
+M1 is in progress. Full upstream `openmw`, `esmtool`, `bsatool` and `niftest`
+build in isolated Ubuntu; no donor source edits or host package installs.
+One real static NIF agrees byte-for-byte between upstream/Asset Lab BSA readers
+and passes upstream NIF parsing. See [build/probe recipe](../tools/upstream/README.md).
+The later-game viewer requires a base game; use the audited public Template
+alongside owner Oblivion content. Hydrate its LFS objects and verify their
+committed size/hash. Do not silently patch the pinned reader to make tests pass.
 
-After an upstream scene works, measure its content/scene boundary and use the
-same private scene to compare Vulkan donor work. Implement a small original
+Private interior/exterior probes now enter the requested cells, render and
+exit cleanly. Screenshots were inspected: textured dungeon geometry and exterior
+terrain/water/statics are present. Software llvmpipe was used. Template/UI,
+COLLADA and some original texture/interpolator errors remain in the logs;
+collision accuracy, motion and animation are not validated.
+
+Next verify collision/traversal and typed override/master-reference fixtures,
+then measure the content/scene boundary and use the same private scenes to
+compare Vulkan donor work. Implement a small original
 authoritative co-op slice before broad TES4 combat/quest conversion. See
 [ROADMAP.md](ROADMAP.md) for acceptance gates and [MULTIPLAYER.md](MULTIPLAYER.md)
 for ownership/persistence requirements.
@@ -66,4 +75,3 @@ Before publishing, run the guard with `--history` and inspect exactly what is
 being distributed, including dependency notices/source. No playable engine,
 touch controls, original animation, network authority or persistence should be
 reported as implemented until its corresponding gate passes.
-

@@ -1,0 +1,74 @@
+# Standalone upstream reproduction
+
+This builds **unchanged OpenMW**, separately from OpenOblivion's native tools.
+Docker is required. Keep dependency sources, build output, owner files and
+evidence outside this repository. No image or binary is published here.
+
+The Ubuntu base image is pinned by digest. Apt packages remain repository
+resolved, so record the resulting image ID/package inventory for each build;
+this recipe is reproducible from source, not a bit-identical dependency lock.
+
+From the OpenOblivion root:
+
+```sh
+python3 tools/fetch_upstream.py --cache ../openoblivion-deps
+python3 tools/check_upstream.py ../openoblivion-deps/openmw
+docker build -t openoblivion-research-build:founding tools/upstream
+mkdir -p ../openoblivion-private/upstream-work
+docker run --rm --init --cpus 8 --memory 24g \
+  --cap-drop ALL --security-opt no-new-privileges \
+  --user "$(id -u):$(id -g)" \
+  --volume "$PWD/../openoblivion-deps/openmw:/source:ro" \
+  --volume "$PWD/../openoblivion-private/upstream-work:/work" \
+  openoblivion-research-build:founding
+```
+
+The full build uses the upstream-selected MyGUI/Recast sources, recorded in
+the [license matrix](../../docs/research/LICENSE_MATRIX.md). It builds
+`openmw`, `esmtool`, `bsatool` and `niftest`. System packages are isolated from
+the host; the source mount is read-only. The build script rejects a different
+engine revision; unchanged upstream CMake verifies the MyGUI/Recast archive
+downloads against SHA-512 pins. An edited extracted dependency cache requires
+separate investigation; do not treat an old CMake download stamp as an audit.
+Record Docker image identity with
+`docker image inspect` and installed package versions with `dpkg-query` in
+that image. Raw output stays in the private workspace.
+
+## Owner scene probe
+
+The [official later-game setup](https://openmw.org/2025/openmw-0-49-0-released/)
+loads Oblivion alongside a base game. We use the public OpenMW Template;
+Oblivion alone lacks the TES3 globals/player/skills that this baseline expects.
+This is a viewer bootstrap, not an OpenOblivion gameplay implementation.
+
+```sh
+python3 tools/fetch_upstream.py --cache ../openoblivion-deps --project example-suite
+python3 tools/upstream/hydrate_template.py --source ../openoblivion-deps/example-suite
+python3 tools/upstream/probe_scene.py \
+  --build-work ../openoblivion-private/upstream-work \
+  --template ../openoblivion-deps/example-suite \
+  --data "/your/Oblivion/Data" --start Vilverin \
+  --output ../openoblivion-private/evidence/interior-01
+```
+
+The template fetcher downloads only `game_template/data` LFS objects from
+revision-specific GitLab URLs. It verifies pointer size/SHA-256 before writing.
+The integrity checker accepts either locked pointers or their exact materialized
+bytes for this template, while rejecting source changes, index changes and
+untracked files. All other upstreams require their exact Git blob contents.
+Git may display hydrated files as modified if Git LFS is not installed; the
+checker verifies them against committed pointers rather than trusting status.
+
+The probe uses Xvfb and software OpenGL, an 800x600 window, a read-only owner
+installation and a fresh private evidence directory. Networking is disabled
+inside the scene container. Independently authored Lua requests a screenshot
+after five simulation seconds and quits after seven. A 120-second wall limit
+stops the uniquely named container on timeout. Success requires the completion
+marker, a screenshot and engine exit zero; inspect the image and logs before
+claiming scene compatibility. It also verifies the engine revision and observed
+cell name and records the image/binary/master identities. Raw logs, hashes and
+screenshots are private.
+
+This does not test Vulkan, a phone, quests, original animation, multiplayer,
+performance or collision accuracy. Engine/asset support warnings remain part
+of the evidence even when a screenshot is produced.

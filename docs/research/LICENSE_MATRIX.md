@@ -25,6 +25,18 @@ This is a per-candidate reuse register, not permission to copy an entire reposit
 | [madpai/open-asset-lab](https://github.com/madpai/open-asset-lab/tree/e5f9dcb29f67ed6346954e66ee6d0af575f832fc)<br>`e5f9dcb29f67ed6346954e66ee6d0af575f832fc` | GPLv3 (LICENSE); optional decoder has separate license | Classic BSA/static NIF import, provenance and compiler/native agreement | GPLv3 candidate; no runtime/content-package compatibility assumption | Read-only source study and six original-fixture tests | Retain GPL/source and decoder notices if reused; keep owner assets and compiled packages private. |
 | [madpai/megamod-showdown](https://github.com/madpai/megamod-showdown/tree/b6f54ea71c92953441751a28b0f93375e53bf1bc)<br>`b6f54ea71c92953441751a28b0f93375e53bf1bc` | GPLv3 (LICENSE) | Vulkan/Android experience, host-owned survival rules and evidence workflow | GPLv3 candidate; inherited dependencies require audit | Read-only architecture study; no code copied | Retain GPL/source and third-party notices if reused; no donor data or personal APK contents. |
 
+## Standalone reproduction dependencies
+
+These are external research checkouts, not assets/source vendored into this
+repository or dependencies of the native reader executables.
+
+| Repository / revision | License and notices | Actual use / compatibility |
+|---|---|---|
+| [OpenMW/example-suite](https://gitlab.com/OpenMW/example-suite/-/tree/a41b44d9403ff3f8a1505c1b4bc152c4dd623b64), `a41b44d9403ff3f8a1505c1b4bc152c4dd623b64` | LICENSE: CC0 1.0 assets; GPLv3 MyGUI configuration. AUTHORS.md credits creators. Documentation identifies a separate Pelagiad font exception; no such font is shipped here. | Unchanged external base game/template for the documented later-game viewer configuration. No assets copied into OpenOblivion. Preserve GPL notices for any configuration reuse; audit each font/dependency before distribution. |
+| [MyGUI/mygui](https://github.com/MyGUI/mygui/tree/dae9ac4be5a09e672bec509b1a8552b107c40214), `dae9ac4be5a09e672bec509b1a8552b107c40214` (3.4.3) | MIT, COPYING.MIT; retain AUTHORS and permission/disclaimer. Media/plugins have exceptions documented in Docs/src/license.txt; not a whole-repository MIT assumption. | Core built unchanged by full upstream CMake, compatible with GPLv3 notice retention; not linked into the OpenOblivion probes. No MyGUI media/plugins redistributed. |
+| [OpenMW/recastnavigation](https://github.com/OpenMW/recastnavigation/tree/03259f3287ff8330f0d66fcd98d022edddffaa97), `03259f3287ff8330f0d66fcd98d022edddffaa97` | Zlib, License.txt; preserve origin, license and changed-source marking. | Built unchanged by full upstream CMake; compatible for audited core. No navigation/runtime code copied here. |
+| [OpenMW/openmw 0.49.0](https://github.com/OpenMW/openmw/tree/675146bd8bce6245d78889f543b5c02a1e3936fe), `675146bd8bce6245d78889f543b5c02a1e3936fe` | GPLv3 project with per-file notices, as above. | Release source studied to compare startup behavior; not built or linked in this checkpoint. |
+
 ## Audited linked slice
 
 CMake lists 14 upstream translation units: `components/esm4/{reader,loadtes4}.cpp`, `components/esm/{formid,refid,stringrefid,generatedrefid,indexrefid,esm3exteriorcellrefid}.cpp`, `components/files/{constrainedfilestreambuf,conversion}.cpp`, `components/platform/fileposix.cpp`, `components/toutf8/toutf8.cpp`, `components/debug/debuglog.cpp`, and `components/vfs/manager.cpp`. Their headers are read from the same verified commit. Reader/header files credit **cc9cii** under zlib notices; files without narrower grants are treated under the OpenMW project GPLv3. The checkout and notices remain unchanged. The build checker verifies every tracked blob before building, including edits hidden by Git index flags.

@@ -2,7 +2,7 @@
 
 Date: 2026-09-30. All game files, raw reports and binaries remain outside the
 public checkout. Counts below are a reviewed summary. This is an M0 tooling
-checkpoint, not playable Oblivion or multiplayer evidence.
+checkpoint and partial M1 reproduction, not playable Oblivion or multiplayer evidence.
 
 ## Revisions and builds
 
@@ -11,11 +11,11 @@ checkpoint, not playable Oblivion or multiplayer evidence.
 | OpenMW source | `46bd4599203ee52ffc0f3e8edb3fc159a0303a49`; unchanged checkout, all tracked blobs verified |
 | Linux inspector/probe | GCC 16.2.1, CMake 4.4.3, Ninja; Debug build succeeded |
 | Android inspector/probe | NDK `28.0.13004108`, Clang 19, `arm64-v8a`, API 29, static libc++; Release cross-build succeeded; ELF identity checked |
-| Public tests | 14 original/guard cases in 3 CTest suites passed |
-| Address/undefined behavior sanitizers | Same 14 cases / 3 suites passed with ASan+UBSan |
-| Content guard | Prospective working content and empty initial history passed; staged/history checks repeated after local snapshot |
+| Public tests | 15 original/guard cases in 3 CTest suites passed, including template LFS identity checks |
+| Address/undefined behavior sanitizers | Original 14 cases / 3 suites passed with ASan+UBSan before the tooling continuation |
+| Content guard | Working, staged and committed-history checks passed at the local checkpoint |
 | Linux Vulkan probe | NVIDIA GeForce RTX 3060 Ti, Vulkan 1.4.351, graphics queue available; no rendering/surface test |
-| Full upstream host configure | System dependency route stopped at yaml-cpp. Bundled-source route progressed through OSG/MyGUI/Bullet/Recast/yaml configuration, then stopped at missing Boost headers/config |
+| Full upstream build | Pinned unchanged source built in isolated Ubuntu 24.04: `openmw`, `esmtool`, `bsatool`, `niftest`; GCC 13, CMake 3.28, Boost 1.83, OSG 3.6.5, SDL 2.30 |
 | GitHub CI | Workflow authored for Linux tests/content history and ARM64 compilation; no remote run or publication occurred |
 | Physical Android | No ADB device connected; no phone run, touch or frame-time evidence |
 
@@ -81,6 +81,48 @@ This reproduction does not prove KF animation, worn armor, original Havok
 behavior, full plugin semantics or gameplay. PyFFI/schema distribution rights
 and bundled binary exclusions are tracked separately in the license matrix.
 
+## Full upstream and independent asset agreement
+
+The full OpenMW development 0.52.0 build succeeded without donor source edits
+in a Docker environment. The host-only attempts lacked yaml-cpp/Boost; the
+isolated dependency environment resolved that issue without installing host
+packages. The source was mounted read-only. Ubuntu base image digest,
+upstream-selected MyGUI 3.4.3/Recast revisions and build recipe are recorded in
+[standalone reproduction tools](../../tools/upstream/README.md) and the license
+matrix; the exact image ID/package inventory and build log remain private.
+Both downloaded archives match upstream's SHA-512 pins. Every extracted file
+was compared against its archive: **2,246 MyGUI files and 164 Recast files**,
+with no differences. The final build recipe also completed against this cache.
+
+Upstream `bsatool` extracted one owner static clutter NIF, and `niftest` read
+it without errors. An independent Asset Lab BSA read produced **identical
+11,661 bytes**. The member name/hash, model and diagnostics remain private.
+This is one archive/member agreement, not blanket NIF, KF or physics coverage.
+
+The scene harness uses software Mesa llvmpipe, OpenGL 4.5, LLVM 20.1.2/Mesa
+25.2.8. Loading Oblivion alone reproduced a Morrowind fallback-script error
+and missing `gamehour` global before any cell was entered. The
+[official setup](https://openmw.org/2025/openmw-0-49-0-released/) requires a
+base game alongside later-game content. The external public Example Suite
+provides it; its LFS objects must be materialized, not mistaken for game data
+when the checkout contains pointer text. No upstream code was patched to
+hide those startup failures.
+
+Both **Vilverin** and **VilverinExterior** then entered their requested cells,
+produced private 800x600 screenshots and exited zero via the original probe
+script. Image inspection confirms textured dungeon geometry in the interior
+and terrain, water, rocks and other static meshes outside. The first completed
+interior probe took 16.9597 seconds wall time; the exterior took 17.7911 seconds.
+Those durations include container startup/loading and the seven-second
+simulation window; they are not frame-time/FPS results.
+
+The viewer logs still report missing template UI/weather assets, a template
+COLLADA body load failure, missing character textures and unsupported trap/
+butterfly interpolators. Generated collision/navmesh entries are visible, but
+collision accuracy and movement were not validated. Sky/player/UI behavior
+includes the template/Morrowind bootstrap. This evidence does not establish
+original NPC animation, gameplay, faithful world materials or Vulkan rendering.
+
 ## Limits and next decisive evidence
 
 The inspector visits generic subrecords; it does not resolve a complete load
@@ -88,8 +130,6 @@ order or simulate any record. Its wrapper bounds container sizes and declared
 decompression allocation, not every hostile payload. It currently targets
 trusted classic owner installations.
 
-Next: isolate the full desktop upstream build and reproduce one private
-Oblivion interior/exterior scene. Record rendering/collision/animation scope
-and actual dependencies before accepting a full runtime fork. Vulkan scene
+Next: complete the private interior/exterior and collision checks, then measure
+the immutable scene/content boundary before accepting a full runtime fork. Vulkan scene
 rendering, a native Android app and authoritative co-op remain separate gates.
-

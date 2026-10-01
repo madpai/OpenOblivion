@@ -24,11 +24,16 @@ and [upstream comparison](docs/research/FOUNDATION_COMPARISON.md).
 - Both executables cross-compile for Android `arm64-v8a`, API 29, NDK r28.
 - Original generated fixtures, upstream revision/integrity checks and a
   public-content guard covering working files, staged blobs and Git history.
+- A separate unchanged full OpenMW build and private interior/exterior scene
+  probes, using the public Template and the owner's data with software OpenGL.
+  See the [upstream reproduction recipe](tools/upstream/README.md).
 
 Owner-supplied local `Oblivion.esm`: **1,167,017 records, 85,079 groups and
-41,789 compressed records** scanned successfully. This establishes structural
-reading only. It does not establish rendering, quests, animation, combat,
-networking, a touch interface or device performance. See [reproduction evidence](docs/research/REPRODUCTION.md).
+41,789 compressed records** scanned successfully. Separate upstream probes
+rendered textured dungeon geometry and an exterior with terrain, water and
+static meshes. These establish a content/viewer baseline; quests, original
+animation, combat, multiplayer, Vulkan scenes, touch controls and phone
+performance remain unproven. See [reproduction evidence](docs/research/REPRODUCTION.md).
 
 ## Build on Linux
 
@@ -90,4 +95,3 @@ The [license matrix](docs/research/LICENSE_MATRIX.md) records exact studied
 revisions, notices, compatibility decisions and actual reuse. No Bethesda
 or Havok game binaries/assets are distributed. Users supply their own classic
 Oblivion installation. Original/public fixtures are generated from source.
-

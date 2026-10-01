@@ -6,7 +6,7 @@ slice and resolves a concrete uncertainty before expanding scope.
 | Milestone | Result | Acceptance / evidence | Current status |
 |---|---|---|---|
 | M0: founding research | License-aware foundation and reproducible native tools | Exact upstream pins, original tests, owner master scan, Linux/ARM64 builds, publication guard | Implemented locally; see reproduction |
-| M1: existing desktop world | Reproduce OpenMW TES4 interior/exterior traversal before changing it | Build full upstream with documented dependencies; inspect static world/terrain/collision against owner installation; save private screenshots/traces | Not implemented; configure currently stops at yaml-cpp |
+| M1: existing desktop world | Reproduce OpenMW TES4 interior/exterior traversal before changing it | Build full upstream with documented dependencies; inspect static world/terrain/collision against owner installation; save private screenshots/traces | Partially reproduced: full build, real BSA/NIF agreement, interior/exterior screenshots; collision accuracy/typed catalogue boundary remain |
 | M2: native Vulkan/mobile scene | One private TES4 scene plus an original public debug scene | Choose a licensed renderer slice, verify materials/axes/scale and collision; APK + touch + lifecycle; physical ARM64 phone frame time/memory evidence | Not implemented |
 | M3: authoritative original co-op slice | Two players fight an original enemy, die and respawn | Headless authority, command validation, late join, no duplicate XP/loot, restart/reconnect and content mismatch rejection | Not implemented |
 | M4: Oblivion dungeon co-op | Owner-supplied dungeon, animated enemy, melee/casting, inventory/equipment | Native NIF/KF/physics/record subset, server-owned combat/progression, private desktop + Android/LAN playtest | Not implemented |
@@ -15,8 +15,8 @@ slice and resolves a concrete uncertainty before expanding scope.
 
 ## M1 tasks in execution order
 
-1. Resolve full OpenMW build dependencies in an isolated prefix; build pinned
-   `esmtool`, `bsatool`, `niftest` and `openmw` without editing donor sources.
+1. Full engine/tools now build without donor edits in an isolated container.
+   Preserve this baseline and its recorded dependencies.
 2. Record private install identity/load order. Validate one interior and
    exterior/terrain area; document missing features and exact renderer behavior.
 3. Use original synthetic override/deletion/master-reference fixtures to verify
@@ -46,4 +46,3 @@ packages matching a loader do not establish gameplay or publication rights.
 | Multiplayer duplicates progress or loot | Kill/restart/reconnect at transaction/acknowledgement boundaries |
 | Data/mod overrides desynchronize peers | Ordered manifests and reference-resolution fixtures; reject mismatch before join |
 | License/dependency ambiguity blocks reuse | Exact-file audit; preserve notices or independently implement behavior |
-

@@ -13,8 +13,8 @@ before the core multiplayer uncertainties have been tested.
 ## Decision
 
 Use the pinned current OpenMW source as the **compatibility foundation**.
-Compile an unchanged reader slice now. Reproduce its desktop Oblivion world
-view next, then expose a narrow immutable-content boundary and evaluate
+Compile an unchanged reader slice and reproduce the separate full desktop
+baseline, then expose a narrow immutable-content boundary and evaluate
 Vulkan presentation against actual scenes. Keep upstream mergeability visible.
 
 Study vsgopenmw for renderer migration and resource/animation handling. Its
@@ -38,8 +38,9 @@ only. No game/physics binaries are bundled.
   not the full TES4 world/quest/runtime semantics needed here.
 - The Vulkan fork and TES3MP have separate scopes and ancestry. A combined
   fork would inherit integration risk before establishing a working TES4 slice.
-- Full desktop OpenMW configuration is not yet reproduced: it currently stops
-  at missing yaml-cpp. The reader build does not answer renderer/runtime costs.
+- Full desktop OpenMW and its three diagnostic tools now build in an isolated
+  Ubuntu environment. Its documented later-game viewer needs a base template
+  alongside Oblivion. Vulkan and runtime/authority costs remain unmeasured.
 
 Exact links and revisions: [comparison](../research/FOUNDATION_COMPARISON.md),
 [license matrix](../research/LICENSE_MATRIX.md), [reproduction](../research/REPRODUCTION.md).
@@ -66,4 +67,3 @@ Revisit the full runtime choice after M1/M2: one interior/exterior scene,
 terrain/static collision and native Vulkan on ARM64. Compare observed reuse
 cost, dependencies, memory and frame times. A replacement renderer or a larger
 fork must be justified by those results, not by a preference for originality.
-

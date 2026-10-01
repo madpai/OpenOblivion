@@ -20,6 +20,12 @@ A future binary distribution must include matching source/build information
 and an audited dependency notice inventory. This founding checkout publishes
 no binary package or game data.
 
+The standalone upstream research build uses externally fetched MyGUI (MIT
+core), Recast (zlib) and installed system libraries. The private viewer uses
+the external OpenMW Example Suite Template (CC0 assets; GPLv3 MyGUI
+configuration), credited in its AUTHORS.md. The template, assets and upstream
+scripts keep their own notices and are not vendored here. OpenOblivion's scene
+automation and fetch/integrity tools are independently authored.
+
 The Elder Scrolls IV: Oblivion belongs to its respective rights holders.
 This independent interoperability project supplies code; users supply game data.
-
