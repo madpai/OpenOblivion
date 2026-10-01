@@ -1,0 +1,2 @@
+PLAYER: scripts/openoblivion_player_movement_probe.lua
+GLOBAL: scripts/openoblivion_player_movement_setup.lua

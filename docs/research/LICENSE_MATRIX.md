@@ -100,3 +100,13 @@ behavior and exterior-grid constants were checked against OpenMW engine base
 `f4bec41444214a7903bebd178389ca22ca13f646` and the unchanged 0.52 desktop pin.
 No camera implementation or donor script is copied/modified. Released native
 libraries and their notice/source requirements remain unchanged.
+
+The native-player trajectory driver, one-time test placement, analysis and
+synthetic trajectory fixtures are independently authored GPL-3.0-only code.
+No controller or collision implementation is copied or modified. Behavior
+research inspected `components/nifbullet/bulletnifloader.cpp` at the 0.51 base
+above (SHA256 `6cafec42e7f0231331656d88fdb47b730b4bb4c0e707fbd9377d200884abf2be`)
+and the locked 0.52 pin (Git blob `0194105efaeed61610edbee0d9400e6059d2b426`).
+Private stair geometry inspection uses the already-listed external PyFFI;
+no schema, game collision mesh or Havok/MOPP binary is redistributed. Adopting a
+native authored-collision path still requires an exact-file reuse audit.

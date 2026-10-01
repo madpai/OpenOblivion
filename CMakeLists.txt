@@ -75,4 +75,6 @@ if(BUILD_TESTING AND NOT ANDROID)
         "${CMAKE_SOURCE_DIR}/tests/test_upstream.py")
     add_test(NAME android-preview-fixtures COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_android_preview.py")
+    add_test(NAME player-movement-fixtures COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_player_movement.py")
 endif()

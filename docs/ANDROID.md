@@ -64,6 +64,14 @@ before starting the other scene, because the launcher shows the latest scene
 log. Camera visibility is recorded as passed; animation and Collada loading
 remain separate engineering work.
 
+The owner's subsequent chat playtest reports walking, stopping, ordinary
+collision, jumping and look working. Stairs bounce and also catch/slow forward
+movement. This is a player traversal defect, not just a camera presentation
+complaint. Prioritize the controller/collision work in
+[PLAYER_MOVEMENT.md](PLAYER_MOVEMENT.md); preserve the current APK while
+reproducing the physical stair path. General collision accuracy, lifecycle and
+performance remain unmeasured.
+
 Confirmed: native inspector and Vulkan capability probe compile for
 `arm64-v8a`, API 29, NDK `28.0.13004108`, Clang 19, static libc++. These are
 command-line executables, separate from the preview APK. The founding probes

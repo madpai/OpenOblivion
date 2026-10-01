@@ -26,7 +26,11 @@ and [upstream comparison](docs/research/FOUNDATION_COMPARISON.md).
   an audited OpenMW Android baseline and owner-supplied scene assets privately.
   Emulator installation/unpacking pass. After repairing a missing-head camera
   stuck at the origin, phone screenshots show textured interiors/exterior and
-  exterior logs verify camera tracking and touch look. Traversal remains unverified.
+  exterior logs verify camera tracking and touch look. The owner reports walk,
+  stop, jump and ordinary collision working; stairs catch and remain unresolved.
+- An original [native-player trajectory probe](docs/PLAYER_MOVEMENT.md) measures
+  horizontal walking, stopping and jump/landing through existing engine controls,
+  with original regression fixtures that reject camera-only motion and respawns.
 - Original generated fixtures, upstream revision/integrity checks and a
   public-content guard covering working files, staged blobs and Git history.
 - A separate unchanged full OpenMW build and private interior/exterior scene

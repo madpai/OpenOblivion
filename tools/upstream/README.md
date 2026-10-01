@@ -85,6 +85,17 @@ That flag requires measured movement, turning and a camera within 256 units of
 the player for probe success. These fault/motion scripts are desktop test tools;
 the motion script is never included in the APK.
 
+`--player-movement` replaces the short screenshot script with a native-player
+walk/stop/jump/landing driver and a dense trajectory. It cannot be combined with
+`--camera-motion`. `--movement-turn DEGREES` sets the initial relative heading;
+`--movement-position X Y Z --movement-heading DEGREES` optionally places the
+player once before testing a specific surface. These controls never enter the
+APK. Trace completion and movement acceptance are reported separately;
+horizontal response, stopping drift and jump/landing metrics exclude camera
+motion and reject large respawn/teleport discontinuities. See
+[player movement priority](../../docs/PLAYER_MOVEMENT.md) for current evidence,
+blocked-route limitations and collision work.
+
 This does not test Vulkan, a phone, quests, original animation, multiplayer,
 performance or collision accuracy. Engine/asset support warnings remain part
 of the evidence even when a screenshot is produced.

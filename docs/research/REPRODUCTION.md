@@ -310,3 +310,59 @@ is `evidence/android-preview/phone-03-analysis.json`. The APK is unchanged.
 The page records this visibility/look checkpoint and advances to
 `OO-ANDROID-004`, testing movement/release, stairs/ground and jump. Each scene
 gets a separate report before the next launch, retaining its own latest log.
+
+## Native-player movement priority and trajectory probe (2026-10-01)
+
+The owner's subsequent chat playtest reports walking, stopping, ordinary
+collision, jumping and looking working. Stairs bounce and forward travel also
+catches/slows at each step. The owner explicitly prioritizes actual in-game
+player movement over viewer work. This is qualitative phone evidence, recorded
+privately in `evidence/android-preview/phone-04-chat-analysis.json`; no stair
+fix, comprehensive collision fidelity or phone timing claim is established.
+
+An independently authored desktop probe now drives the stock native player's
+walk, release, jump and landing controls, capturing position, ground state and
+expected walk speed at up to 20 samples per simulation second. It changes no
+camera path. Optional placement teleports once before the timed test; normal
+movement then uses upstream physics. Raw traces, source/configuration hashes,
+observed cell and engine identity are recorded privately.
+
+The initial exterior control covers 728.75 horizontal units over 4.902843
+sampled walking seconds, 99.09% of requested distance. Stopping drift after
+a 0.2-second grace period is 0.3308 units. The jump rises 113.2647 units and
+ends grounded. These measure one bounded desktop route, not original game
+movement fidelity or a physical-phone benchmark.
+
+The default interior route is obstructed (25.7 units over about five seconds,
+3.47% of requested distance); its jump is blocked too. Turning at the same
+spawn faces a stone door. Neither run is a stair reproduction. Two initial
+stair placements also fail to provide a valid ascent/descent comparison: one
+falls and resets to the entry location, producing a large discontinuity;
+the other is obstructed. Screenshots/traces are preserved, not counted as
+successful stair traversal. General native collision accuracy stays unverified.
+
+Original trajectory fixtures reject vertical-only and camera-only "walking",
+stopping drift, an unlanded jump, incomplete/non-finite data and respawn/teleport
+discontinuities. Trace completion is separate from horizontal response,
+stopping and jump/landing acceptance. Authored diagnostic thresholds and
+route-clearance limitations are documented in [PLAYER_MOVEMENT.md](../PLAYER_MOVEMENT.md).
+
+Both pinned 0.51 and 0.52 loaders explicitly generate Bethesda collision from
+rendered geometry rather than the authored Havok shape data. Private inspection
+of two Ayleid stair models finds separate MOPP/triangle-strip collision trees
+with fewer vertices than the visible meshes. This is a verified compatibility
+gap and a candidate contributor to snagging; causal proof on the owner's stair
+route remains outstanding. No upstream source, solver or native library is
+changed in this checkpoint. The current 0.3 APK is retained; a camera-only
+smoothing workaround is not implemented.
+
+Private evidence: `evidence/player-movement-{interior,exterior}-01`,
+`player-movement-stairs-descent-01`, `player-movement-stair-{ascent,descent}-02`
+and the validated exterior repeat. Analysis revisions preserve original metrics
+and reject the invalid stair reset. The next implementation gate is a valid
+stair route and original authored-collision fixtures, then a bounded native
+collision/controller change tested against that baseline.
+
+Twenty-four original tests pass in five CTest suites. The Linux tools rebuild
+with verified unchanged upstream source. The validated exterior repeat retains
+the three movement gates with no discontinuities; its raw trace is private.

@@ -24,10 +24,15 @@ persistent references by position. Desktop fault/motion and healthy controls
 pass. The owner's 0.3 submission now shows textured interiors and exterior
 ground/ruins on the phone. Exterior logs verify fallback activation, 124-unit
 camera tracking and touch look. The four samples have identical horizontal
-player coordinates; traversal/collision remain unverified. A clothed NPC is
+player coordinates; that log does not verify traversal/collision. A clothed NPC is
 visible in a T-pose; original animation and Collada loading remain unresolved.
-The next objective tests movement/release, stairs/ground and jump on this APK,
-with a separate screenshot/log report for each scene and device/Android details.
+The owner subsequently reports walking, stopping, ordinary collision, jumping
+and look working, with stairs bouncing and catching/slowing forward travel.
+This is qualitative phone evidence; stair traversal remains an open movement
+defect. The owner explicitly prioritizes actual player movement over viewer
+work. See [player movement priority](PLAYER_MOVEMENT.md), including the native
+trajectory probe and the authored-TES4-collision gap. No camera-only stair fix
+or new APK is claimed.
 The previous 0.2 APK is archived privately, and real QA submissions are retained.
 See `OPENOBLIVION_CAMERA_REPAIR` and mode/distance in `OPENOBLIVION_PHONE_QA` logs.
 
@@ -44,7 +49,7 @@ an independently authored reader-API loop because the pinned upstream
 `ReaderUtils::readItem` can omit the final grouped record. Original fixtures
 reproduce and cover this issue; no upstream file was patched.
 
-Linux tools and Android ARM64 tools build. Nineteen tests pass in the normal
+Linux tools and Android ARM64 tools build. Twenty-four tests pass in the normal
 build; the founding fourteen also passed ASan/UBSan. The Vulkan probe enumerates
 a desktop GPU; it does not render.
 Six existing Asset Lab original-fixture tests were reproduced with the private
@@ -73,8 +78,11 @@ COLLADA and some original texture/interpolator errors remain in the logs;
 collision accuracy and animation are not validated. Bounded desktop motion
 passes, and the separate phone preview verifies visibility/look only.
 
-Next verify collision/traversal and typed override/master-reference fixtures,
-then measure the content/scene boundary and use the same private scenes to
+Next prioritize the player controller and collision: reproduce stair catching
+with valid ascent/descent placement and audit authored TES4 collision before
+changing the solver. The native movement trace distinguishes horizontal travel,
+stopping, jump/landing and respawn discontinuities. Typed override/master-reference
+fixtures and the content/scene boundary remain required; use the same scenes to
 compare Vulkan donor work. Implement a small original
 authoritative co-op slice before broad TES4 combat/quest conversion. See
 [ROADMAP.md](ROADMAP.md) for acceptance gates and [MULTIPLAYER.md](MULTIPLAYER.md)
