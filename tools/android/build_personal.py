@@ -91,6 +91,9 @@ def main():
     paths = [(file, 'template/' + file.relative_to(template / 'game_template/data').as_posix())
              for file in sorted((template / 'game_template/data').rglob('*')) if file.is_file()]
     paths += [(file, file.relative_to(stage).as_posix()) for file in sorted(stage.rglob('*')) if file.is_file()]
+    # Original read-only camera/player diagnostics; no donor scripts modified.
+    paths += [(ROOT / 'tools/android/phone_qa.omwscripts', 'qa/phone_qa.omwscripts'),
+              (ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua', 'qa/scripts/openoblivion_phone_qa.lua')]
     selection = work / 'scene-data'
     if selection.exists():
         if selection.is_symlink(): raise ValueError('Selection directory must not be a symlink')
@@ -122,6 +125,9 @@ def main():
                   'unpacked_bytes': manifest['unpacked_bytes'], 'template_revision': check(template, 'OpenMW/example-suite')}
     provenance['host_source_sha256'] = {file.relative_to(ROOT / 'android/host').as_posix(): digest(file)
                                        for file in sorted((ROOT / 'android/host').rglob('*')) if file.is_file()}
+    provenance['preview_tools_sha256'] = {file.relative_to(ROOT).as_posix(): digest(file) for file in
+        (Path(__file__).resolve(), ROOT / 'tools/android/scene_assets.py',
+         ROOT / 'tools/android/phone_qa.omwscripts', ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua')}
     (assets / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')
     (host / 'local.properties').write_text('sdk.dir=' + str(args.sdk.resolve()) + '\n')
     subprocess.run([str(args.gradle.resolve()), '--no-daemon', '--console=plain', 'assembleDebug'], cwd=host, check=True)

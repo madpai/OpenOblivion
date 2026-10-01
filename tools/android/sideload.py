@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-only
-"""Serve an allowlisted personal APK on a Tailscale address with download resume."""
+"""Private Tailscale APK downloads and owner screenshot/QA reports."""
 import argparse
 from datetime import datetime, timezone
 from email.utils import format_datetime
@@ -10,7 +10,83 @@ import ipaddress
 import json
 from pathlib import Path
 import re
+import threading
 from urllib.parse import urlsplit
+import uuid
+import hashlib
+
+MAX_SCREENSHOT = 20 * 1024 * 1024
+MAX_REPORT = 1024 * 1024
+
+
+def stamp():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def save_screenshot(directory, body):
+    if body.startswith(b'\x89PNG\r\n\x1a\n'):
+        suffix = '.png'
+    elif body.startswith(b'\xff\xd8\xff'):
+        suffix = '.jpg'
+    elif body[:4] == b'RIFF' and body[8:12] == b'WEBP':
+        suffix = '.webp'
+    else:
+        raise ValueError('Use a PNG, JPEG or WebP screenshot')
+    identity = uuid.uuid4().hex
+    path = directory / (identity + suffix)
+    with path.open('xb') as stream:
+        stream.write(body)
+    path.chmod(0o600)
+    receipt = {'schema': 1, 'kind': 'screenshot', 'id': identity, 'file': path.name,
+               'size': len(body), 'sha256': hashlib.sha256(body).hexdigest(), 'received_at': stamp()}
+    metadata = directory / (identity + '.json')
+    metadata.write_text(json.dumps(receipt, indent=2) + '\n'); metadata.chmod(0o600)
+    return {'id': identity, 'bytes': len(body)}
+
+
+def save_report(directory, body, current_sha, current_build):
+    try:
+        data = json.loads(body)
+    except (UnicodeError, json.JSONDecodeError):
+        raise ValueError('Invalid report JSON') from None
+    if not isinstance(data, dict):
+        raise ValueError('Expected a report object')
+    fields = {'device': 120, 'android': 80, 'tested_build': 160, 'scene': 20, 'result': 30,
+              'notes': 8000, 'log': 131072, 'page_apk_sha256': 64, 'qa_objective': 80}
+    report = {}
+    for key, limit in fields.items():
+        value = data.get(key, '')
+        if not isinstance(value, str) or len(value) > limit:
+            raise ValueError('Invalid report field: ' + key)
+        report[key] = value
+    if report['scene'] not in ('interior', 'exterior', 'both', 'other'):
+        raise ValueError('Choose a scene')
+    if report['result'] not in ('empty', 'sky-only', 'falling', 'crash', 'geometry', 'other'):
+        raise ValueError('Choose what happened')
+    shots = data.get('screenshots', [])
+    if not isinstance(shots, list) or len(shots) > 4:
+        raise ValueError('At most four screenshots per report')
+    receipts = []
+    for identity in shots:
+        if not isinstance(identity, str) or not re.fullmatch('[0-9a-f]{32}', identity):
+            raise ValueError('Invalid screenshot ID')
+        file = directory / (identity + '.json')
+        if not file.is_file() or file.is_symlink():
+            raise ValueError('Unknown screenshot ID')
+        receipt = json.loads(file.read_text())
+        if receipt.get('kind') != 'screenshot':
+            raise ValueError('ID is not a screenshot')
+        receipts.append(receipt)
+    if not receipts and not report['notes'].strip() and not report['log'].strip():
+        raise ValueError('Include a screenshot, notes or a scene log')
+    identity = uuid.uuid4().hex
+    report.update({'schema': 1, 'kind': 'qa-report', 'id': identity, 'received_at': stamp(),
+                   'screenshots': receipts, 'server_apk_sha256': current_sha, 'server_build': current_build})
+    file = directory / (identity + '.json')
+    with file.open('x') as stream:
+        json.dump(report, stream, indent=2); stream.write('\n')
+    file.chmod(0o600)
+    return {'id': identity, 'screenshots': len(receipts)}
 
 
 def main():
@@ -18,6 +94,7 @@ def main():
     parser.add_argument('--root', required=True, type=Path)
     parser.add_argument('--bind', required=True)
     parser.add_argument('--port', type=int, default=8735)
+    parser.add_argument('--uploads', required=True, type=Path, help='Private evidence directory outside the download root')
     args = parser.parse_args()
     if ipaddress.ip_address(args.bind) not in ipaddress.ip_network('100.64.0.0/10'):
         parser.error('Bind must be a private Tailscale IPv4 address')
@@ -25,38 +102,79 @@ def main():
     repository = Path(__file__).resolve().parents[2]
     if root == repository or repository in root.parents:
         parser.error('Personal APKs must be served from outside the public checkout')
+    uploads = args.uploads.expanduser().resolve()
+    if uploads == repository or repository in uploads.parents or uploads == root or root in uploads.parents:
+        parser.error('Uploads must be outside the repository and download root')
+    uploads.mkdir(parents=True, exist_ok=True, mode=0o700)
+    uploads.chmod(0o700)
+    upload_slots = threading.BoundedSemaphore(2)
     manifest = json.loads((root / 'download.json').read_text())
     entries = {entry['name']: entry for entry in manifest['downloads']}
     for name in entries:
         if Path(name).name != name or (root / name).is_symlink() or not (root / name).is_file():
             parser.error('Invalid allowlisted download')
     apk = entries['openoblivion-personal-preview.apk']
-    page = ('''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>OpenOblivion personal test</title><style>body{font:18px system-ui;max-width:720px;margin:40px auto;padding:0 20px;background:#141c21;color:#eae9df}a{color:#bce5f0} .download{display:inline-block;padding:18px;background:#276174;color:white;border-radius:8px;font-weight:bold}code{overflow-wrap:anywhere;font-size:13px}li{margin:12px 0}</style>
-<h1>OpenOblivion Preview</h1><p>Personal ARM64 scene test with your Oblivion assets included.</p>
-<p><a class="download" href="/openoblivion-personal-preview.apk">Download APK — SIZE</a></p>
-<ol><li>Keep Tailscale connected while downloading. Download resume is supported.</li>
-<li>Open the APK and allow installation from your browser when Android asks.</li>
-<li>Open <b>OpenOblivion Preview</b>. Let the bundled assets install once, then choose Vilverin interior or exterior.</li>
-<li>Use the left pad to move and drag the right side to look. Exit returns to the launcher.</li></ol>
-<p>Android 10 or newer, ARM64. Allow about 3 GB of free storage for download, installation and unpacking.</p>
-<p>Early world-view test using OpenMW Android 0.51 and OpenGL ES. Original quests, combat, multiplayer and Vulkan are still under development. The bundled visual assets cover Vilverin and nearby exterior cells; distant areas may have missing textures. Voices, sound and DLC are omitted.</p>
-<p>VALIDATION</p><p>Build BUILD<br>SHA256: <code>HASH</code></p>
-<p>For your own installation only. Keep this asset-packed APK private.</p>
-<p><a href="/SHA256SUMS.txt">Checksums</a> · <a href="/source-notes.txt">Runtime source and attribution</a></p></html>'''
-            .replace('SIZE', f"{apk['size'] / 1024 / 1024:.0f} MB")
-            .replace('VALIDATION', html.escape(manifest['validation']))
-            .replace('BUILD', html.escape(manifest['build']))
-            .replace('HASH', html.escape(apk['sha256']))).encode()
+    replacements = {
+        'SIZE': f"{apk['size'] / 1024 / 1024:.0f} MB",
+        'BUILD': manifest['build'], 'VALIDATION': manifest['validation'],
+        'HASH': apk['sha256'], 'QA_ID': manifest.get('qa_id', 'OO-ANDROID-002'),
+        'QA_OBJECTIVE': manifest.get('qa_objective', 'Verify visible dungeon geometry and exterior ground, then check look and movement.'),
+    }
+    page_text = Path(__file__).with_name('sideload.html').read_text()
+    for key, value in replacements.items():
+        page_text = page_text.replace('@@' + key + '@@', html.escape(value))
+    page = page_text.encode()
+
 
     class Handler(BaseHTTPRequestHandler):
         server_version = 'OpenOblivionSideload/1'
         def do_HEAD(self): self.serve(False)
         def do_GET(self): self.serve(True)
+        def respond_json(self, code, data):
+            body = json.dumps(data).encode()
+            self.send_response(code); self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body))); self.send_header('Cache-Control', 'no-store')
+            self.end_headers(); self.wfile.write(body)
+        def do_POST(self):
+            path = urlsplit(self.path).path
+            if path not in ('/upload', '/report'):
+                self.respond_json(404, {'error': 'Not found'}); return
+            origin = self.headers.get('Origin')
+            if origin and origin != f'http://{args.bind}:{args.port}':
+                self.respond_json(403, {'error': 'Use the private sideload page to upload'}); return
+            if self.headers.get('Transfer-Encoding') or self.headers.get('Content-Encoding', 'identity') != 'identity':
+                self.respond_json(400, {'error': 'Encoded uploads are not supported'}); return
+            try:
+                size = int(self.headers.get('Content-Length', '0'))
+            except ValueError:
+                size = 0
+            limit = MAX_SCREENSHOT if path == '/upload' else MAX_REPORT
+            if size <= 0 or size > limit:
+                self.respond_json(413, {'error': 'Upload is empty or exceeds the size limit'}); return
+            if path == '/report' and self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+                self.respond_json(415, {'error': 'Report must use JSON'}); return
+            if not upload_slots.acquire(blocking=False):
+                self.respond_json(503, {'error': 'Uploads are busy; try again shortly'}); return
+            try:
+                self.connection.settimeout(30)
+                body = self.rfile.read(size)
+                if len(body) != size:
+                    raise ValueError('Upload was interrupted; try again')
+                result = (save_screenshot(uploads, body) if path == '/upload'
+                          else save_report(uploads, body, apk['sha256'], manifest['build']))
+                self.respond_json(201, result)
+                self.log_message('Saved private %s id=%s', path[1:], result['id'])
+            except ValueError as error:
+                self.respond_json(400, {'error': str(error)})
+            except OSError:
+                self.respond_json(500, {'error': 'Could not store the upload; please retry'})
+            finally:
+                upload_slots.release()
         def serve(self, body):
             path = urlsplit(self.path).path
             if path == '/':
                 self.send_response(200); self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Cache-Control', 'no-store')
                 self.send_header('Content-Length', str(len(page))); self.end_headers()
                 if body: self.wfile.write(page)
                 return

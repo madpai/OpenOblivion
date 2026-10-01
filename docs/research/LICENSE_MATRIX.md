@@ -87,3 +87,9 @@ bundle. This personal package is supplied back to the installation owner over
 their private tailnet; it must never enter public releases or CI artifacts.
 
 [Exact donor source and patches](https://github.com/Andiweli/OpenMW-Android/tree/7c97200966c9cb35a76b74d16d5c76f1a8939612).
+
+The 0.2 scene dependency traversal and read-only phone QA Lua are independently
+authored; no upstream parser or Lua implementation is copied. Field layouts
+were checked against the pinned OpenMW reader, and camera/debug API contracts
+against the Android engine's 0.51 base. The gallery/QA workflow was studied in
+the already-listed MegaMod checkout; its server/page code is not reused.

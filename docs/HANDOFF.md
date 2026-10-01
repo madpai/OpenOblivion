@@ -10,8 +10,14 @@ They stage a pinned external OpenMW Android 0.51 baseline and a private visual
 slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 `/home/commander/openoblivion-private/sideload`, served only on Tailscale port
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
-release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure;
-physical phone scene rendering and controls still need validation.
+release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
+and the owner's failed physical-phone views. The 0.2 diagnostic APK expands NPC
+visual dependencies and logs camera/player positions; it is not a confirmed
+phone rendering fix. The sideload page now includes screenshot uploads and
+QA objective `OO-ANDROID-002`. Reports live in
+`/home/commander/openoblivion-private/evidence/phone-qa`, outside downloads/Git.
+Next compare phone screenshots and `OPENOBLIVION_PHONE_QA` samples with the
+desktop loose-slice evidence to distinguish camera/spawn and rendering failures.
 
 ## Decisions and measured state
 
@@ -26,7 +32,7 @@ an independently authored reader-API loop because the pinned upstream
 `ReaderUtils::readItem` can omit the final grouped record. Original fixtures
 reproduce and cover this issue; no upstream file was patched.
 
-Linux tools and Android ARM64 tools build. Fifteen tests pass in the normal
+Linux tools and Android ARM64 tools build. Eighteen tests pass in the normal
 build; the founding fourteen also passed ASan/UBSan. The Vulkan probe enumerates
 a desktop GPU; it does not render.
 Six existing Asset Lab original-fixture tests were reproduced with the private
@@ -35,7 +41,8 @@ PyFFI environment and explicit NIFXMLPATH. Neither sibling checkout was edited.
 Source/revisions/licenses: [license matrix](research/LICENSE_MATRIX.md),
 [lock](research/upstreams.lock.json). Raw evidence is external; public results
 are in [REPRODUCTION.md](research/REPRODUCTION.md). GitHub workflow is authored,
-not remotely executed. No physical Android device was available.
+not remotely executed. No physical Android device was available through ADB;
+the owner supplied a phone log and failure description.
 
 ## Continue here
 

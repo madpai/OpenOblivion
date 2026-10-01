@@ -28,6 +28,50 @@ def subrecords(raw):
     if extended is not None: raise ValueError('Orphan extended size')
 
 
+def visual_links(tag, fields):
+    """Return visual paths/form dependencies, retaining repeated TES4 fields.
+
+    This deliberately covers classic scene visuals only, not quests, scripts,
+    load-order overrides or a complete inventory/gameplay dependency graph.
+    """
+    paths, links = [], set()
+    for key, value in fields:
+        if key in (b'MODL', b'MOD2', b'MOD3', b'MOD4') and value.rstrip(b'\0'):
+            paths.append('meshes/' + value.rstrip(b'\0').decode('cp1252'))
+        if key == b'ICON' and value.rstrip(b'\0'):
+            if tag == b'LTEX': prefix = 'textures/landscape/'
+            elif tag in (b'RACE', b'EYES'): prefix = 'textures/'
+            else: continue
+            paths.append(prefix + value.rstrip(b'\0').decode('cp1252'))
+        direct = ((tag == b'NPC_' and key in (b'RNAM', b'HNAM', b'ENAM'))
+                  or (tag == b'LTEX' and key == b'GNAM'))
+        if direct:
+            if len(value) != 4: raise ValueError('Invalid visual form reference')
+            links.add(struct.unpack('<I', value)[0])
+        if tag in (b'NPC_', b'CREA', b'CONT') and key == b'CNTO':
+            if len(value) != 8: raise ValueError('Invalid inventory entry')
+            links.add(struct.unpack_from('<I', value)[0])
+        if tag in (b'LVLC', b'LVLI', b'LVLN') and key == b'LVLO':
+            if len(value) not in (8, 12): raise ValueError('Invalid leveled visual entry')
+            links.add(struct.unpack_from('<I', value, 4 if len(value) == 12 else 2)[0])
+    links.discard(0)
+    return paths, links
+
+
+def visual_closure(records, roots):
+    pending, seen, missing, wanted = list(roots), set(), set(), set()
+    while pending:
+        fid = pending.pop()
+        if fid in seen: continue
+        seen.add(fid)
+        if len(seen) > 100000: raise ValueError('Visual dependency budget exceeded')
+        if fid not in records:
+            missing.add(fid); continue
+        _, paths, links = records[fid]
+        wanted.update(paths); pending.extend(links - seen)
+    return wanted, seen, missing
+
+
 def select(data, assetlab, output):
     from check_upstream import check
     check(assetlab, 'madpai/open-asset-lab')
@@ -57,7 +101,8 @@ def select(data, assetlab, output):
                 if expected > 32*1024*1024: raise ValueError('Decompression budget exceeded')
                 decoder = zlib.decompressobj(); raw = decoder.decompress(raw[4:], expected+1)
                 if len(raw) != expected or not decoder.eof or decoder.unused_data: raise ValueError('Invalid compressed record')
-            fields = dict(subrecords(raw))
+            repeated = list(subrecords(raw))
+            fields = dict(repeated)  # Singleton cell/reference fields only.
             if tag == b'CELL':
                 editor = fields.get(b'EDID', b'').rstrip(b'\0').lower()
                 xy = struct.unpack('<ii', fields[b'XCLC'][:8]) if b'XCLC' in fields else None
@@ -67,17 +112,15 @@ def select(data, assetlab, output):
                 refs.append((cell, struct.unpack('<I', fields[b'NAME'])[0]))
             # All landscape texture definitions are small and prevent near-cell
             # blending/grass dependencies from being omitted by this simple slice.
-            paths = []
-            for key in (b'MODL', b'MOD2', b'MOD3', b'MOD4'):
-                if key in fields: paths.append('meshes/' + fields[key].rstrip(b'\0').decode('cp1252'))
-            if tag == b'LTEX' and b'ICON' in fields:
-                paths.append('textures/landscape/' + fields[b'ICON'].rstrip(b'\0').decode('cp1252'))
-            if paths: records[fid] = (tag, paths)
+            paths, links = visual_links(tag, repeated)
+            # Keep definitions even when they need no visual file (for example
+            # a leveled inventory item). Absence of a model is not a missing form.
+            if tag not in (b'REFR', b'ACHR', b'ACRE', b'LAND', b'PGRD', b'CELL'):
+                records[fid] = (tag, paths, links)
     walk(0, len(plugin))
     bases = {base for cell, base in refs if cell in selected_cells}
-    wanted = set()
-    for fid, (tag, paths) in records.items():
-        if fid in bases or tag == b'LTEX': wanted.update(paths)
+    roots = bases | {fid for fid, (tag, _, _) in records.items() if tag == b'LTEX'}
+    wanted, followed, missing_forms = visual_closure(records, roots)
     archives = [Archive(data / ('Oblivion - ' + name + '.bsa')) for name in ('Meshes', 'Textures - Compressed', 'Misc')]
     providers = {key: archive for archive in archives for key in archive.entries}
     # Runtime defaults may request common water/effect textures independently
@@ -107,8 +150,9 @@ def select(data, assetlab, output):
         if '..' in Path(name).parts or ':' in name: raise ValueError('Invalid selected asset path')
         target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(content)
         packed.append({'path': name, 'size': len(content), 'sha256': hashlib.sha256(content).hexdigest()})
-    report = {'schema': 1, 'scope': 'Vilverin interiors and Tamriel cells 11..13,20..22; all LTEX textures; shared effects',
+    report = {'schema': 2, 'scope': 'Vilverin interiors and Tamriel cells 11..13,20..22; visual race/hair/eyes/inventory/leveled dependencies; all LTEX textures/grass; shared effects',
               'cells': sorted(selected_cells), 'base_forms': len(bases), 'selected_files': sorted(packed, key=lambda f: f['path']),
+              'followed_forms': len(followed), 'missing_visual_forms': sorted(missing_forms),
               'missing_requests': sorted(missing)}
     (output.parent / 'scene-selection.json').write_text(json.dumps(report, indent=2)+'\n')
     print(f"Selected {len(packed)} visual files, {sum(f['size'] for f in packed)//1024//1024} MiB; {len(missing)} unresolved requests", flush=True)

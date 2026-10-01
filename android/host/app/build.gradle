@@ -8,8 +8,8 @@ android {
         applicationId 'org.openoblivion.preview'
         minSdk 29
         targetSdk 32
-        versionCode 1
-        versionName '0.1-scene-preview'
+        versionCode 2
+        versionName '0.2-scene-diagnostics'
         ndk { abiFilters 'arm64-v8a' }
     }
     packaging { jniLibs { useLegacyPackaging = true; keepDebugSymbols += ['**/*.so'] } }

@@ -23,6 +23,8 @@ parser.add_argument('--data', required=True, type=Path, help="Owner's classic Ob
 parser.add_argument('--start', required=True, help='TES4 cell editor ID')
 parser.add_argument('--output', required=True, type=Path, help='Fresh private evidence directory')
 parser.add_argument('--image', default='openoblivion-research-build:founding')
+parser.add_argument('--scene-data', type=Path, help='Optional private loose visual slice; mount only the master, without full BSAs')
+parser.add_argument('--phone-qa', action='store_true', help='Also exercise the original read-only phone camera/player diagnostics')
 args = parser.parse_args()
 output = args.output.expanduser().resolve()
 if output == ROOT or ROOT in output.parents:
@@ -32,6 +34,9 @@ if output.exists():
 work = args.build_work.expanduser().resolve(strict=True)
 data = args.data.expanduser().resolve(strict=True)
 template = args.template.expanduser().resolve(strict=True)
+scene_data = args.scene_data.expanduser().resolve(strict=True) if args.scene_data else None
+if scene_data and (scene_data == ROOT or ROOT in scene_data.parents or not scene_data.is_dir()):
+    parser.error('Scene slice must be an external private directory')
 check(template, 'OpenMW/example-suite')
 if not (work / 'build/openmw').is_file() or not (data / 'Oblivion.esm').is_file():
     parser.error('A built stock engine and owner Oblivion.esm are required')
@@ -41,9 +46,12 @@ config = output / 'config'
 config.mkdir()
 cfg = ['replace=content', 'replace=fallback-archive',
        'resources=/work/build/resources', 'data=/template/game_template/data',
-       'data=/game', 'data=/probe-data', 'content=template.omwgame',
+       *(['data=/scene-master', 'data=/scene-slice'] if scene_data else ['data=/game']),
+       'data=/probe-data', 'content=template.omwgame',
        'content=Oblivion.esm', 'content=scene_probe.omwscripts', 'encoding=win1252']
-for archive in sorted(data.glob('*.bsa')):
+if args.phone_qa:
+    cfg += ['data=/phone-qa-data', 'content=phone_qa.omwscripts']
+for archive in ([] if scene_data else sorted(data.glob('*.bsa'))):
     if archive.name.startswith('Oblivion - '):
         cfg.append('fallback-archive=' + archive.name)
 (config / 'openmw.cfg').write_text('\n'.join(cfg) + '\n')
@@ -60,7 +68,10 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            '--env', 'XDG_CACHE_HOME=/evidence/xdg-cache',
            '--env', 'XDG_RUNTIME_DIR=/evidence/runtime',
            '--env', 'LIBGL_ALWAYS_SOFTWARE=1', '--env', 'ALSOFT_DRIVERS=null',
-           '--volume', f'{work}:/work:ro', '--volume', f'{data}:/game:ro',
+           '--volume', f'{work}:/work:ro',
+           *(['--volume', f'{data / "Oblivion.esm"}:/scene-master/Oblivion.esm:ro',
+              '--volume', f'{scene_data}:/scene-slice:ro'] if scene_data else ['--volume', f'{data}:/game:ro']),
+           *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa else []),
            '--volume', f'{template}:/template:ro',
            '--volume', f'{ROOT / "tools/upstream"}:/probe-data:ro',
            '--volume', f'{output}:/evidence', '--workdir', '/work/build',
@@ -100,6 +111,7 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'docker_image_id': image_id,
            'master_sha256': hashlib.sha256((data / 'Oblivion.esm').read_bytes()).hexdigest(),
            'engine_sha256': hashlib.sha256((work / 'build/openmw').read_bytes()).hexdigest(),
+           'bounded_visual_slice': bool(scene_data), 'phone_qa_enabled': args.phone_qa,
            'screenshots': screens, 'scope': 'Private scene load/screenshot; software OpenGL, not Vulkan or gameplay'}
 (output / 'metrics.json').write_text(json.dumps(metrics, indent=2) + '\n')
 print('Private upstream scene probe complete=' + str(complete))

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenOblivion personal test</title>
+<style>
+body{font:17px/1.5 system-ui;max-width:760px;margin:30px auto;padding:0 18px;background:#141c21;color:#eae9df}
+a{color:#bce5f0}h1{font-size:1.8rem}h2{font-size:1.2rem;margin-top:28px}
+.download,button{display:block;padding:15px;background:#276174;color:white;border:0;border-radius:8px;font:inherit;font-weight:bold;text-align:center;text-decoration:none;cursor:pointer}
+button{width:100%;margin:16px 0}button:disabled{opacity:.5;cursor:wait}
+code{overflow-wrap:anywhere;font-size:12px}li{margin:10px 0}.panel{padding:16px;background:#202d35;border-radius:10px}
+label{display:block;margin:14px 0 5px}input,select,textarea{width:100%;box-sizing:border-box;padding:11px;border:1px solid #61727d;border-radius:6px;background:#10181d;color:#fff;font:inherit}
+input[type=file]{border:2px dashed #61727d;padding:20px}textarea{min-height:95px}.muted{color:#b3c2ca;font-size:.9rem}
+#receipt{white-space:pre-wrap;overflow-wrap:anywhere}details{margin:20px 0}
+</style>
+<h1>OpenOblivion Preview</h1>
+<p>Personal ARM64 scene test with your Oblivion assets included.</p>
+<p><a class="download" href="/openoblivion-personal-preview.apk">Download APK — @@SIZE@@</a></p>
+<p class="muted">Build @@BUILD@@</p>
+<p>@@VALIDATION@@</p>
+<section class="panel">
+<h2>Current QA objective — @@QA_ID@@</h2>
+<p>@@QA_OBJECTIVE@@</p>
+<p><b>Pass:</b> Vilverin shows textured walls and floor; the exterior shows ground and ruins. Looking changes the view, and movement changes your position without dropping below the world.</p>
+<p><b>Fail:</b> blank interior, sky with no ground, error markers, falling through the scene, or returning to the launcher.</p>
+<ol>
+<li>Open the build listed above. Choose <b>Vilverin interior</b> and wait up to 30 seconds.</li>
+<li>Take a screenshot, then drag on the right to look around. Hold forward on the left pad for five seconds and take another shot if the view changes.</li>
+<li>Exit to the launcher and repeat with <b>Vilverin exterior</b>.</li>
+<li>Open <b>View scene log</b>. Paste its text below, along with screenshots and your phone model.</li>
+</ol>
+<p class="muted">An empty view or sky alone does not pass. Screenshots of failures are useful; you do not need to repeat a failing scene indefinitely.</p>
+</section>
+<h2>Send screenshots and a QA report</h2>
+<p>Pick screenshots from your gallery. Reports travel over Tailscale to this desktop and stay private.</p>
+<form id="qa-form">
+<label for="shots">Screenshots — up to four, 20 MB each</label>
+<input id="shots" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+<p id="chosen" class="muted"></p>
+<label for="device">Phone model</label><input id="device" maxlength="120" placeholder="For example, Galaxy S24">
+<label for="android">Android version</label><input id="android" maxlength="80" placeholder="For example, Android 15">
+<label for="tested">APK/build tested</label><input id="tested" maxlength="160" value="@@BUILD@@">
+<p class="muted">Change this if you tested an older APK.</p>
+<label for="scene">Scene</label><select id="scene"><option value="both">Both scenes</option><option value="interior">Vilverin interior</option><option value="exterior">Vilverin exterior</option><option value="other">Other</option></select>
+<label for="result">What happened?</label><select id="result"><option value="empty">Blank / no world geometry</option><option value="sky-only">Sky only / no ground</option><option value="falling">Falling / below the world</option><option value="crash">Crash / returned to launcher</option><option value="geometry">Geometry visible</option><option value="other">Other</option></select>
+<label for="notes">What you saw and tried</label><textarea id="notes" maxlength="8000" placeholder="Describe the view, movement, look controls, and how long you waited."></textarea>
+<label for="log">Scene log</label><textarea id="log" maxlength="131072" placeholder="Paste the text from View scene log."></textarea>
+<button id="send" type="submit">Send QA report</button>
+<div id="receipt" role="status" aria-live="polite"></div>
+</form>
+<details><summary>Installation and controls</summary>
+<ol><li>Keep Tailscale connected while downloading. Download resume is supported.</li>
+<li>Open the APK and allow installation from your browser when Android asks.</li>
+<li>Open <b>OpenOblivion Preview</b>. Let bundled assets install once, then choose a scene.</li>
+<li>Left pad: move. Drag right: look. Use: interact. Jump: jump. Exit: launcher.</li></ol>
+<p>Android 10 or newer, ARM64. Allow about 4 GB free for download, installation and unpacking.</p>
+</details>
+<p class="muted">Early OpenMW Android 0.51 / OpenGL ES scene viewer. Gameplay, multiplayer and Vulkan are planned for OpenOblivion. Visual assets cover Vilverin and nearby exterior cells; distant areas may have missing resources. Voices, sound and DLC are omitted.</p>
+<p class="muted">For your own installation only. Keep this asset-packed APK private.</p>
+<p>SHA256: <code>@@HASH@@</code></p>
+<p><a href="/SHA256SUMS.txt">Checksums</a> · <a href="/source-notes.txt">Runtime source and attribution</a></p>
+<script>
+const files=document.getElementById('shots'),send=document.getElementById('send'),receipt=document.getElementById('receipt');
+const field=id=>document.getElementById(id).value;
+files.addEventListener('change',()=>{document.getElementById('chosen').textContent=Array.from(files.files).map(f=>f.name+' ('+(f.size/1048576).toFixed(1)+' MB)').join('\n');});
+async function post(path,body,type){
+ const r=await fetch(path,{method:'POST',headers:{'Content-Type':type},body});
+ const result=await r.json(); if(!r.ok)throw Error(result.error||('HTTP '+r.status)); return result;
+}
+document.getElementById('qa-form').addEventListener('submit',async e=>{
+ e.preventDefault(); const chosen=Array.from(files.files);
+ if(chosen.length>4){receipt.textContent='Choose at most four screenshots.';return;}
+ if(chosen.some(f=>f.size>20*1048576||!['image/png','image/jpeg','image/webp'].includes(f.type))){receipt.textContent='Use PNG, JPEG or WebP screenshots, up to 20 MB each.';return;}
+ if(!chosen.length&&!field('notes').trim()&&!field('log').trim()){receipt.textContent='Choose a screenshot or include notes/a scene log.';return;}
+ send.disabled=true;
+ try{
+  const screenshots=[];
+  for(let i=0;i<chosen.length;i++){
+   receipt.textContent='Uploading screenshot '+(i+1)+' of '+chosen.length+'…';
+   const saved=await post('/upload',chosen[i],chosen[i].type);screenshots.push(saved.id);
+  }
+  receipt.textContent='Saving QA report…';
+  const result=await post('/report',JSON.stringify({device:field('device'),android:field('android'),tested_build:field('tested'),scene:field('scene'),result:field('result'),notes:field('notes'),log:field('log'),screenshots,page_apk_sha256:'@@HASH@@',qa_objective:'@@QA_ID@@'}),'application/json');
+  receipt.textContent='Saved privately. Report ID: '+result.id+'\nScreenshots: '+screenshots.length+'. Keep this ID when following up.';
+ }catch(error){receipt.textContent='Upload failed: '+error.message+'\nKeep this page open and try again.';}
+ finally{send.disabled=false;}
+});
+</script>
+</html>

@@ -135,7 +135,7 @@ the immutable scene/content boundary before accepting a full runtime fork. Vulka
 rendering, a native Android app and authoritative co-op remain separate gates.
 
 
-## Personal Android sideload checkpoint (2026-10-01)
+## Personal Android sideload baseline 0.1 (2026-10-01)
 
 Original launcher/touch host plus unchanged external Andiweli OpenMW Android
 0.51 baseline, source `7c97200966c9cb35a76b74d16d5c76f1a8939612`. See
@@ -169,3 +169,48 @@ Personal artifact root: `/home/commander/openoblivion-private/sideload`. The
 user service is enabled for the current user's sessions (`Linger=no`); the
 host and Tailscale must remain online. Stop with
 `systemctl --user stop openoblivion-sideload.service`. No remote push occurred.
+
+## Phone QA and diagnostic build 0.2 (2026-10-01)
+
+The owner reported incorrect views in both scenes, with mostly sky outside.
+Their phone log reaches Vilverin under GL4ES/OpenGL 2.1 and contains Collada
+sky/player model failures, missing NPC visual files and missing attachment
+nodes. It does not show a native crash. A loaded cell is not a visibility pass.
+Camera/spawn failure is a hypothesis; no camera coordinates were in that log.
+
+The independently authored scene packager now preserves repeated model and
+inventory subrecords and follows NPC race/hair/eyes, inventory/leveled forms,
+race head/body paths and landscape grass. All **32 NPC mesh paths** reported
+missing are present in the new private selection. It contains 3,079 files
+(407 MiB), follows 3,208 forms with no missing form IDs, and records 57 unresolved
+asset requests. Unsupported SpeedTree and unavailable expansion terrain/grass
+remain among those requests; this is still a scene slice, not a full resolver.
+
+Build `0.2-scene-diagnostics`, versionCode 2: **636,600,299 bytes**, SHA256
+`54f999707f2ed86fc360f025259b3d9a08cf8d756eeef66e76f12a4ff0ef83b0`.
+APK v2 signature, ZIP CRCs and unchanged native hashes pass. The payload declares
+840,121,235 unpacked bytes. Original read-only Lua logs player/camera positions,
+orientation and collision state at five intervals without changing gameplay.
+The template/native runtime remains unchanged; Collada loading is not fixed.
+
+The Android 14 emulator upgrades from 0.1 to 0.2 successfully. The new payload
+ID matches the installer's completion marker; installed diagnostic Lua matches
+its source hash, configuration registers it, and the launcher reaches assets
+ready. This verifies update/unpacking/configuration, not emulator world rendering.
+
+Desktop 0.52 probes register the private loose slice and mount **only the owner
+master**, without full game archives supplying omitted dependencies. Both exit
+zero and produce inspected screenshots: textured interior walls/doorway and
+exterior terrain/water/statics are visible. Phone diagnostic Lua also emits
+samples there. Wall times: 16.8712 seconds interior, 17.2646 exterior. These are
+desktop content/diagnostic checks, not Android rendering, FPS or movement proof.
+Evidence is under `evidence/android-preview-slice-{interior,exterior}-02` in the
+private workspace.
+
+The sideload page now includes objective `OO-ANDROID-002`, explicit visibility
+pass/fail criteria, a gallery picker and phone/build/result/notes/log fields.
+Original HTTP fixtures and a live private round trip verify screenshot/report
+storage, build identity, upload limits, invalid IDs, origin rejection, download
+ranges and refusal to serve uploaded evidence. Test uploads are removed after
+verification. Real phone reports stay in `evidence/phone-qa`, outside downloads
+and Git. Four CTest suites (18 tests) and the history content guard pass.

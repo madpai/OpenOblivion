@@ -12,7 +12,24 @@ crashed in `libndk_translation_proxy_libGLESv2.so` with a null function target;
 single-threaded OSG rendering did not fix it. A template-only control reached
 world initialization but reported Android Collada model load failures. This
 does not establish phone scene rendering or touch movement. No physical device
-was connected. Preserve these limits when describing the download.
+was connected to ADB.
+
+The owner's subsequent physical-phone test of build 0.1 reaches Vilverin under
+GL4ES/OpenGL 2.1 but reports an incorrect interior and mostly sky outside. Its
+log confirms Collada sky/player model failures and missing NPC race/body/hair/
+worn-item models. Build 0.2 expands visual dependencies and includes all 32 NPC
+mesh paths reported missing. Original read-only Lua now samples player/camera
+positions, orientation and collision state. Desktop 0.52 checks of that loose
+visual slice show textured interior geometry and exterior terrain/water/statics.
+That does not establish that the phone view is fixed; the Android Collada loader
+failure and a possible camera/spawn issue remain under investigation.
+
+The private sideload page now has QA objective `OO-ANDROID-002`, a gallery upload
+picker and device/build/log fields. Its pass condition requires visible world
+geometry and working look/movement. Empty interiors or sky without ground fail.
+Reports and screenshots stay outside the checkout and are not downloadable
+through the service. Use those reports to compare the new camera-position logs
+with desktop evidence before selecting a renderer, model or spawn fix.
 
 Confirmed: native inspector and Vulkan capability probe compile for
 `arm64-v8a`, API 29, NDK `28.0.13004108`, Clang 19, static libc++. These are

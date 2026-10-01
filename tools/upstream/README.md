@@ -69,6 +69,13 @@ claiming scene compatibility. It also verifies the engine revision and observed
 cell name and records the image/binary/master identities. Raw logs, hashes and
 screenshots are private.
 
+To check a generated Android scene slice without accidentally supplying missing
+files from the full archives, add `--scene-data /outside/android-preview-build/scene-data`.
+This mounts only the master from the owner's Data directory and registers no
+BSA archives. `--phone-qa` also runs the original Android diagnostic Lua script.
+These options test visual dependency coverage and diagnostics on the desktop
+0.52 reference runtime; they do not exercise the Android 0.51 binary or its GPU.
+
 This does not test Vulkan, a phone, quests, original animation, multiplayer,
 performance or collision accuracy. Engine/asset support warnings remain part
 of the evidence even when a screenshot is produced.
