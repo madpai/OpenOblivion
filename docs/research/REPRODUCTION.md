@@ -517,8 +517,17 @@ separate from the native desktop metrics. Water transitions, breath
 depletion/recovery, drowning and original Oblivion movement fidelity remain
 unverified; existing Collada/animation limitations remain.
 
-Next: preserve the liked 0.5 stair feel, measure original Oblivion walk/run and
-jump behavior with fixed character stats, calibrate the native player controller,
-then repeat phone stair and water checks at matched movement settings. See
-[player movement next steps](../PLAYER_MOVEMENT.md). This pass updates documents
-only: the runtime, private APK and sideload objective remain unchanged.
+At this checkpoint the liked 0.5 stair feel stayed in place and the runtime
+was unchanged. The later control correction and the current engine follow-up
+are in the next section and in [player movement](../PLAYER_MOVEMENT.md).
+
+## Phone controls 0.7 (2026-10-01)
+
+Owner testing of private preview 0.6 reported that the USE and JUMP labels no
+longer matched the buttons, and that the run control left the player walking
+after one press. This engine binds Space to activate and E to jump. Holding
+Shift inverts the always-run setting. Preview 0.7 restores USE on the lower
+button and JUMP above it, and pulses the always-run control instead of holding
+Shift. It starts on run. The 0.5 movement motor and stair filter are unchanged.
+0.6 is withdrawn. The private sideload objective is `OO-ANDROID-007`. The APK
+stays outside this repository.

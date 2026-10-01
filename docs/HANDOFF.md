@@ -13,7 +13,10 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
 and the owner's earlier failed physical-phone views. The current download is
-`0.5-native-stairs`, with screenshot uploads and QA objective `OO-ANDROID-005`.
+`0.7-controls`, with screenshot uploads and QA objective `OO-ANDROID-007`.
+It keeps the 0.5 engine and stair filter. USE is the lower-right button, JUMP
+is above it, and the run control starts on run. `0.6-run-toggle` is withdrawn.
+`0.5-native-stairs` remains archived for the stair comparison.
 The complete working 0.3 APK/page/notes are archived privately. Native 0.5
 builds the Android engine from hash-locked sources and applies the small audited
 post-physics camera patch. Same-binary desktop Vilverin comparisons improve
@@ -104,11 +107,15 @@ passes; phone evidence includes visibility/look and subsequent owner-reported
 basic movement/stair comfort, with no original movement calibration yet.
 
 The post-physics camera candidate now passes desktop stair comparisons in both
-directions, and the owner now likes the 0.5 stair feel. Continue by measuring
-original Oblivion walk/run and jump behavior at fixed character stats, calibrating
-the native player movement, then repeating stairs at matched speeds. Keep 0.5
-as the current comparison and 0.3 as the recovery baseline. Check swim transitions
-and breath behavior separately; the owner's observation does not prove drowning.
+directions, and the owner now likes the 0.5 stair feel. One-to-one movement,
+including stair collision, is not the current target: authored Havok shapes are
+still skipped, and several published movement settings are absent from the
+master. Do not retune the 0.5 filter ahead of a motor recovered from the game.
+Preview 0.7-controls keeps that motor. USE and JUMP match this engine's
+Space and E bindings, and the run control pulses always-run instead of holding
+Shift. Keep 0.5 as the stair
+comparison and 0.3 as the recovery baseline. Check swim transitions and breath
+behavior separately; the owner's observation does not prove drowning.
 Use `tools/native/README.md` for the canonical source build and its exact receipt.
 The source build lives under `/home/commander/openoblivion-private/native-android`,
 desktop integration under `native-desktop`, and private candidate APK staging

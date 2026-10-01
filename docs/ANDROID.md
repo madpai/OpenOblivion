@@ -106,11 +106,13 @@ activation and sampled movement, not a controlled stair or performance compariso
 
 The owner separately reports very smooth stairs with subtle stepping they like,
 swimming working and a breath indicator appearing. Preserve the current feel.
-Next, calibrate walk/run speed and jump behavior against original Oblivion with
-fixed character stats, then retest stair flow and water transitions. Swimming
-and the meter are observations; depletion/recovery and drowning remain untested.
+One-to-one speed, jump and stair collision is not the current target. Preview
+**0.7-controls** keeps the 0.5 motor and stair filter. USE is the lower-right
+button and JUMP is above it, matching this engine's Space and E bindings. The
+top button pulses always-run and starts on run. Swimming and the meter are observations;
+depletion/recovery and drowning remain untested.
 
-The private download is 0.5; the complete working 0.3 APK/page/notes are archived
+The private download is 0.7-controls; 0.6 is withdrawn, 0.5 remains the stair comparison, and the complete working 0.3 APK/page/notes are archived
 for recovery/comparison. The rejected 0.4 Lua-filter APK remains withheld.
 Native 0.5 keeps the original movement and camera collision paths and adds
 bounded read-only QA samples. It remains OpenGL, with animation, general TES4

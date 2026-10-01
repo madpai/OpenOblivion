@@ -14,6 +14,7 @@ final class TouchControls extends View {
     private final Set<Integer> keys = new HashSet<>();
     private int move = -1, look = -1;
     private float lx, ly;
+    private boolean running = true;
     private final int[] directions = {KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_D};
     TouchControls(GameActivity a) { super(a); activity = a; setFocusable(false); }
     private float radius() { return Math.min(getWidth(), getHeight()) * .16f; }
@@ -25,20 +26,26 @@ final class TouchControls extends View {
         c.drawText("MOVE", cx() - r * .42f, cy() + 8, paint);
         c.drawText("Drag right to look", getWidth() * .5f, getHeight() * .12f, paint);
         button(c, "USE", 0); button(c, "JUMP", 1); button(c, "EXIT", 2);
+        button(c, running ? "WALK" : "RUN", 3);
     }
     private RectF rect(int i) {
         float w = getWidth() * .105f, h = getHeight() * .15f;
+        if (i == 3) return new RectF(getWidth() - w * 2.75f, h * .2f, getWidth() - w * 1.55f, h * 1.2f);
         return new RectF(getWidth() - w * (i == 2 ? 1.2f : 1.4f),
             i == 2 ? h * .2f : getHeight() - h * (i == 0 ? 1.4f : 2.7f),
             getWidth() - w * (i == 2 ? .2f : .4f), i == 2 ? h * 1.2f : getHeight() - h * (i == 0 ? .4f : 1.7f));
     }
     private void button(Canvas c, String label, int i) {
-        RectF b = rect(i); paint.setColor(0x88606060); c.drawRoundRect(b, 14, 14, paint);
+        RectF b = rect(i); paint.setColor(i == 3 && running ? 0xAA3D6B4F : 0x88606060); c.drawRoundRect(b, 14, 14, paint);
         paint.setColor(Color.WHITE); c.drawText(label, b.left + 10, b.centerY() + 7, paint);
     }
     private void key(int k, boolean down) {
         if (down && keys.add(k)) SDLActivity.onNativeKeyDown(k);
         else if (!down && keys.remove(k)) SDLActivity.onNativeKeyUp(k);
+    }
+    private void pulse(int k) {
+        SDLActivity.onNativeKeyDown(k);
+        SDLActivity.onNativeKeyUp(k);
     }
     void release() { for (int k : new HashSet<>(keys)) key(k, false); actions.clear(); move = look = -1; }
     @Override public boolean onTouchEvent(MotionEvent e) {
@@ -47,6 +54,7 @@ final class TouchControls extends View {
         if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_POINTER_DOWN) {
             float x = e.getX(ix), y = e.getY(ix);
             if (rect(2).contains(x, y)) { release(); activity.finish(); return true; }
+            if (rect(3).contains(x, y)) { running = !running; pulse(KeyEvent.KEYCODE_CAPS_LOCK); invalidate(); return true; }
             int k = rect(0).contains(x,y) ? KeyEvent.KEYCODE_SPACE : rect(1).contains(x,y) ? KeyEvent.KEYCODE_E : 0;
             if (k != 0) { if (!actions.containsValue(k)) { actions.put(id, k); key(k, true); } }
             else if (x < getWidth() * .4f && move == -1) move = id;

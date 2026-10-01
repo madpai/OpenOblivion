@@ -30,26 +30,30 @@ a controlled stair comparison. Device/model and Android fields are blank;
 there are no attached screenshots. Stair comfort comes from the owner's chat
 feedback, independently of the desktop variation measurements.
 
-The next engine work should establish original Oblivion player movement before
-further stair tuning:
+One-to-one Oblivion movement, including stair contact, is not the current
+target. The pinned runtime still builds static collision from visible geometry
+and skips authored Havok shapes. A read of the owner master found Player
+`00000007` (Imperial `00000907`, height 1, Speed 40, Athletics 5, Acrobatics 5)
+and the present settings `fMoveCharWalkMin/Max` 90/130, `fMoveRunMult` 3,
+`fMoveNoWeaponMult` 1.1, `fMoveEncumEffect` 0.4, `fMoveWeightMax` 150,
+`fMoveSneakMult` 0.6 and `fJumpHeightMax` 164. `fJumpHeightMin`,
+`fMoveRunAthleticsMult`, the unworn encumbrance setting, and the swim and
+air-control settings are absent from that master and from `Oblivion_default.ini`.
+Applying the published defaults on top of the current motor would change speed
+and jump without making stair collision match. The 0.5 stair filter stays as
+the owner left it.
 
-1. Record a reference route in original Oblivion with a fixed character and
-   documented movement-relevant stats, equipment, encumbrance and frame cadence.
-   Measure walk/run and strafe speeds, input/release response, and jump height,
-   airtime, horizontal travel and landing. Study the existing TES4 records and
-   pinned implementations first; current Template/TES3 defaults are not a
-   demonstrated Oblivion baseline. Recover constants/formulas from evidence.
-2. Calibrate the native player controller against that reference, keeping TES4
-   compatibility values separate from future server/mode rules. Measure solved
-   body motion separately from the camera. Preserve 0.5's filter while testing
-   walk/run, stop, jump/landing, ramps, walls and low ceilings on original fixtures.
-3. Repeat phone ascent/descent at matched walk/run speeds, including stops,
-   turns and jumps at landings. Retune stair presentation only if those tests
-   identify a remaining problem. Also check water entry/exit, swimming and
-   underwater breath behavior; a visible meter alone does not establish drowning.
+Preview **0.7-controls** does not change walk speed, jump height, gravity,
+collision, or the stair filter. On this engine Space activates and E jumps, so
+the lower-right button is USE and the button above it is JUMP. The top button
+pulses the always-run control and starts on run. Holding Shift inverted that
+control and could leave the player walking, so 0.6 is withdrawn. Water entry,
+breath, and drowning remain untested. The next movement work is to recover
+Oblivion's own player motor from the game, not to retune the stair filter.
 
 Animation and broader viewer work follow the dependable player baseline.
-This documentation checkpoint makes no runtime changes or new APK.
+The 0.7 phone control change is the host overlay only. The movement probe and
+stair filter are unchanged.
 
 The original `--player-movement` desktop probe drives the existing native player
 controls through five seconds of walking, stopping, jumping and landing. It
@@ -197,5 +201,6 @@ Private evidence names are `native-stair-ascent-{raw,smoothed}-05`,
 `native-surface-{stairs,ramp,wall,ceiling}-05`, `native-look-control-05` and
 `native-healthy-tracking-control-05`. Native source/build instructions are in
 [tools/native](../tools/native/README.md). The latest owner phone feedback now
-supports stair comfort on 0.5, separately from these desktop metrics. Original
-movement calibration and repeat phone QA at matched speeds remain required.
+supports stair comfort on 0.5, separately from these desktop metrics. The next
+movement step is to recover Oblivion's player motor from the game and measure
+it against these fixtures. The 0.5 stair filter stays until that comparison.

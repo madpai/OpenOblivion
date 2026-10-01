@@ -22,11 +22,11 @@ slice and resolves a concrete uncertainty before expanding scope.
    The owner now prioritizes actual player movement. Walking/stopping/ordinary
    collision/jump/look are reported working on the phone. Native 0.5 now has
    owner-reported smooth stairs with liked subtle stepping; swimming and a breath
-   indicator are also observed. Next, measure original Oblivion walk/run speeds
-   and jump behavior with fixed character stats, calibrate native movement, then
-   repeat stair and water checks at those settings. Preserve the current stair
-   feel until that comparison. Authored TES4 collision remains separate
-   compatibility work; see [player movement priority](PLAYER_MOVEMENT.md).
+   indicator are also observed. Preview 0.7 corrects the phone USE, JUMP, and
+   run controls without changing the 0.5 motor or stair filter. Next, recover
+   Oblivion's own walk, run, and jump motor from the game and measure it before
+   retuning stairs. Authored TES4 collision remains separate compatibility work;
+   see [player movement priority](PLAYER_MOVEMENT.md).
 3. Use original synthetic override/deletion/master-reference fixtures to verify
    typed data resolution. Cross-check bytes from one BSA/NIF against existing
    NifTools/Asset Lab readers with preserved diagnostics.

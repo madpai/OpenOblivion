@@ -37,7 +37,7 @@ public final class MainActivity extends Activity {
         title.setText("OpenOblivion — personal scene preview"); title.setTextSize(24);
         layout.addView(title);
         TextView scope = new TextView(this);
-        scope.setText("OpenMW Android 0.51 baseline · ARM64 · OpenGL ES\nWorld viewing and touch movement. Quests, combat and multiplayer are not implemented.\nLeft pad: move. Drag right: look. Use: interact. Jump: jump. Exit: return here.");
+        scope.setText("OpenMW Android 0.51 baseline · ARM64 · OpenGL ES\nWorld viewing and touch movement. Quests, combat and multiplayer are not implemented.\nLeft pad: move. Drag right: look. USE is the lower-right button. JUMP is above it. The top button switches run and walk, and starts on run. Exit: return here.");
         layout.addView(scope);
         status = new TextView(this); layout.addView(status);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
