@@ -1,0 +1,2 @@
+# Unified-diff context prefixes include spaces on otherwise empty source lines.
+tools/native/camera_grounded_eye.patch -whitespace
