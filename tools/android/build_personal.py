@@ -93,7 +93,9 @@ def main():
     paths += [(file, file.relative_to(stage).as_posix()) for file in sorted(stage.rglob('*')) if file.is_file()]
     # Original read-only camera/player diagnostics; no donor scripts modified.
     paths += [(ROOT / 'tools/android/phone_qa.omwscripts', 'qa/phone_qa.omwscripts'),
-              (ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua', 'qa/scripts/openoblivion_phone_qa.lua')]
+              (ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua', 'qa/scripts/openoblivion_phone_qa.lua'),
+              (ROOT / 'tools/android/camera_repair.omwscripts', 'qa/camera_repair.omwscripts'),
+              (ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua', 'qa/scripts/openoblivion_preview_camera.lua')]
     selection = work / 'scene-data'
     if selection.exists():
         if selection.is_symlink(): raise ValueError('Selection directory must not be a symlink')
@@ -128,11 +130,19 @@ def main():
     provenance['preview_tools_sha256'] = {file.relative_to(ROOT).as_posix(): digest(file) for file in
         (Path(__file__).resolve(), ROOT / 'tools/android/scene_assets.py',
          ROOT / 'tools/android/phone_qa.omwscripts', ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua')}
+    for file in (ROOT / 'tools/android/camera_repair.omwscripts', ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua'):
+        provenance['preview_tools_sha256'][file.relative_to(ROOT).as_posix()] = digest(file)
     (assets / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')
     (host / 'local.properties').write_text('sdk.dir=' + str(args.sdk.resolve()) + '\n')
-    subprocess.run([str(args.gradle.resolve()), '--no-daemon', '--console=plain', 'assembleDebug'], cwd=host, check=True)
     result = host / 'app/build/outputs/apk/debug/app-debug.apk'
+    # AGP's incremental ZIP writer can leave the old large payload as dead
+    # space. Recreate only this generated APK; keep compilation caches.
+    if result.is_symlink(): raise ValueError('Generated APK must not be a symlink')
+    result.unlink(missing_ok=True)
+    subprocess.run([str(args.gradle.resolve()), '--no-daemon', '--console=plain', 'assembleDebug'], cwd=host, check=True)
     with zipfile.ZipFile(result) as built:
+        if result.stat().st_size > sum(entry.compress_size for entry in built.infolist()) + 16*1024*1024:
+            raise ValueError('APK contains excessive unused ZIP space; regenerate the APK')
         print('Checking APK CRCs and exact native hashes', flush=True)
         bad = built.testzip()
         if bad:

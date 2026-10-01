@@ -11,13 +11,19 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 `/home/commander/openoblivion-private/sideload`, served only on Tailscale port
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
-and the owner's failed physical-phone views. The 0.2 diagnostic APK expands NPC
-visual dependencies and logs camera/player positions; it is not a confirmed
-phone rendering fix. The sideload page now includes screenshot uploads and
-QA objective `OO-ANDROID-002`. Reports live in
+and the owner's failed physical-phone views. The current download is
+`0.3-camera-repair`, with screenshot uploads and QA objective `OO-ANDROID-003`.
+APK signature, emulator upgrade/payload configuration and the complete served
+download checksum pass. Reports live in
 `/home/commander/openoblivion-private/evidence/phone-qa`, outside downloads/Git.
-Next compare phone screenshots and `OPENOBLIVION_PHONE_QA` samples with the
-desktop loose-slice evidence to distinguish camera/spawn and rendering failures.
+The follow-up 0.2 report shows camera/tracked positions at the origin, with a
+normally positioned player. The missing Camera/Head bone condition reproduces
+the blank view on desktop. Build 0.3 adds a conditional native actor-root camera
+fallback at zero orbit distance and includes the initial 5x5 exterior grid plus
+persistent references by position. Desktop fault/motion and healthy controls
+pass; the next phone QA must establish visibility and touch movement there.
+The previous 0.2 APK is archived privately, and real QA submissions are retained.
+See `OPENOBLIVION_CAMERA_REPAIR` and mode/distance in `OPENOBLIVION_PHONE_QA` logs.
 
 ## Decisions and measured state
 
@@ -32,7 +38,7 @@ an independently authored reader-API loop because the pinned upstream
 `ReaderUtils::readItem` can omit the final grouped record. Original fixtures
 reproduce and cover this issue; no upstream file was patched.
 
-Linux tools and Android ARM64 tools build. Eighteen tests pass in the normal
+Linux tools and Android ARM64 tools build. Nineteen tests pass in the normal
 build; the founding fourteen also passed ASan/UBSan. The Vulkan probe enumerates
 a desktop GPU; it does not render.
 Six existing Asset Lab original-fixture tests were reproduced with the private

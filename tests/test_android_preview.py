@@ -13,13 +13,50 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch
+from types import ModuleType
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/android'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import scene_assets
 import sideload
 
 
 class SceneDependencies(unittest.TestCase):
+    def test_persistent_reference_selected_by_world_position(self):
+        # Independent synthetic classic records and a tiny archive substitute.
+        def sub(tag, data): return tag + struct.pack('<H', len(data)) + data
+        def record(tag, fid, data=b''): return struct.pack('<4sIIII', tag, len(data), 0, fid, 0) + data
+        def group(kind, label, data): return struct.pack('<4sIIiI', b'GRUP', len(data)+20, label, kind, 0) + data
+        def reference(fid, base, x, y):
+            return record(b'REFR', fid, sub(b'NAME', struct.pack('<I', base))
+                          + sub(b'DATA', struct.pack('<6f', x*4096, y*4096, 0, 0, 0, 0)))
+        persistent = group(6, 10, reference(20, 1, 12.5, 21.5) + reference(21, 2, 15.5, 21.5))
+        target = record(b'CELL', 11, sub(b'XCLC', struct.pack('<ii', 12, 21)))
+        other_world = group(1, 0x777, group(6, 12, reference(22, 3, 12.5, 21.5)))
+        plugin = (record(b'TES4', 0) + group(1, 0x3c, persistent + target) + other_world
+                  + record(b'STAT', 1, sub(b'MODL', b'fixture/inside.nif\0'))
+                  + record(b'STAT', 2, sub(b'MODL', b'fixture/outside.nif\0'))
+                  + record(b'STAT', 3, sub(b'MODL', b'fixture/other-world.nif\0')))
+        class FixtureArchive:
+            def __init__(self, _):
+                self.entries = {name: None for name in ('meshes/fixture/inside.nif',
+                                'meshes/fixture/outside.nif', 'meshes/fixture/other-world.nif')}
+            def read(self, _): return b'Original fixture mesh bytes.'
+        module = ModuleType('assetlab.importers.bsa'); module.Archive = FixtureArchive
+        import check_upstream
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); (root / 'Oblivion.esm').write_bytes(plugin)
+            previous_path = sys.path[:]
+            try:
+                with patch.dict(sys.modules, {'assetlab.importers.bsa': module}), patch.object(check_upstream, 'check'):
+                    selected = scene_assets.select(root, root / 'fixture-archive-api', root / 'slice')
+            finally:
+                sys.path[:] = previous_path
+            self.assertEqual([name for _, name in selected], ['data/meshes/fixture/inside.nif'])
+            report = json.loads((root / 'scene-selection.json').read_text())
+            self.assertEqual(report['position_only_base_forms'], 1)
+            self.assertEqual(report['cells'], [11])
+
     def test_repeated_race_and_inventory_fields_survive_dependency_closure(self):
         def sub(tag, value): return tag + struct.pack('<H', len(value)) + value
         def form(value): return struct.pack('<I', value)

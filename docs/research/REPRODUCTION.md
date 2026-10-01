@@ -214,3 +214,67 @@ storage, build identity, upload limits, invalid IDs, origin rejection, download
 ranges and refusal to serve uploaded evidence. Test uploads are removed after
 verification. Real phone reports stay in `evidence/phone-qa`, outside downloads
 and Git. Four CTest suites (18 tests) and the history content guard pass.
+
+## Camera origin reproduction and repair candidate 0.3 (2026-10-01)
+
+The owner's follow-up 0.2 QA submission contains screenshots of a flat green
+interior and a sky-only exterior. Its exterior log records three camera/tracked
+positions at the world origin while the player is in the loaded exterior cell.
+Touch look changes pitch/yaw. The two saved reports contain duplicate evidence;
+both are retained privately. No physical device is connected to ADB.
+
+In the pinned 0.51 camera implementation, first-person tracking selects a Camera
+or Head node. When neither exists, tracked position becomes zero. The failed
+Collada player model therefore strands the view at the origin. An original
+desktop fault option deliberately selects a missing player model, without
+changing upstream files. The control reproduces **the same green blank interior**
+and zero camera position with a normally placed player.
+
+An independent preview Lua fallback switches sustained lost first-person
+tracking to native actor-root tracking at zero orbit distance. It activates
+after 0.25 seconds with tracked/player distance over 512 units. Desktop fault
+tests then show textured interior/exterior geometry and camera distance
+**124 units** above the player. A healthy control retains first-person mode and
+does not activate the fallback. A two-second movement/turning fault test moves
+38.9528 units in the interior; the final loose-slice exterior test moves
+306.4249 units while the camera follows at 124 units. Collision fidelity and
+physical-phone behavior are not established by these bounded desktop tests.
+
+The bundle now matches the runtime's initial **5x5 exterior grid** and includes
+persistent world references selected by position rather than only CELL ownership.
+An original fixture covers in-grid persistent placement, out-of-grid exclusion
+and exclusion of another world. All **38 missing owner mesh paths** from the
+follow-up log are selected. The selection contains 3,417 files (429 MiB), four
+interiors plus 25 exterior cells, 3,300 followed forms, six additional base forms
+selected by position, and 62 unresolved asset requests. Unsupported SpeedTree,
+template/weather and unavailable expansion assets remain outside this fix.
+
+Build `0.3-camera-repair`, versionCode 3: **653,815,486 bytes**, SHA256
+`e0054ec93aeeb2909ef66b940c4d2734933c1dbcc2e8a3bf694cb0485c656f24`.
+Payload declares 863,651,520 unpacked bytes. Signature, ZIP CRCs and unchanged
+native library hashes pass. The packager now recreates the generated APK and
+checks unused ZIP-space overhead: an incremental package initially retained
+about 600 MiB of dead bytes after replacing its payload, and was rejected before
+deployment. Compilation caches remain reusable.
+
+The Android 14 emulator upgrades from 0.2 to 0.3 successfully. Its completion
+marker matches payload ID
+`87eb3d8206bab322a63008de3d83a82777a232deb7bbe6319945e8393a6a8b11`;
+installed camera/diagnostic Lua matches the original sources, configuration
+registers the fallback and the launcher reaches assets ready. This establishes
+upgrade/unpacking/configuration, not Android scene rendering.
+
+The existing private service now serves 0.3 and objective `OO-ANDROID-003`.
+A complete HTTP APK download matches the hash/size above; the live page build,
+objective, suffix range and new ETag checks pass. The verified 0.2 download and
+manifest are archived in `sideload-history/0.2`; real phone submissions are
+retained. The new objective requires visible scenery, look and five-second
+movement in both scenes, with screenshots and updated camera logs.
+
+Private evidence: `evidence/camera-origin-control-interior-03`,
+`camera-root-repair-{interior,exterior}-03`, `camera-healthy-control-interior-03`,
+`camera-root-motion-interior-03`, and `camera-final-slice-exterior-03` under the
+private workspace. The latest exterior probe uses only the selected loose data
+and owner master, verifies movement/camera bounds and exits zero. Model-loader
+errors and unsupported animation remain; the new APK requires another phone
+visibility/touch report. Nineteen original tests pass in four CTest suites.

@@ -76,6 +76,15 @@ BSA archives. `--phone-qa` also runs the original Android diagnostic Lua script.
 These options test visual dependency coverage and diagnostics on the desktop
 0.52 reference runtime; they do not exercise the Android 0.51 binary or its GPU.
 
+`--missing-player-model` deliberately points the template's player model settings
+at a nonexistent path, reproducing the missing-head camera condition without
+editing upstream assets. Compare a control run with one adding `--camera-repair`.
+Use `--phone-qa` to record camera positions and mode. `--camera-motion` applies
+bounded movement and turning for two seconds through the engine's control API.
+That flag requires measured movement, turning and a camera within 256 units of
+the player for probe success. These fault/motion scripts are desktop test tools;
+the motion script is never included in the APK.
+
 This does not test Vulkan, a phone, quests, original animation, multiplayer,
 performance or collision accuracy. Engine/asset support warnings remain part
 of the evidence even when a screenshot is produced.

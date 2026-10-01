@@ -21,15 +21,33 @@ worn-item models. Build 0.2 expands visual dependencies and includes all 32 NPC
 mesh paths reported missing. Original read-only Lua now samples player/camera
 positions, orientation and collision state. Desktop 0.52 checks of that loose
 visual slice show textured interior geometry and exterior terrain/water/statics.
-That does not establish that the phone view is fixed; the Android Collada loader
-failure and a possible camera/spawn issue remain under investigation.
+That did not establish that the phone view was fixed; its follow-up report
+provided the camera coordinates needed to diagnose the blank views.
 
-The private sideload page now has QA objective `OO-ANDROID-002`, a gallery upload
+The 0.2 private sideload page added QA objective `OO-ANDROID-002`, a gallery upload
 picker and device/build/log fields. Its pass condition requires visible world
 geometry and working look/movement. Empty interiors or sky without ground fail.
 Reports and screenshots stay outside the checkout and are not downloadable
-through the service. Use those reports to compare the new camera-position logs
-with desktop evidence before selecting a renderer, model or spawn fix.
+through the service.
+
+The follow-up 0.2 report contains two failing screenshots and exterior camera
+samples at `(0, 0, 0)` while the player is in the loaded cell. Pitch/yaw change
+with touch look. The pinned engine's first-person camera needs a Camera/Head
+bone; absent tracking returns the origin. Deliberately omitting the player model
+on desktop reproduces the same blank interior and zero camera positions.
+
+Build 0.3 conditionally switches lost first-person tracking to the native
+actor-root camera at zero orbit distance. Desktop fault tests recover textured
+interior/exterior views and keep the camera 124 units above the player during
+bounded movement/turning. Healthy first-person tracking remains unchanged.
+The visual bundle now covers the initial 5x5 exterior grid and persistent
+references selected by position; all 38 missing owner mesh paths in the follow-up
+log are selected. The Collada loader remains unresolved. This is a preview
+workaround, with physical-phone rendering and controls awaiting another report.
+The live download is 0.3 with objective `OO-ANDROID-003`: check both scenes,
+look around, move for five seconds, then upload screenshots and the new log.
+The emulator upgrade verifies the payload ID, installed scripts/configuration
+and ready launcher. The complete served APK matches the build SHA256.
 
 Confirmed: native inspector and Vulkan capability probe compile for
 `arm64-v8a`, API 29, NDK `28.0.13004108`, Clang 19, static libc++. These are

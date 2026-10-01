@@ -93,3 +93,10 @@ authored; no upstream parser or Lua implementation is copied. Field layouts
 were checked against the pinned OpenMW reader, and camera/debug API contracts
 against the Android engine's 0.51 base. The gallery/QA workflow was studied in
 the already-listed MegaMod checkout; its server/page code is not reused.
+
+The 0.3 preview camera fallback and desktop fault/motion harness are also
+independently authored GPL-3.0-only code using documented APIs. Camera tracking
+behavior and exterior-grid constants were checked against OpenMW engine base
+`f4bec41444214a7903bebd178389ca22ca13f646` and the unchanged 0.52 desktop pin.
+No camera implementation or donor script is copied/modified. Released native
+libraries and their notice/source requirements remain unchanged.

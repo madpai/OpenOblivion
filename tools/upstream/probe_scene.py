@@ -25,6 +25,9 @@ parser.add_argument('--output', required=True, type=Path, help='Fresh private ev
 parser.add_argument('--image', default='openoblivion-research-build:founding')
 parser.add_argument('--scene-data', type=Path, help='Optional private loose visual slice; mount only the master, without full BSAs')
 parser.add_argument('--phone-qa', action='store_true', help='Also exercise the original read-only phone camera/player diagnostics')
+parser.add_argument('--camera-repair', action='store_true', help='Exercise the original preview camera fallback')
+parser.add_argument('--missing-player-model', action='store_true', help='Fault injection: deliberately omit the base player model')
+parser.add_argument('--camera-motion', action='store_true', help='Bounded movement/turning probe; changes controls for two seconds')
 args = parser.parse_args()
 output = args.output.expanduser().resolve()
 if output == ROOT or ROOT in output.parents:
@@ -49,8 +52,11 @@ cfg = ['replace=content', 'replace=fallback-archive',
        *(['data=/scene-master', 'data=/scene-slice'] if scene_data else ['data=/game']),
        'data=/probe-data', 'content=template.omwgame',
        'content=Oblivion.esm', 'content=scene_probe.omwscripts', 'encoding=win1252']
-if args.phone_qa:
-    cfg += ['data=/phone-qa-data', 'content=phone_qa.omwscripts']
+if args.phone_qa or args.camera_repair:
+    cfg += ['data=/phone-qa-data']
+if args.phone_qa: cfg += ['content=phone_qa.omwscripts']
+if args.camera_repair: cfg += ['content=camera_repair.omwscripts']
+if args.camera_motion: cfg += ['content=camera_motion_probe.omwscripts']
 for archive in ([] if scene_data else sorted(data.glob('*.bsa'))):
     if archive.name.startswith('Oblivion - '):
         cfg.append('fallback-archive=' + archive.name)
@@ -58,6 +64,8 @@ for archive in ([] if scene_data else sorted(data.glob('*.bsa'))):
 settings = (template / 'settings.cfg').read_text()
 # This setting belongs in the existing Models section of the upstream template.
 settings = settings.replace('[Models]', '[Models]\nload unsupported nif files = true', 1)
+if args.missing_player_model:
+    settings = settings.replace('meshes/BasicPlayer.dae', 'meshes/openoblivion_missing_player.dae')
 (config / 'settings.cfg').write_text(settings + '\n[Video]\nresolution x = 800\nresolution y = 600\n')
 container_name = 'openoblivion-scene-' + uuid.uuid4().hex[:12]
 command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--network', 'none', '--cpus', '4', '--memory', '12g',
@@ -71,7 +79,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            '--volume', f'{work}:/work:ro',
            *(['--volume', f'{data / "Oblivion.esm"}:/scene-master/Oblivion.esm:ro',
               '--volume', f'{scene_data}:/scene-slice:ro'] if scene_data else ['--volume', f'{data}:/game:ro']),
-           *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa else []),
+           *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa or args.camera_repair else []),
            '--volume', f'{template}:/template:ro',
            '--volume', f'{ROOT / "tools/upstream"}:/probe-data:ro',
            '--volume', f'{output}:/evidence', '--workdir', '/work/build',
@@ -100,6 +108,11 @@ cell_sample = re.search(r'OPENOBLIVION_SCENE_PROBE cell=(\S+) name=(.*?) exterio
 cell_matches = cell_sample is not None and cell_sample[2].casefold() == args.start.casefold()
 complete = ('OPENOBLIVION_SCENE_PROBE_DONE' in log and bool(screens) and result.returncode == 0
             and revision_matches and cell_matches)
+repair_activated = 'OPENOBLIVION_CAMERA_REPAIR activated:' in log
+motion = re.search(r'OPENOBLIVION_CAMERA_MOTION distance=([\d.eE+-]+) camera_player_distance=([\d.eE+-]+) yaw=([\d.eE+-]+)', log)
+motion_verified = bool(motion and float(motion[1]) > 1 and float(motion[2]) < 256 and abs(float(motion[3])) > 0.1)
+if args.camera_motion and not motion_verified: complete = False
+if args.camera_repair and args.missing_player_model and not repair_activated: complete = False
 metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_complete': complete,
            'elapsed_seconds': round(time.monotonic() - start, 4), 'start_cell': args.start,
            'template_revision': check(template, 'OpenMW/example-suite'),
@@ -112,6 +125,11 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'master_sha256': hashlib.sha256((data / 'Oblivion.esm').read_bytes()).hexdigest(),
            'engine_sha256': hashlib.sha256((work / 'build/openmw').read_bytes()).hexdigest(),
            'bounded_visual_slice': bool(scene_data), 'phone_qa_enabled': args.phone_qa,
+           'camera_repair_enabled': args.camera_repair, 'missing_player_model_injected': args.missing_player_model,
+           'camera_motion_enabled': args.camera_motion,
+           'camera_repair_activated': repair_activated, 'camera_motion_verified': motion_verified,
+           'motion_distance': float(motion[1]) if motion else None,
+           'motion_camera_player_distance': float(motion[2]) if motion else None,
            'screenshots': screens, 'scope': 'Private scene load/screenshot; software OpenGL, not Vulkan or gameplay'}
 (output / 'metrics.json').write_text(json.dumps(metrics, indent=2) + '\n')
 print('Private upstream scene probe complete=' + str(complete))

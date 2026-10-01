@@ -20,6 +20,8 @@ return {
                 .. ' tracked=' .. tostring(camera.getTrackedPosition())
                 .. ' pitch=' .. tostring(camera.getPitch())
                 .. ' yaw=' .. tostring(camera.getYaw())
+                .. ' mode=' .. tostring(camera.getMode())
+                .. ' camera_player_distance=' .. string.format('%.2f', (camera.getPosition() - self.position):length())
                 .. ' collision=' .. tostring(debug.isCollisionEnabled()))
             sample = sample + 1
         end,

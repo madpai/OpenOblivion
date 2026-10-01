@@ -7,11 +7,22 @@ This is a packaging aid, not a complete dependency resolver or gameplay reader.
 """
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import struct
 import sys
 import zlib
+
+EXTERIOR_WORLD = 0x3c
+EXTERIOR_CENTER = (12, 21)
+EXTERIOR_RADIUS = 2
+TES4_CELL_UNITS = 4096
+
+
+def in_exterior_grid(world, xy):
+    return world == EXTERIOR_WORLD and xy is not None and all(
+        abs(value - center) <= EXTERIOR_RADIUS for value, center in zip(xy, EXTERIOR_CENTER))
 
 
 def subrecords(raw):
@@ -106,10 +117,17 @@ def select(data, assetlab, output):
             if tag == b'CELL':
                 editor = fields.get(b'EDID', b'').rstrip(b'\0').lower()
                 xy = struct.unpack('<ii', fields[b'XCLC'][:8]) if b'XCLC' in fields else None
-                if editor.startswith(b'vilverin') or (world == 0x3c and xy and abs(xy[0]-12)<=1 and abs(xy[1]-21)<=1):
+                # Pinned OpenMW TES4 scenes activate a radius-two (5x5) grid.
+                if editor.startswith(b'vilverin') or in_exterior_grid(world, xy):
                     selected_cells.add(fid)
             if tag in (b'REFR', b'ACHR', b'ACRE') and b'NAME' in fields:
-                refs.append((cell, struct.unpack('<I', fields[b'NAME'])[0]))
+                # Persistent world references can belong to the world's
+                # persistent CELL rather than their physical exterior cell.
+                xy = None
+                if world == EXTERIOR_WORLD and b'DATA' in fields:
+                    if len(fields[b'DATA']) != 24: raise ValueError('Invalid reference transform')
+                    xy = tuple(math.floor(value / TES4_CELL_UNITS) for value in struct.unpack_from('<ff', fields[b'DATA']))
+                refs.append((cell, struct.unpack('<I', fields[b'NAME'])[0], in_exterior_grid(world, xy)))
             # All landscape texture definitions are small and prevent near-cell
             # blending/grass dependencies from being omitted by this simple slice.
             paths, links = visual_links(tag, repeated)
@@ -118,7 +136,9 @@ def select(data, assetlab, output):
             if tag not in (b'REFR', b'ACHR', b'ACRE', b'LAND', b'PGRD', b'CELL'):
                 records[fid] = (tag, paths, links)
     walk(0, len(plugin))
-    bases = {base for cell, base in refs if cell in selected_cells}
+    cell_bases = {base for cell, base, _ in refs if cell in selected_cells}
+    position_bases = {base for _, base, visible in refs if visible}
+    bases = cell_bases | position_bases
     roots = bases | {fid for fid, (tag, _, _) in records.items() if tag == b'LTEX'}
     wanted, followed, missing_forms = visual_closure(records, roots)
     archives = [Archive(data / ('Oblivion - ' + name + '.bsa')) for name in ('Meshes', 'Textures - Compressed', 'Misc')]
@@ -150,8 +170,9 @@ def select(data, assetlab, output):
         if '..' in Path(name).parts or ':' in name: raise ValueError('Invalid selected asset path')
         target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(content)
         packed.append({'path': name, 'size': len(content), 'sha256': hashlib.sha256(content).hexdigest()})
-    report = {'schema': 2, 'scope': 'Vilverin interiors and Tamriel cells 11..13,20..22; visual race/hair/eyes/inventory/leveled dependencies; all LTEX textures/grass; shared effects',
+    report = {'schema': 2, 'scope': 'Vilverin interiors and Tamriel cells 10..14,19..23 (native initial 5x5 grid); visual race/hair/eyes/inventory/leveled dependencies; all LTEX textures/grass; shared effects',
               'cells': sorted(selected_cells), 'base_forms': len(bases), 'selected_files': sorted(packed, key=lambda f: f['path']),
+              'position_only_base_forms': len(position_bases - cell_bases),
               'followed_forms': len(followed), 'missing_visual_forms': sorted(missing_forms),
               'missing_requests': sorted(missing)}
     (output.parent / 'scene-selection.json').write_text(json.dumps(report, indent=2)+'\n')

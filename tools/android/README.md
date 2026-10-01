@@ -39,7 +39,10 @@ python3 tools/android/build_personal.py \
 
 The packager includes the whole master, public Template, engine resources,
 and a visual neighborhood: all Vilverin interiors and Tamriel cells
-11..13,20..22. The packaging-only TES4 traversal follows reference base forms
+10..14,19..23, matching the pinned runtime's initial 5x5 active exterior grid.
+Persistent world references are also selected by their physical position;
+their owning persistent CELL need not be in this neighborhood.
+The packaging-only TES4 traversal follows reference base forms
 and model paths, including repeated race head/body parts, NPC race/hair/eyes,
 inventory and leveled item/actor links, then readable NIF texture links and
 implicit normal/glow companions. All landscape texture definitions, their
@@ -63,6 +66,20 @@ scene log. It does not change the camera, spawn, collision or gameplay rules.
 The user's 0.1 phone report loaded the cell but showed incorrect interior/
 exterior views and Collada player-model failures. The expanded visual bundle
 fixes missing NPC dependencies; a phone rendering fix is not yet established.
+
+Build 0.3 adds a separately authored preview camera workaround. If first-person
+tracking stays more than 512 units from the player for 0.25 seconds, it selects
+native third-person actor-root tracking with zero orbit distance. This retains
+the engine's look/movement and collision paths while avoiding a missing
+Camera/Head bone. Healthy tracking is left alone. Camera mode and measured
+camera/player distance appear in the diagnostic log; activation prints
+`OPENOBLIVION_CAMERA_REPAIR`. This repairs a reproduced camera condition, not
+the Collada loader, original animation or RPG gameplay. Phone verification of
+the new APK is still required.
+
+The packager recreates the generated APK while retaining compilation caches,
+then rejects excessive unused ZIP space. This prevents incremental APK updates
+from retaining a replaced large payload as hundreds of MiB of dead bytes.
 
 ## Private server
 

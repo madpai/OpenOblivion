@@ -24,8 +24,9 @@ and [upstream comparison](docs/research/FOUNDATION_COMPARISON.md).
 - Both executables cross-compile for Android `arm64-v8a`, API 29, NDK r28.
 - An optional [personal Android scene APK](tools/android/README.md) packages
   an audited OpenMW Android baseline and owner-supplied scene assets privately.
-  Emulator installation/unpacking pass; world rendering and touch movement
-  still need phone validation after an emulator graphics translation crash.
+  Emulator installation/unpacking pass. Phone QA identified a missing-head
+  camera stuck at the origin; a conditional repair passes desktop fault tests
+  and still needs phone visibility/touch validation.
 - Original generated fixtures, upstream revision/integrity checks and a
   public-content guard covering working files, staged blobs and Git history.
 - A separate unchanged full OpenMW build and private interior/exterior scene

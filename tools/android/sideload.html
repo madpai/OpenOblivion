@@ -22,13 +22,14 @@ input[type=file]{border:2px dashed #61727d;padding:20px}textarea{min-height:95px
 <h2>Current QA objective — @@QA_ID@@</h2>
 <p>@@QA_OBJECTIVE@@</p>
 <p><b>Pass:</b> Vilverin shows textured walls and floor; the exterior shows ground and ruins. Looking changes the view, and movement changes your position without dropping below the world.</p>
-<p><b>Fail:</b> blank interior, sky with no ground, error markers, falling through the scene, or returning to the launcher.</p>
+<p><b>Fail:</b> blank interior, sky with no ground, falling through the scene, or returning to the launcher. Also record any missing objects or error markers.</p>
 <ol>
 <li>Open the build listed above. Choose <b>Vilverin interior</b> and wait up to 30 seconds.</li>
 <li>Take a screenshot, then drag on the right to look around. Hold forward on the left pad for five seconds and take another shot if the view changes.</li>
 <li>Exit to the launcher and repeat with <b>Vilverin exterior</b>.</li>
 <li>Open <b>View scene log</b>. Paste its text below, along with screenshots and your phone model.</li>
 </ol>
+<p class="muted">The log now includes camera mode and distance from the player. A repaired camera should stay near the player; seeing <code>OPENOBLIVION_CAMERA_REPAIR</code> records when the fallback activates. Player/sky model-loader errors remain a separate issue.</p>
 <p class="muted">An empty view or sky alone does not pass. Screenshots of failures are useful; you do not need to repeat a failing scene indefinitely.</p>
 </section>
 <h2>Send screenshots and a QA report</h2>
