@@ -56,29 +56,34 @@ exist on that skeleton.
 
 ## Working tree after this pass
 
-Version name `0.10-touch-name`, versionCode 10, is the served download.
+Version name `0.11-fit`, versionCode 11, is the served download.
 Physics is the 0.9 library. APK SHA256
-`02b7c090ee570365b463fdb105830b880fa6a32e18cbdfd1f766ad05c270c366`.
+`6dede3d7b7c16633ea07a232aa5131f70f6182fcf9052f4bda6f6f5b538050a4`
+(656,483,887 bytes). QA objective `OO-ANDROID-011`.
 
-The overlay keeps USE on Space, JUMP on E, and the Shift run hold. It adds
-attack (left mouse, held), sneak (left ctrl, held while the button is on),
-weapon (F), spell (R), inventory (right mouse), journal (J), wait (T), the
-game menu (Escape), and POV (Tab). USE, JUMP, and attack sit above a 13%
-bottom gap so the minimap is not under the thumb. The look hint moved from
-the top center to just above the move stick.
+The closed overlay is the move stick plus USE (Space), JUMP (E), ATK
+(left mouse, held), and MORE. The tray holds the Shift run toggle, sneak
+(left ctrl while on), weapon (F), spell (R), inventory (right mouse),
+journal (J), wait (T), the game menu (Escape), POV (Tab), and exit.
+USE, JUMP, and attack sit above a 13% bottom gap so the minimap is not
+under the thumb. The look hint is just above the move stick. Same-cell
+doors stay open after USE. The measurement is in
+[the Vilverin gate note](VILVERIN_GATE.md).
 
 A player script draws a top bar when Lua has a record name. It does not print
 record ids. TES4 actors are not in the 0.51 Lua type map, so the Bandit label
-remains the engine tooltip. GUI scale 1.25 and font size 20 make that label
-and the bars larger. Both numbers are a comfort choice.
+remains the engine tooltip. Build 0.10 appended GUI scale 1.25 and font size
+20. The engine sanitized 20 to 18. The host no longer appends those two
+settings.
 
 ## Still next
 
 1. Bind TES4 actor and container display names in Lua, then the top bar can
    show them. Container inventory is loaded on the base record and is not
    exposed to Lua, so USE still does not open a chest.
-2. One desktop log of skeleton bone count versus skinned parts for one
-   Vilverin NPC. Not a new animation system, and not a new body.
+2. Match inserted NPC parts to the male skeleton. That NIF has 142 named
+   nodes, including `Bip01 Pelvis` and `Bip01 Spine`, and no Groin, Chest,
+   Neck, Head, or Right Hand node. Not a new animation system, and not a new body.
 3. Character radius, height, and step offset. A pass over the master, the
    default ini, and the player skeleton did not find them. Do not retune the
    body from this pass.
@@ -98,5 +103,18 @@ The phone default is OpenMW shape type 0, an axis-aligned box
 (`settings-default.cfg`: 0 box, 1 rotating box, 2 cylinder). The template
 `BasicPlayer.dae` collision mesh, read as text, spans `-13.3072..13.3072` in
 X and Y and `1.7012..140` in Z, which is half extents `13.3072, 13.3072,
-69.1494`. Phone logs have failed to load that Collada file, so those extents
-are the file, not a confirmed runtime body. The OSG loader was not re-run.
+69.1494` and center Z `70.8506`. The XY center is 0, so shape type 0 applies
+to that mesh. Phone logs fail the Collada file (`basicplayer.dae`, code 3)
+and then the embedded error marker. That marker's combined vertex bounds are
+X and Z `-61.602..61.602` and Y `-9.950..9.951`, a 123.2 by 19.9 footprint.
+The XY ratio is far outside the axis-aligned-box test, so the live body on
+0.10 was the rotating marker box.
+
+`tools/android/meshes/basicplayer.osgt` repeats the eight Collision corners
+and nothing else. The packer rewrites the actor model keys from
+`meshes/BasicPlayer.dae` to that file. The kf paths stay on the dae. This is
+the template node the settings already named, loaded through a format the
+phone already reads. It is not a recovered Oblivion capsule, and the step
+constants and stair filter stay where they are. The next phone log's
+`visual_bounds` is the check that this mesh, rather than the marker, loaded.
+The host has no OSG, so that check is still ahead.

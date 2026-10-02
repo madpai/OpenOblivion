@@ -3,24 +3,45 @@
 Landscape touch actions in `android/host/app/src/main/java/ui/activity/TouchControls.java`.
 They inject the OpenMW 0.51 default bindings only. Physics, gait, and the run control are unchanged.
 
-USE, JUMP, EXIT, and run stay where they were. USE holds Space (`A_Activate`). JUMP holds E (`A_Jump`). EXIT finishes the activity. Run toggles a hold of Left Shift (`A_Run`), starts on, and shows WALK while running and RUN while walking. `A_AutoMove` (Q) has no overlay button.
+The closed overlay is a move stick and four buttons. Thirteen controls are not drawn at once. MORE opens a two-column tray and CLOSE hides it again. The phone shots of 0.10 showed the old thirteen buttons covering the journal, the inventory, and the right-hand look surface.
 
-Mouse buttons use `org.libsdl.app.SDLActivity.sendMouseButton(int state, int button)`: state `1` presses and `0` releases. The button argument is the SDL id, `SDL_BUTTON_LEFT` (1) or `SDL_BUTTON_RIGHT` (3). `onNativeMouse` is not used; that call also injects pointer motion and tracks one Android button-state mask. The finger that pressed a mouse button is the only one that can release it. Keys use the same one-owner rule. `release()` drops held keys and mouse buttons; `onPause` already calls it. Run and sneak holds are sent again from `syncRun()` when the window focus returns.
+## Closed overlay
 
-Buttons are hit-tested before the move stick (left 40%) and look (everything else), so a tap on a button does not also look. Every new key button is the same size as USE: 10.5% of width by 11% of height. ATK is wider and as tall as the JUMP+USE stack. USE, JUMP, and ATK sit 13% of the screen height above the bottom edge so the engine minimap is not covered. The look hint is above the move stick, not at the top center, because the engine name label occupies that spot. The new cluster is below RUN and EXIT and does not cover the stick. Nothing from the list below was dropped.
+The left 40% of the screen is the move stick when the finger is not on a button. The rest of the empty screen looks: a drag there calls `SDLActivity.sendRelativeMouseMotion`. The hint "Drag empty space to look" sits above the stick. The engine name label stays at the top center.
 
-Upper row, left to right: POV, MAGIC, WAIT, MENU. Lower row, left to right: JOURNAL, WEAPON, SNEAK, INV. ATK sits under WEAPON and SNEAK, immediately left of JUMP and USE.
+The right edge holds four squares, bottom to top: USE, JUMP, ATK, MORE. USE holds Space (`A_Activate`). JUMP holds E (`A_Jump`). ATK holds `SDL_BUTTON_LEFT` (`A_Use`) and is highlighted while that button is down. MORE toggles the tray and reads CLOSE while the tray is open. USE sits 13% of the screen height above the bottom edge so the engine compass stays visible. That gap is only a layout choice.
+
+Each square's edge is 10.5% of the shorter screen side, capped at 14% of the height, and then raised to 48px if that is still smaller. The gap is at least 6px and otherwise 16% of the edge. `tests/test_touch_layout.py` checks this cluster on 1920×1080, 2400×1080, 1280×720, and 960×540.
+
+## Tray
+
+MORE opens ten squares in two columns, row-major from the top: RUN, SNEAK, WEAPON, MAGIC, INV, JOURNAL, WAIT, POV, MENU, EXIT. The bottom row lines up with USE. The columns sit to the left of the four primary buttons.
+
+RUN toggles a hold of Left Shift (`A_Run`). It starts on. The label reads WALK while running and RUN while walking. SNEAK toggles a hold of Left Ctrl (`A_Sneak`). The label stays SNEAK and the square is highlighted while sneak is on. This is not the engine `toggleSneak` setting. RUN and SNEAK leave the tray open.
+
+Every other tray control, and USE, JUMP, and ATK, close the tray on the press. EXIT still calls `release()` and finishes the activity. MENU is Escape and does not replace EXIT.
 
 | Control | OpenMW action | SDL binding | Gesture |
 | --- | --- | --- | --- |
-| ATK | `A_Use` (10) | `SDL_BUTTON_LEFT` (1) | Hold while the finger is down. Highlighted while held. |
-| SNEAK | `A_Sneak` (24) | `SDL_SCANCODE_LCTRL` | Toggle. Holds Left Ctrl while on, same pattern as run. Label stays SNEAK and the button is highlighted while on. This is not the engine `toggleSneak` setting. |
-| WEAPON | `A_ToggleWeapon` (28) | `SDL_SCANCODE_F` | Tap. Key down on finger down, up on finger up. |
-| MAGIC | `A_ToggleSpell` (29) | `SDL_SCANCODE_R` | Tap. Key down on finger down, up on finger up. |
-| INV | `A_Inventory` (3) | `SDL_BUTTON_RIGHT` (3) | Tap. Button down on finger down, up on finger up. |
-| MENU | `A_GameMenu` (0) | `SDL_SCANCODE_ESCAPE` | Tap. Key down on finger down, up on finger up. Does not replace EXIT. |
-| JOURNAL | `A_Journal` (14) | `SDL_SCANCODE_J` | Tap. Key down on finger down, up on finger up. |
-| WAIT | `A_Rest` (13) | `SDL_SCANCODE_T` | Tap. Key down on finger down, up on finger up. |
-| POV | `A_TogglePOV` (30) | `SDL_SCANCODE_TAB` | Tap. Key down on finger down, up on finger up. Holding it keeps Tab down, which OpenMW uses for the temporary preview camera. |
+| USE | `A_Activate` | Space | Hold. Primary, bottom. |
+| JUMP | `A_Jump` | E | Hold. Primary. |
+| ATK | `A_Use` (10) | `SDL_BUTTON_LEFT` (1) | Hold. Highlighted while held. |
+| MORE | none | none | Toggles the tray. |
+| RUN | `A_Run` (17) | Left Shift | Toggle. Label WALK while running. |
+| SNEAK | `A_Sneak` (24) | Left Ctrl | Toggle hold. Highlighted while on. |
+| WEAPON | `A_ToggleWeapon` (28) | F | Tap. |
+| MAGIC | `A_ToggleSpell` (29) | R | Tap. |
+| INV | `A_Inventory` (3) | `SDL_BUTTON_RIGHT` (3) | Tap. |
+| MENU | `A_GameMenu` (0) | Escape | Tap. |
+| JOURNAL | `A_Journal` (14) | J | Tap. |
+| WAIT | `A_Rest` (13) | T | Tap. |
+| POV | `A_TogglePOV` (30) | Tab | Tap. Holding it keeps Tab down, which OpenMW uses for the temporary preview camera. |
+| EXIT | none | none | Finishes the activity. |
 
-OpenMW fires these menu and stance actions on the press. Attack stays active only while left mouse is down.
+`A_AutoMove` (Q) has no overlay button. OpenMW fires the menu and stance actions on the press. Attack stays active only while left mouse is down.
+
+## Pointer and focus
+
+Mouse buttons use `org.libsdl.app.SDLActivity.sendMouseButton(int state, int button)`: state `1` presses and `0` releases. The button argument is the SDL id, `SDL_BUTTON_LEFT` (1) or `SDL_BUTTON_RIGHT` (3). `onNativeMouse` is not used; that call also injects pointer motion and tracks one Android button-state mask. The finger that pressed a key or a mouse button is the only one that can release it. Buttons are hit-tested before the stick and the look surface, so a tray square does not also look.
+
+`release()` drops held keys, Shift, Ctrl, and mouse buttons. It does not clear the run, sneak, or tray state. `onPause` already calls it. `syncRun()` sends the Shift and Ctrl holds again when the window focus returns. `GameActivity` calls both.

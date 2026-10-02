@@ -24,7 +24,7 @@ Morrowind NPC and creature records refuse the telekinesis extension, as do unloc
 
 ## API limit
 
-`object.type.record(object).name` is used when that type binding exists. In this 0.51 tree, `record()` is bound for Morrowind object types and for ESM4 doors and terminals. Other ESM4 types, including weapons, armor, books, containers, and activators, have a type table but no `record()`. ESM4 NPCs and creatures are not in the Lua type map, so `object.type` is nil. The bar stays hidden for those hits. The engine tooltip still draws a TES4 NPC name. The phone settings raise GUI scale to 1.25 and font size to 20 so that existing label, the bars, and the minimap are easier to read on the 960×540 framebuffer. Those two numbers are a touch-comfort choice, not recovered Oblivion settings.
+`object.type.record(object).name` is used when that type binding exists. In this 0.51 tree, `record()` is bound for Morrowind object types and for ESM4 doors and terminals. Other ESM4 types, including weapons, armor, books, containers, and activators, have a type table but no `record()`. ESM4 NPCs and creatures are not in the Lua type map, so `object.type` is nil. The bar stays hidden for those hits. The engine tooltip still draws a TES4 NPC name. Build 0.10 appended GUI scaling factor 1.25 and font size 20. The engine rejected 20 and sanitized it to 18. The host no longer appends either setting, so the framebuffer keeps the defaults, scaling factor 1.0 and font size 16.
 
 ## Packing
 

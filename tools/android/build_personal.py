@@ -29,6 +29,82 @@ def outside(path):
     return path
 
 
+# These are actor models. The kf keys stay on the dae; Collada already fails
+# there, and this box is not an animation clip.
+PLAYER_MODEL_KEYS = {
+    'xbaseanim', 'baseanim', 'xbaseanim1st', 'baseanimkna', 'baseanimkna1st',
+    'xbaseanimfemale', 'baseanimfemale', 'baseanimfemale1st', 'xargonianswimkna',
+}
+
+
+def player_collision_settings(text):
+    """Point actor models at the loadable collision box."""
+    rewritten = []
+    for line in text.splitlines(keepends=True):
+        body = line.split('#', 1)[0]
+        if '=' in body and body.split('=', 1)[0].strip() in PLAYER_MODEL_KEYS:
+            line = line.replace('meshes/BasicPlayer.dae', 'meshes/basicplayer.osgt')
+        rewritten.append(line)
+    return ''.join(rewritten)
+
+
+# The staged OpenMW 0.51 script. Same-cell TES4 doors were hidden for five
+# seconds because the Open and Close sequences are not played. A hall gate
+# then became solid again while the player was still in the doorway.
+DOOR_FIVE_SECOND_STUB = """local async = require('openmw.async')
+local core = require('openmw.core')
+local types = require('openmw.types')
+local world = require('openmw.world')
+local auxUtil = require('openmw_aux.util')
+
+local EnableObject = async:registerTimerCallback('EnableObject', function(obj) obj.enabled = true end)
+
+local function ESM4DoorActivation(door, actor)
+    -- TODO: Implement lockpicking minigame
+    -- TODO: Play door opening animation
+    local Door4 = types.ESM4Door
+    core.sound.playSound3d(Door4.record(door).openSound, actor)
+    if Door4.isTeleport(door) then
+        actor:teleport(Door4.destCell(door), Door4.destPosition(door), Door4.destRotation(door))
+    else
+        door.enabled = false
+        async:newSimulationTimer(5, EnableObject, door)
+    end
+    return false -- disable activation handling in C++ mwmechanics code
+end
+"""
+
+DOOR_STAYS_OPEN = """local core = require('openmw.core')
+local types = require('openmw.types')
+local world = require('openmw.world')
+local auxUtil = require('openmw_aux.util')
+
+local function ESM4DoorActivation(door, actor)
+    -- TODO: Implement lockpicking minigame
+    -- TODO: Play the Open and Close sequences. The mesh is hidden until then.
+    -- A same-cell door stays that way until it is used again.
+    local Door4 = types.ESM4Door
+    core.sound.playSound3d(Door4.record(door).openSound, actor)
+    if Door4.isTeleport(door) then
+        actor:teleport(Door4.destCell(door), Door4.destPosition(door), Door4.destRotation(door))
+    else
+        print('OPENOBLIVION_DOOR toggle enabled=' .. tostring(door.enabled))
+        door.enabled = not door.enabled
+    end
+    return false -- disable activation handling in C++ mwmechanics code
+end
+"""
+
+
+def same_cell_doors_stay_open(text):
+    """Replace the five-second same-cell door hide with a toggle."""
+    if DOOR_STAYS_OPEN in text:
+        return text
+    if DOOR_FIVE_SECOND_STUB not in text:
+        raise ValueError('ESM4 door activation is not the known five-second stub')
+    return text.replace(DOOR_FIVE_SECOND_STUB, DOOR_STAYS_OPEN, 1)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--donor', required=True, type=Path)
@@ -107,6 +183,8 @@ def main():
         if digest(defaults) != native_build['defaults_sha256']:
             raise ValueError('Native source defaults mismatch')
         shutil.copyfile(defaults, stage / 'base/defaults.bin')
+    door_script = stage / 'resources/vfs/scripts/omw/activationhandlers.lua'
+    door_script.write_text(same_cell_doors_stay_open(door_script.read_text()))
     java = host / 'app/src/main/java/org/libsdl/app'
     java.mkdir(parents=True, exist_ok=True)
     bridge = donor / 'source/app/src/main/java/org/libsdl/app'
@@ -125,11 +203,12 @@ def main():
         if digest(runtime / 'third-party-notices.txt') != native_build['notices_sha256']:
             raise ValueError('Native source notices mismatch')
         shutil.copyfile(runtime / 'third-party-notices.txt', notices / 'native-source-third-party.txt')
-    shutil.copyfile(template / 'settings.cfg', stage / 'template-settings.cfg')
+    (stage / 'template-settings.cfg').write_text(player_collision_settings((template / 'settings.cfg').read_text()))
     paths = [(file, 'template/' + file.relative_to(template / 'game_template/data').as_posix())
              for file in sorted((template / 'game_template/data').rglob('*')) if file.is_file()]
     paths += [(file, file.relative_to(stage).as_posix()) for file in sorted(stage.rglob('*')) if file.is_file()]
     # Original read-only camera/player diagnostics; no donor scripts modified.
+    paths += [(ROOT / 'tools/android/meshes/basicplayer.osgt', 'template/meshes/basicplayer.osgt')]
     paths += [(ROOT / 'tools/android/phone_qa.omwscripts', 'qa/phone_qa.omwscripts'),
               (ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua', 'qa/scripts/openoblivion_phone_qa.lua'),
               (ROOT / 'tools/android/look_name.omwscripts', 'qa/look_name.omwscripts'),
@@ -177,7 +256,8 @@ def main():
     provenance['preview_tools_sha256'] = {file.relative_to(ROOT).as_posix(): digest(file) for file in
         (Path(__file__).resolve(), ROOT / 'tools/android/scene_assets.py',
          ROOT / 'tools/android/phone_qa.omwscripts', ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua',
-         ROOT / 'tools/android/look_name.omwscripts', ROOT / 'tools/android/scripts/openoblivion_look_name.lua')}
+         ROOT / 'tools/android/look_name.omwscripts', ROOT / 'tools/android/scripts/openoblivion_look_name.lua',
+         ROOT / 'tools/android/meshes/basicplayer.osgt')}
     for file in (ROOT / 'tools/android/camera_repair.omwscripts', ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua'):
         provenance['preview_tools_sha256'][file.relative_to(ROOT).as_posix()] = digest(file)
     (assets / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')

@@ -141,9 +141,7 @@ public final class MainActivity extends Activity {
         settings = settings.replace("[Models]", "[Models]\nload unsupported nif files = true");
         settings += "\n[Video]\nresolution x = 960\nresolution y = 540\nfullscreen = true\nvsync = true\n"
             + "\n[Shadows]\nenable shadows = false\n\n[Water]\nshader = false\n\n[Camera]\nviewing distance = 4096\n"
-            + "\n[Terrain]\ndistant terrain = false\n\n[Post Processing]\nenabled = false\n"
-            // Comfort scale for the 960x540 framebuffer. Not an Oblivion constant.
-            + "\n[GUI]\nscaling factor = 1.25\nfont size = 20\n";
+            + "\n[Terrain]\ndistant terrain = false\n\n[Post Processing]\nenabled = false\n";
         write(new File(user, "settings.cfg"), settings);
     }
     @Override public void onBackPressed() { if (!preparing) super.onBackPressed(); }

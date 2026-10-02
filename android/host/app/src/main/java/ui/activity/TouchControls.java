@@ -10,11 +10,10 @@ import org.libsdl.app.SDLActivity;
 final class TouchControls extends View {
     private static final int USE = 0, JUMP = 1, EXIT = 2, RUN = 3;
     private static final int ATK = 4, SNEAK = 5, WEAPON = 6, MAGIC = 7;
-    private static final int INV = 8, MENU = 9, JOURNAL = 10, WAIT = 11, POV = 12;
+    private static final int INV = 8, MENU = 9, JOURNAL = 10, WAIT = 11, POV = 12, MORE = 13;
     private static final int SDL_LEFT = 1, SDL_RIGHT = 3;
-    // Grid index is the control id minus SNEAK. Column 0 lines up with USE/JUMP; row 0 is the upper row.
-    private static final int[] GRID_COL = {1, 2, 2, 0, 0, 3, 1, 3};
-    private static final int[] GRID_ROW = {1, 1, 0, 1, 0, 1, 0, 0};
+    // Two columns, top to bottom. Hidden until MORE is open, so the right side stays a look surface.
+    private static final int[] EXTRA = {RUN, SNEAK, WEAPON, MAGIC, INV, JOURNAL, WAIT, POV, MENU, EXIT};
 
     private final GameActivity activity;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -28,14 +27,22 @@ final class TouchControls extends View {
     private boolean shiftSent;
     private boolean sneaking;
     private boolean ctrlSent;
+    private boolean moreOpen;
     private final int[] directions = {KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_D};
 
     TouchControls(GameActivity a) { super(a); activity = a; setFocusable(false); }
     private float radius() { return Math.min(getWidth(), getHeight()) * .16f; }
     private float cx() { return radius() * 1.4f; }
     private float cy() { return getHeight() - radius() * 1.4f; }
-    private float bw() { return getWidth() * .105f; }
-    private float bh() { return getHeight() * .11f; }
+    // Square edge cluster. 48px is the floor; the height cap keeps four buttons on a short screen.
+    private float side() {
+        float s = Math.min(getWidth(), getHeight()) * .105f;
+        float cap = getHeight() * .14f;
+        if (s > cap) s = cap;
+        if (s < 48f) s = 48f;
+        return s;
+    }
+    private float gap() { return Math.max(6f, side() * .16f); }
     // Leaves the engine compass/minimap visible under USE. Not a gameplay constant.
     private float bottomGap() { return getHeight() * .13f; }
 
@@ -46,8 +53,13 @@ final class TouchControls extends View {
         // Above the stick, not the top center. The engine name label sits there
         // (the Bandit caption in the published stair shot).
         paint.setTextSize(Math.max(14, getHeight() * .028f));
-        c.drawText("Drag the right side to look", cx() - r, cy() - r - 8, paint);
-        for (int i = 0; i <= POV; i++) button(c, label(i), i);
+        c.drawText("Drag empty space to look", cx() - r, cy() - r - 8, paint);
+        button(c, "USE", primaryRect(0), false);
+        button(c, "JUMP", primaryRect(1), false);
+        button(c, "ATK", primaryRect(2), mouseDown.contains(SDL_LEFT));
+        button(c, moreOpen ? "CLOSE" : "MORE", primaryRect(3), moreOpen);
+        if (!moreOpen) return;
+        for (int i = 0; i < EXTRA.length; i++) button(c, label(EXTRA[i]), extraRect(i), highlighted(EXTRA[i]));
     }
 
     private String label(int i) {
@@ -68,31 +80,28 @@ final class TouchControls extends View {
         }
     }
 
-    private RectF rect(int i) {
-        float w = bw(), h = bh(), width = getWidth(), height = getHeight();
-        if (i == RUN) return new RectF(width - w * 2.75f, h * .2f, width - w * 1.55f, h * 1.2f);
-        if (i == EXIT)
-            return new RectF(width - w * 1.2f, h * .2f, width - w * .2f, h * 1.2f);
-        if (i == USE || i == JUMP) {
-            float gap = bottomGap();
-            return new RectF(width - w * 1.4f,
-                height - gap - h * (i == USE ? 1.4f : 2.7f),
-                width - w * .4f,
-                height - gap - h * (i == USE ? .4f : 1.7f));
-        }
-        if (i == ATK) {
-            float gap = bottomGap();
-            return new RectF(width - w * 3.70f, height - gap - h * 2.7f, width - w * 1.55f, height - gap - h * .4f);
-        }
-        int g = i - SNEAK;
-        float right = width - w * (0.4f + GRID_COL[g] * 1.15f);
-        float top = h * (1.45f + GRID_ROW[g] * 1.25f);
-        return new RectF(right - w, top, right, top + h);
+    private boolean highlighted(int i) {
+        return (i == RUN && running) || (i == SNEAK && sneaking) || (i == ATK && mouseDown.contains(SDL_LEFT));
     }
 
-    private void button(Canvas c, String label, int i) {
-        RectF b = rect(i);
-        boolean on = (i == RUN && running) || (i == SNEAK && sneaking) || (i == ATK && mouseDown.contains(SDL_LEFT));
+    // slot 0 is the bottom button. USE, JUMP, ATK, MORE.
+    private RectF primaryRect(int slotFromBottom) {
+        float s = side(), g = gap();
+        float right = getWidth() - g;
+        float bottom = getHeight() - bottomGap() - s - slotFromBottom * (s + g);
+        return new RectF(right - s, bottom, right, bottom + s);
+    }
+
+    private RectF extraRect(int index) {
+        float s = side(), g = gap();
+        int row = index / 2, col = index % 2;
+        float right = primaryRect(0).left - g - (1 - col) * (s + g);
+        // Row 4 lines up with USE. Earlier rows step up the screen (smaller y).
+        float top = primaryRect(0).top - (4 - row) * (s + g);
+        return new RectF(right - s, top, right, top + s);
+    }
+
+    private void button(Canvas c, String label, RectF b, boolean on) {
         paint.setColor(on ? 0xAA3D6B4F : 0x88606060);
         c.drawRoundRect(b, 14, 14, paint);
         paint.setColor(Color.WHITE);
@@ -120,7 +129,12 @@ final class TouchControls extends View {
     }
 
     private int controlAt(float x, float y) {
-        for (int i = 0; i <= POV; i++) if (rect(i).contains(x, y)) return i;
+        if (primaryRect(3).contains(x, y)) return MORE;
+        if (primaryRect(2).contains(x, y)) return ATK;
+        if (primaryRect(1).contains(x, y)) return JUMP;
+        if (primaryRect(0).contains(x, y)) return USE;
+        if (!moreOpen) return -1;
+        for (int i = 0; i < EXTRA.length; i++) if (extraRect(i).contains(x, y)) return EXTRA[i];
         return -1;
     }
 
@@ -184,10 +198,11 @@ final class TouchControls extends View {
         if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_POINTER_DOWN) {
             float x = e.getX(ix), y = e.getY(ix);
             int c = controlAt(x, y);
-            if (c == EXIT) { release(); activity.finish(); return true; }
-            if (c == RUN) { running = !running; syncRun(); invalidate(); }
+            if (c == MORE) { moreOpen = !moreOpen; invalidate(); }
+            else if (c == EXIT) { release(); activity.finish(); return true; }
+            else if (c == RUN) { running = !running; syncRun(); invalidate(); }
             else if (c == SNEAK) { sneaking = !sneaking; syncRun(); invalidate(); }
-            else if (c >= 0) take(id, c);
+            else if (c >= 0) { take(id, c); if (moreOpen) { moreOpen = false; invalidate(); } }
             else if (x < getWidth() * .4f && move == -1) move = id;
             else if (x >= getWidth() * .4f && look == -1) { look = id; lx = x; ly = y; }
         }

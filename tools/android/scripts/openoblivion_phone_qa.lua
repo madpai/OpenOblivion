@@ -12,6 +12,9 @@ return {
         onUpdate = function(dt)
             elapsed = elapsed + dt
             if sample > #times or elapsed < times[sample] or not self.cell then return end
+            local bounds = 'none'
+            local ok, box = pcall(function() return self:getBoundingBox() end)
+            if ok and box ~= nil then bounds = tostring(box) end
             print('OPENOBLIVION_PHONE_QA sample=' .. sample
                 .. ' seconds=' .. string.format('%.2f', elapsed)
                 .. ' cell=' .. tostring(self.cell.name)
@@ -22,7 +25,8 @@ return {
                 .. ' yaw=' .. tostring(camera.getYaw())
                 .. ' mode=' .. tostring(camera.getMode())
                 .. ' camera_player_distance=' .. string.format('%.2f', (camera.getPosition() - self.position):length())
-                .. ' collision=' .. tostring(debug.isCollisionEnabled()))
+                .. ' collision=' .. tostring(debug.isCollisionEnabled())
+                .. ' visual_bounds=' .. bounds)
             sample = sample + 1
         end,
     },

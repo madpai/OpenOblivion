@@ -13,13 +13,15 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
 and the owner's earlier failed physical-phone views. The served download is
-`0.10-touch-name` (versionCode 10), QA objective `OO-ANDROID-010`. Its APK
-SHA256 is `02b7c090ee570365b463fdb105830b880fa6a32e18cbdfd1f766ad05c270c366`
-(656,482,247 bytes). It keeps the 0.5 stair filter, the fixed `OL_STATIC`
-strip collision, and the 0.9 movement. It adds touch attack, sneak, weapon,
-spell, inventory, journal, wait, menu, and POV, a top name bar for records
-Lua can name, and GUI scale 1.25 / font size 20. See
-[preview play](research/PREVIEW_PLAY.md). `0.9-authored-collision` is archived.
+`0.11-fit` (versionCode 11), QA objective `OO-ANDROID-011`. Its APK
+SHA256 is `6dede3d7b7c16633ea07a232aa5131f70f6182fcf9052f4bda6f6f5b538050a4`
+(656,483,887 bytes). It keeps the 0.5 stair filter, the fixed `OL_STATIC`
+strip collision, and the 0.9 movement library. The closed overlay is the
+stick plus USE, JUMP, ATK, and MORE. Actor models use the template Collision
+box in `basicplayer.osgt`. Same-cell doors stay open until used again. See
+[the Vilverin gate note](research/VILVERIN_GATE.md) and
+[preview play](research/PREVIEW_PLAY.md). `0.10-touch-name` and
+`0.9-authored-collision` are archived.
 The 0.9 package keeps the 0.5 stair filter and adds fixed `OL_STATIC` strip collision.
 USE is the lower-right button, JUMP
 is above it, and run is a held Shift with always-run pinned off. It starts on
