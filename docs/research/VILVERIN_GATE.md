@@ -23,22 +23,30 @@ units wide at the stop and about 152 units wide nearer the gate.
 ## What is solid
 
 `ARNHallGateDoor01` has BSX integer data 11. OpenMW's collision test is
-`mData & 2`, and 11 includes that flag. The leaf bodies are two
-`bhkBoxShape` values on `bhkRigidBodyT`, layer 2, mass 0. They are not fixed
-`OL_STATIC` strips, so the authored-strip loader does not take them and the
-render mesh stays. The phone log shows `NiControllerManager` and
+`mData & 2`, and 11 includes that flag. The root has no collision object.
+Each leaf carries a `bhkBoxShape` on a `bhkRigidBodyT`, layer 2
+(`OL_ANIM_STATIC`), motion 6 (keyframed), quality 2, mass 0. Those bodies
+are not fixed `OL_STATIC` strips, so the authored-strip loader leaves them
+and the render mesh stays. Multiplying the box half-extents by 7 reproduces
+the visible slabs. Strip vertices are a different field and stay in mesh
+units. The phone log shows `NiControllerManager` and
 `NiMultiTargetTransformController` unhandled on this file, and no authored
-triangle count. The sequences in the file are named Open and Close. The leaf
-stays in the closed bind pose.
+triangle count. The sequences are named Open and Close, each 1.367 seconds.
+The stored Open keys yaw the two leaves about Z to about +87.9 and −87.3
+degrees. Those keys are not played, so the leaves stay in the closed bind
+pose. The text keys name `DRSMetalOpen02` and `DRSMetalClose02`.
 
-The closed render mesh, projected through its thin axis, has a standing
-clearance of 14 units at the narrowest row and a wide opening on most other
-rows. A body 26 units wide does not walk through that closed leaf. The hall
-frame `ARNHallDoorFrame01` does take the strip path: the phone logged 30
-triangles, and the strip scale is `(1, 1, 1)`. Those vertices were not
-multiplied by 7. The standing opening in the strips is 110 to 126 units. The
-visible frame opening is 116 to 128. The 123-unit-wide error-marker body does
-not fit the 110-unit strip opening. The 26.6-unit template collision box does.
+A 0.5-unit raster of the closed render mesh reported a 14-unit gap. That
+figure leaks between the overlapping leaves. A 0.25-unit flood fill has no
+connected through-path: width 0 at mid height, and about 1.5 at the bottom
+edge. Holes in one leaf do not continue through the other leaf. A body 26
+units wide does not walk through that closed leaf, and the 123-unit marker
+does not either. The hall frame `ARNHallDoorFrame01` does take the strip
+path: the phone logged 30 triangles, and the strip scale is `(1, 1, 1)`.
+Those vertices were not multiplied by 7. The collision opening is 111 units
+at mid height and 126.75 at the floor. The 123-unit-wide error-marker body
+fits the floor slice and does not fit the mid-height slice. The 26.6-unit
+template collision box fits both.
 
 `ARNHallStairs01` is already on that same strip path (213 triangles in the
 phone log). Its landing cross-section is wider than both bodies. The frame,
