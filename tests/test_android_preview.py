@@ -19,6 +19,63 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/android'))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 import scene_assets
 import sideload
+import payload
+import zipfile
+
+
+class InstalledPayload(unittest.TestCase):
+    def test_complete_inventory_and_bounded_parts_preserve_original_bytes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); data = root / 'Data'; data.mkdir()
+            names = ['Oblivion.esm', *payload.BASE_ARCHIVES, 'Knights.esp', 'Knights.bsa',
+                     'DLCShiveringIsles.esp', 'Music/Explore/original.mp3', 'Video/original.bik',
+                     'Shaders/original.sdp', 'Textures/original.dds', 'OriginalMod.esp']
+            for index, name in enumerate(names):
+                path = data / name; path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(bytes([index]) * (index + 1))
+            paths, archives, plugins = payload.installed_data(data)
+            self.assertEqual({name.removeprefix('data/') for _, name in paths}, set(names))
+            self.assertEqual(archives, [*payload.BASE_ARCHIVES, 'Knights.bsa'])
+            self.assertEqual(plugins, ['Oblivion.esm', 'DLCShiveringIsles.esp', 'Knights.esp'])
+            groups = payload.partition(paths, limit=24)
+            self.assertGreater(len(groups), 1)
+            recovered, parts = {}, []
+            for index, group in enumerate(groups):
+                self.assertLessEqual(sum(file.stat().st_size for file, _ in group), 24)
+                out = root / f'part-{index}.zip'
+                receipt = payload.write_zip(out, group)
+                parts.append(receipt)
+                self.assertEqual(receipt['sha256'], hashlib.sha256(out.read_bytes()).hexdigest())
+                with zipfile.ZipFile(out) as archive:
+                    self.assertIsNone(archive.testzip())
+                    for name in archive.namelist():
+                        self.assertNotIn(name, recovered)
+                        recovered[name] = archive.read(name)
+            self.assertEqual(recovered, {name: file.read_bytes() for file, name in paths})
+            manifest = {'parts': parts, 'files': [{'path': name, 'size': file.stat().st_size,
+                        'sha256': hashlib.sha256(file.read_bytes()).hexdigest()} for file, name in paths]}
+            payload.verify_parts(root, manifest)
+            broken = json.loads(json.dumps(manifest)); broken['files'][0]['sha256'] = '0' * 64
+            with self.assertRaises(ValueError): payload.verify_parts(root, broken)
+            broken = json.loads(json.dumps(manifest)); broken['files'].pop()
+            with self.assertRaises(ValueError): payload.verify_parts(root, broken)
+            with self.assertRaises(ValueError): payload.partition(paths, limit=2)
+            with self.assertRaises(ValueError): payload.validate_paths([paths[0], paths[0]])
+            with self.assertRaises(ValueError): payload.validate_paths([(paths[0][0], 'data/../escape')])
+
+    def test_incomplete_ambiguous_and_executable_installations_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            data = Path(directory)
+            with self.assertRaises(ValueError): payload.installed_data(data)
+            for name in ['Oblivion.esm', *payload.BASE_ARCHIVES]: (data / name).write_bytes(b'original')
+            invalid = data / 'unexpected.dll'; invalid.write_bytes(b'original fixture')
+            with self.assertRaises(ValueError): payload.installed_data(data)
+            invalid.unlink()
+            link = data / 'linked-file'; link.symlink_to(data / 'Oblivion.esm')
+            with self.assertRaises(ValueError): payload.installed_data(data)
+            link.unlink()
+            (data / 'oblivion.esm').write_bytes(b'ambiguous original fixture')
+            with self.assertRaises(ValueError): payload.installed_data(data)
 
 
 class SceneDependencies(unittest.TestCase):
@@ -102,10 +159,13 @@ class PrivateQAHTTP(unittest.TestCase):
             apk_name = 'openoblivion-personal-preview.apk'
             content = b'Original download protocol fixture.'
             (root / apk_name).write_bytes(content)
+            bundle = 'openoblivion-installed-assets.zip'; (root / bundle).write_bytes(b'Original APK-set fixture.')
             sha = hashlib.sha256(content).hexdigest()
             (root / 'download.json').write_text(json.dumps({
                 'build': 'fixture-build', 'validation': 'Unverified fixture',
-                'downloads': [{'name': apk_name, 'size': len(content), 'sha256': sha}]}))
+                'asset_set': {'name': bundle, 'build': 'fixture-full-set'},
+                'downloads': [{'name': apk_name, 'size': len(content), 'sha256': sha},
+                              {'name': bundle, 'size': 25, 'sha256': hashlib.sha256((root / bundle).read_bytes()).hexdigest()}]}))
             ready = threading.Event(); servers = []
             def bind(_address, handler):
                 server = ThreadingHTTPServer(('127.0.0.1', 0), handler)
@@ -126,6 +186,13 @@ class PrivateQAHTTP(unittest.TestCase):
                     page = request('GET', '/')[2]
                     self.assertIn(b'Current QA objective', page)
                     self.assertIn(b'Send screenshots', page)
+                    self.assertIn(b'Complete installed assets', page)
+                    self.assertIn(bundle.encode(), page)
+                    self.assertIn(b'install.cmd', page)
+                    status, headers, body = request('GET', '/' + bundle)
+                    self.assertEqual(status, 200)
+                    self.assertEqual(headers['Content-Type'], 'application/zip')
+                    self.assertEqual(body, b'Original APK-set fixture.')
                     status, headers, body = request('GET', '/' + apk_name, headers={'Range': 'bytes=2-7'})
                     self.assertEqual((status, body), (206, content[2:8]))
                     self.assertEqual(headers['Content-Range'], f'bytes 2-7/{len(content)}')

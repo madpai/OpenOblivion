@@ -123,6 +123,25 @@ def main():
     page_text = Path(__file__).with_name('sideload.html').read_text()
     for key, value in replacements.items():
         page_text = page_text.replace('@@' + key + '@@', html.escape(value))
+    complete = manifest.get('asset_set')
+    asset_section = ''
+    if complete:
+        name = complete['name']
+        if name not in entries or not name.endswith('.zip'):
+            parser.error('Complete APK set must be an allowlisted ZIP download')
+        entry = entries[name]
+        asset_section = ('<section class="panel"><h2>Complete installed assets</h2><p><a class="download" href="/'
+            + html.escape(name, quote=True) + '">Download full APK set — '
+            + f"{entry['size'] / 1024**3:.2f} GiB" + '</a></p><p>Build '
+            + html.escape(complete['build']) + '. Includes the installed archives, expansions, music, voices and videos.</p>'
+            + '<p>Unzip on a computer, connect your Android phone with USB debugging enabled and '
+              'Android platform-tools (adb) available, then run <b>install.cmd</b> on Windows or '
+              '<b>sh install.sh</b> on Linux/macOS. The script installs every signed APK together. '
+              'Opening base.apk alone will not install the full set.</p>'
+            + '<p>Allow about 18 GB free for downloading, installing and unpacking. '
+              'Complete assets support further testing; original gameplay and audio/video playback remain incomplete.</p>'
+            + '<p class="muted">SHA256: <code>' + html.escape(entry['sha256']) + '</code></p></section>')
+    page_text = page_text.replace('@@ASSET_SET@@', asset_section)
     page = page_text.encode()
 
 
@@ -198,12 +217,14 @@ def main():
                     self.send_response(416); self.send_header('Content-Range', f'bytes */{size}')
                     self.send_header('Content-Length', '0'); self.end_headers(); return
             self.send_response(206 if partial else 200)
-            self.send_header('Content-Type', 'application/vnd.android.package-archive' if name.endswith('.apk') else 'text/plain; charset=utf-8')
+            mime = ('application/vnd.android.package-archive' if name.endswith('.apk')
+                    else 'application/zip' if name.endswith('.zip') else 'text/plain; charset=utf-8')
+            self.send_header('Content-Type', mime)
             self.send_header('Accept-Ranges', 'bytes'); self.send_header('ETag', etag)
             self.send_header('Last-Modified', format_datetime(datetime.fromtimestamp(file.stat().st_mtime, timezone.utc), usegmt=True))
             self.send_header('Content-Length', str(end-start+1))
             self.send_header('X-Content-Type-Options', 'nosniff')
-            if name.endswith('.apk'): self.send_header('Content-Disposition', 'attachment; filename="' + name + '"')
+            if name.endswith(('.apk', '.zip')): self.send_header('Content-Disposition', 'attachment; filename="' + name + '"')
             if partial: self.send_header('Content-Range', f'bytes {start}-{end}/{size}')
             self.end_headers()
             if not body: return

@@ -27,6 +27,7 @@ parser.add_argument('--start', required=True, help='TES4 cell editor ID')
 parser.add_argument('--output', required=True, type=Path, help='Fresh private evidence directory')
 parser.add_argument('--image', default='openoblivion-research-build:founding')
 parser.add_argument('--scene-data', type=Path, help='Optional private loose visual slice; mount only the master, without full BSAs')
+parser.add_argument('--installed-data', action='store_true', help='Load all installed BSAs and the measured classic expansion plugins')
 parser.add_argument('--phone-qa', action='store_true', help='Also exercise the original read-only phone camera/player diagnostics')
 parser.add_argument('--tes4-interactions', action='store_true', help='Exercise native TES4 names, container snapshots and preview UI')
 parser.add_argument('--camera-repair', action='store_true', help='Exercise the original preview camera fallback')
@@ -53,6 +54,8 @@ if args.movement_fixture and (not args.player_movement or args.start != 'OpenObl
     parser.error('Original stairs require --player-movement --start OpenOblivionStairs')
 if args.movement_fixture and args.scene_data:
     parser.error('Original movement fixtures cannot mount an owner scene slice')
+if args.installed_data and (args.scene_data or args.movement_fixture):
+    parser.error('--installed-data requires the full owner Data directory')
 if args.raw_eye and (not args.player_movement or not args.camera_repair):
     parser.error('--raw-eye requires --player-movement --camera-repair')
 if args.grounded_eye and not args.camera_repair:
@@ -134,9 +137,16 @@ if args.player_movement:
 if args.movement_fixture:
     fixture_data = output / 'fixture-data'
     generate_movement_fixture(fixture_data, args.movement_surface)
-for archive in ([] if scene_data or args.movement_fixture else sorted(data.glob('*.bsa'))):
-    if archive.name.startswith('Oblivion - '):
-        cfg.append('fallback-archive=' + archive.name)
+if args.installed_data:
+    sys.path.insert(0, str(ROOT / 'tools/android'))
+    from payload import installed_data
+    _, archives, plugins = installed_data(data)
+    cfg += ['content=' + name for name in plugins if name != 'Oblivion.esm']
+    cfg += ['fallback-archive=' + name for name in archives]
+else:
+    for archive in ([] if scene_data or args.movement_fixture else sorted(data.glob('*.bsa'))):
+        if archive.name.startswith('Oblivion - '):
+            cfg.append('fallback-archive=' + archive.name)
 (config / 'openmw.cfg').write_text('\n'.join(cfg) + '\n')
 settings = (template / 'settings.cfg').read_text()
 # This setting belongs in the existing Models section of the upstream template.
@@ -216,7 +226,8 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'engine_sha256': hashlib.sha256((work / 'build/openmw').read_bytes()).hexdigest(),
            'engine_kind': 'openoblivion-native-integration' if native_manifest else 'stock-upstream',
            'native_integration': native_manifest, 'native_grounded_eye_enabled': args.native_grounded_eye,
-           'bounded_visual_slice': bool(scene_data), 'phone_qa_enabled': args.phone_qa,
+           'bounded_visual_slice': bool(scene_data), 'complete_installed_data': args.installed_data,
+           'phone_qa_enabled': args.phone_qa,
            'tes4_interactions_enabled': args.tes4_interactions,
            'tes4_interactions_verified': interactions_verified,
            'camera_repair_enabled': args.camera_repair, 'missing_player_model_injected': args.missing_player_model,

@@ -6,6 +6,17 @@ audited external OpenMW Android 0.51 runtime and OpenGL ES. See
 private APK bundles a bounded owner-data scene slice and installs it without
 manual file copying. Public APKs must still contain no game data.
 
+Complete installed-data checkpoint, 2026-10-03: the separate private
+`0.13-installed-assets` package carries every supplied Data file in a signed
+APK set. The 5.57 GB download contains six APKs and computer install scripts;
+the complete Data does not fit one signed APK. Android emulator installation,
+all 824 extracted file hashes/sizes, the complete archive/plugin configuration,
+obsolete loose-file removal and launcher controls pass. It uses the same native
+library as `0.12-containers`, which remains the smaller single-APK option.
+See [installed assets](research/INSTALLED_ASSETS.md) for exact content, checksum
+and installation instructions. Full content availability does not establish
+phone rendering, original audio/video playback or gameplay parity.
+
 Android 14 x86_64 emulator with ARM64 translation: APK installation, SHA256
 verified asset unpacking and the launcher passed. The world-load attempt
 crashed in `libndk_translation_proxy_libGLESv2.so` with a null function target;

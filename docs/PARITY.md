@@ -14,8 +14,8 @@ placeholder bodies and template UI are not evidence of TES4 equivalence.
 
 | Area | Present checkpoint | Parity acceptance |
 |---|---|---|
-| Content | Classic master reader; bounded Vilverin neighborhood packaging | Full ordered master/plugin load, overrides/deletion, world streaming, base game and installed expansions with complete dependency manifests |
-| Android | Self-contained scene APK, launcher, touch controls and private QA uploads | Physical-device lifecycle, storage, installation/upgrades, controls and sustained memory/frame-time checks |
+| Content | Classic master reader; bounded Vilverin APK and a complete installed-Data APK set with file manifests | Full ordered master/plugin semantics, overrides/deletion, world streaming and expansion gameplay |
+| Android | Scene APK, complete signed APK-set packaging, launcher, touch controls and private QA uploads | Physical-device lifecycle, storage, installation/upgrades, controls and sustained memory/frame-time checks |
 | Movement/physics | Basic traversal; native stair camera filter; fixed static Havok strips | Recover controller dimensions and motor behavior; compare run/walk/jump/swim, slopes, stairs, collision layers and dynamic bodies to the original |
 | Actors/animation | TES4 names and shared-skeleton attachment; actors remain in a bind pose | Original KF sequences, skin/bone agreement, equipment slots, locomotion, attacks, first-person hands and facial animation |
 | Doors/containers | Door hide toggle; base container contents can be inspected | Embedded door animation with collision and saved state; per-reference leveled inventory, locks/traps, transfer, ownership/theft and respawn |
@@ -31,11 +31,13 @@ and equipment, then the original motor, gameplay and script/quest systems.
 These priorities can overlap where a dependency is available; adding a menu
 or reading a record never closes its gameplay gate.
 
-The current packager is explicitly a bounded scene build. Its private APK
-contains the whole master and its selected visual neighborhood, not the full
-game’s audio, every world cell or DLC. Full content packaging and world
-streaming remain required work. Do not label the current download a complete
-Oblivion port or a complete-installation bundle.
+The smaller single APK remains a bounded scene build. The separate
+`--all-assets` package includes every file from the supplied Data directory,
+including installed expansions, audio and video. The measured 5.50 GB
+compressed Data exceeds the single signed APK format; a signed APK set carries
+the complete installation snapshot. See [installed assets](research/INSTALLED_ASSETS.md).
+World streaming and gameplay parity remain required work. Do not label either
+download a complete Oblivion port.
 
 Each published checkpoint needs public CTest/content-guard checks, native
 build receipts, a measured local scene check where applicable, a private APK

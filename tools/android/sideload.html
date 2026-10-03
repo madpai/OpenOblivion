@@ -18,13 +18,15 @@ input[type=file]{border:2px dashed #61727d;padding:20px}textarea{min-height:95px
 <p><a class="download" href="/openoblivion-personal-preview.apk">Download APK — @@SIZE@@</a></p>
 <p class="muted">Build @@BUILD@@</p>
 <p>@@VALIDATION@@</p>
+@@ASSET_SET@@
 <section class="panel">
 <h2>Current QA objective — @@QA_ID@@</h2>
 <p>@@QA_OBJECTIVE@@</p>
-<p><b>Pass:</b> Walking up and down the stairs feels smooth, without a vertical jolt at each tread. Releasing the pad stops movement. Turning, walls/floors and jumping still work.</p>
+<p><b>Pass:</b> USE on an unlocked sack, barrel or chest opens a base-contents window. Close returns control to the scene. Looking at a bandit shows its name. Walking, stairs, looking and jumping still work.</p>
 <p><b>Fail:</b> repeated stair bounce, delayed or floaty jumping, movement continuing after release, passing through solid walls/floors, falling below the scene, or returning to the launcher. Describe where it happens.</p>
 <ol>
 <li>Install the build shown above. Choose <b>Vilverin interior</b> and take a screenshot when the scene is visible.</li>
+<li>USE an unlocked sack, barrel or chest. Capture the contents window, tap Close and confirm movement resumes. Some leveled entries currently show “Unresolved item”; item transfer is not implemented. Look at a nearby bandit and check its name.</li>
 <li>Walk down the entrance stairs, turn and walk back up. Describe the bounce in both directions. Release the pad on a landing, look around and try one jump. Take a second screenshot.</li>
 <li>Exit to the launcher and copy <b>View scene log</b>. Send an <b>interior</b> report below with both screenshots, your phone model, Android version and what worked or failed.</li>
 <li>Repeat with <b>Vilverin exterior</b>, staying near the ruins. Send a separate <b>exterior</b> report. Copy each log before starting another scene.</li>
@@ -56,7 +58,7 @@ input[type=file]{border:2px dashed #61727d;padding:20px}textarea{min-height:95px
 <li>Left pad: move. Drag right: look. Use: interact. Jump: jump. Exit: launcher.</li></ol>
 <p>Android 10 or newer, ARM64. Allow about 4 GB free for download, installation and unpacking.</p>
 </details>
-<p class="muted">Early OpenMW Android 0.51 / OpenGL ES scene viewer. Gameplay, multiplayer and Vulkan are planned for OpenOblivion. Visual assets cover Vilverin and nearby exterior cells; distant areas may have missing resources. Voices, sound and DLC are omitted.</p>
+<p class="muted">Early OpenMW Android 0.51 / OpenGL ES scene viewer. Gameplay, multiplayer and Vulkan are planned for OpenOblivion. The single APK covers Vilverin and nearby exterior cells; distant areas may have missing resources. Voices, sound and DLC are omitted from that smaller APK.</p>
 <p class="muted">For your own installation only. Keep this asset-packed APK private.</p>
 <p>SHA256: <code>@@HASH@@</code></p>
 <p><a href="/SHA256SUMS.txt">Checksums</a> · <a href="/source-notes.txt">Runtime source and attribution</a></p>

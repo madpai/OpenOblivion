@@ -69,7 +69,7 @@ phone baseline is archived and the earlier Lua experiment is withheld.
 | --- | --- |
 | Classic TES4 inspection | Native read-only scanner using a pinned, unchanged OpenMW reader slice. Owner master scan: **1,167,017 records**, **85,079 groups**, **41,789 compressed records**. |
 | Desktop reproduction | Separate unchanged OpenMW build loads private interior/exterior scenes and renders terrain, water and statics with software OpenGL. |
-| Android preview | Original launcher, touch controls, private asset packaging and screenshot/QA upload tools. Phone scene visibility and look confirmed; basic traversal reported by the owner. |
+| Android preview | Original launcher, touch controls, private scene APK and complete installed-data APK-set packaging. Phone scene visibility and look confirmed; basic traversal reported by the owner. See [installed assets](docs/research/INSTALLED_ASSETS.md). |
 | Native stair smoothing | Source-built Android 0.51 engine with an opt-in camera patch; desktop stairs/ramp/wall/ceiling checks pass. Phone log confirms activation; owner reports smooth stairs with subtle stepping. Original movement calibration remains. |
 | Movement diagnostics | Native walk/stop/jump trajectories, original stair fixtures and separate player/view measurements. Discontinuities cannot count as successful movement. |
 | TES4 interaction inspection | Native actor/container names, base inventory snapshots, correct optional lock reset and shared-skeleton attachment. Desktop Vilverin window capture/close passes; loot transfer and original animation remain. See [the interaction checkpoint](docs/research/TES4_INTERACTIONS.md). |

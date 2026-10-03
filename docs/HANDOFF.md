@@ -11,6 +11,17 @@ See [TES4_INTERACTIONS.md](research/TES4_INTERACTIONS.md) for native names,
 container/window verification, reference lock reset, shared-skeleton scope,
 build receipts and remaining work. Movement constants remain unchanged.
 
+Complete-content continuation: `--all-assets` now produces the private
+`0.13-installed-assets` signed APK set. Every supplied Data file is included
+byte for byte; all 824 extracted files / 73 original Data files verify on an
+isolated Android emulator after `adb install-multiple`. The 5.57 GB download
+exceeds a single signed APK, so unzip on a computer and run the included
+install script with the phone connected. The smaller `0.12-containers` single
+APK remains the direct-install choice. See [INSTALLED_ASSETS.md](research/INSTALLED_ASSETS.md)
+for the complete package hash, content/format boundary, verified desktop full
+archive/expansion configuration and remaining phone/gameplay acceptance.
+The full set's native library and movement constants are unchanged.
+
 Founding checkpoint: 2026-09-30. The owner authorized publication to
 https://github.com/madpai/OpenOblivion on 2026-10-01. Original project code is
 GPL-3.0-only; owner content stays private.

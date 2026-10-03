@@ -27,6 +27,7 @@ public final class MainActivity extends Activity {
     private ProgressBar progress;
     private final List<Button> launches = new ArrayList<>();
     private boolean preparing;
+    private boolean installedData;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -57,12 +58,15 @@ public final class MainActivity extends Activity {
             view.setText(text); view.setTextIsSelectable(true); view.setPadding(24, 16, 24, 16); scroll.addView(view);
             new AlertDialog.Builder(this).setTitle("Scene log").setView(scroll).setPositiveButton("Close", null).show();
         });
-        setContentView(layout);
+        ScrollView page = new ScrollView(this); page.setFillViewport(true); page.addView(layout);
+        setContentView(page);
         preparing = true;
         new Thread(() -> {
             try {
                 prepare();
-                runOnUiThread(() -> { preparing = false; status.setText("Bundled scene assets ready. Choose a location to start.");
+                runOnUiThread(() -> { preparing = false; status.setText(installedData
+                        ? "Complete installed assets ready. Choose a location to start. Gameplay parity remains in development."
+                        : "Bundled scene assets ready. Choose a location to start.");
                     progress.setProgress(100); for (Button b : launches) b.setEnabled(true); });
             } catch (Exception e) {
                 Log.e("OpenOblivion", "Asset preparation failed", e);
@@ -83,18 +87,41 @@ public final class MainActivity extends Activity {
     }
     private void prepare() throws Exception {
         JSONObject manifest = new JSONObject(assetText("payload-manifest.json"));
+        installedData = "installed-data".equals(manifest.optString("content_scope"));
         String id = manifest.getString("id");
         File root = new File(getFilesDir(), "payload"); root.mkdirs();
         File ready = new File(root, ".ready");
         if (ready.isFile() && read(ready).equals(id)) { configure(root); return; }
+        List<String> parts = new ArrayList<>();
+        if (manifest.getInt("schema") == 2) {
+            JSONArray packaged = manifest.getJSONArray("parts");
+            for (int i = 0; i < packaged.length(); ++i) {
+                String name = packaged.getJSONObject(i).getString("asset");
+                if (!name.matches("payload-[0-9]{3}\\.zip") || parts.contains(name))
+                    throw new IOException("Invalid payload part name");
+                parts.add(name);
+            }
+        } else if (manifest.getInt("schema") == 1) parts.add("payload.zip");
+        else throw new IOException("Unsupported payload manifest");
+        if (parts.isEmpty()) throw new IOException("No payload parts");
+        // Check every installed split before writing any new payload files.
+        for (String part : parts) {
+            try (InputStream in = getAssets().open(part)) { if (in.read() == -1) throw new IOException("Empty payload part"); }
+            catch (IOException error) { throw new IOException("Missing bundled assets. Install every APK in the complete package together.", error); }
+        }
         if (new StatFs(root.getPath()).getAvailableBytes() < manifest.getLong("unpacked_bytes") + 256L * 1024 * 1024)
             throw new IOException("Not enough free storage to unpack the bundled assets; free space, then reopen");
         Map<String, JSONObject> expected = new HashMap<>();
         JSONArray entries = manifest.getJSONArray("files");
-        for (int i = 0; i < entries.length(); ++i) { JSONObject e = entries.getJSONObject(i); expected.put(e.getString("path"), e); }
+        for (int i = 0; i < entries.length(); ++i) {
+            JSONObject e = entries.getJSONObject(i); String name = e.getString("path");
+            if (expected.put(name, e) != null) throw new IOException("Duplicate payload path");
+        }
+        Set<String> retained = new HashSet<>(expected.keySet());
         long done = 0, total = manifest.getLong("unpacked_bytes"), lastUpdate = 0;
         byte[] buffer = new byte[1024 * 1024];
-        try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(getAssets().open("payload.zip"), buffer.length))) {
+        for (String part : parts) {
+        try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(getAssets().open(part), buffer.length))) {
             for (ZipEntry entry; (entry = zip.getNextEntry()) != null;) {
                 JSONObject e = expected.remove(entry.getName());
                 if (e == null || entry.isDirectory()) throw new IOException("Unexpected payload entry");
@@ -117,7 +144,22 @@ public final class MainActivity extends Activity {
                 Files.move(temp.toPath(), dest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
         }
+        }
         if (!expected.isEmpty()) throw new IOException("Incomplete payload");
+        // Old loose scene extracts would override the complete BSA archives.
+        // Remove obsolete files only after every replacement has verified.
+        try (java.util.stream.Stream<java.nio.file.Path> old = Files.walk(root.toPath())) {
+            for (java.nio.file.Path path : old.sorted(Comparator.reverseOrder()).toArray(java.nio.file.Path[]::new)) {
+                if (path.equals(root.toPath())) continue;
+                if (Files.isSymbolicLink(path)) throw new IOException("Invalid old payload link");
+                String name = root.toPath().relativize(path).toString().replace(File.separatorChar, '/');
+                if (Files.isDirectory(path)) {
+                    try (java.util.stream.Stream<java.nio.file.Path> children = Files.list(path)) {
+                        if (!children.findAny().isPresent()) Files.delete(path);
+                    }
+                } else if (!retained.contains(name)) Files.delete(path);
+            }
+        }
         configure(root);
         write(ready, id);
     }
@@ -131,8 +173,21 @@ public final class MainActivity extends Activity {
         String base = read(new File(root, "base/openmw.base.cfg"));
         base = base.replace("resources=./resources", "resources=" + resourcePath).replace("data=./resources/vfs-mw", "data=" + resourcePath + "/vfs-mw");
         write(new File(global, "openmw.cfg"), base);
+        JSONObject manifest;
+        try { manifest = new JSONObject(assetText("payload-manifest.json")); }
+        catch (JSONException error) { throw new IOException("Invalid payload configuration", error); }
+        StringBuilder gameConfig = new StringBuilder("content=Oblivion.esm\n");
+        try {
+            if (manifest.has("archives")) {
+                gameConfig.setLength(0);
+                JSONArray plugins = manifest.getJSONArray("plugins"), archives = manifest.getJSONArray("archives");
+                for (int i = 0; i < plugins.length(); ++i) gameConfig.append("content=").append(configName(plugins.getString(i))).append('\n');
+                for (int i = 0; i < archives.length(); ++i) gameConfig.append("fallback-archive=").append(configName(archives.getString(i))).append('\n');
+            }
+        } catch (JSONException error) { throw new IOException("Invalid installed content list", error); }
         String cfg = "replace=content\nreplace=fallback-archive\nresources=" + resourcePath
-            + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ncontent=template.omwgame\ncontent=Oblivion.esm\ncontent=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\ncontent=look_name.omwscripts\ncontent=container.omwscripts\n"
+            + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ncontent=template.omwgame\n" + gameConfig
+            + "content=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\ncontent=look_name.omwscripts\ncontent=container.omwscripts\n"
             + (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE ? "content=native_stair_qa.omwscripts\n" : "")
             + "encoding=win1252\n"
             ;
@@ -143,6 +198,12 @@ public final class MainActivity extends Activity {
             + "\n[Shadows]\nenable shadows = false\n\n[Water]\nshader = false\n\n[Camera]\nviewing distance = 4096\n"
             + "\n[Terrain]\ndistant terrain = false\n\n[Post Processing]\nenabled = false\n";
         write(new File(user, "settings.cfg"), settings);
+    }
+    private static String configName(String name) throws IOException {
+        if (name.isEmpty() || name.contains("/") || name.contains("\\") || name.contains("\n")
+                || name.contains("\r") || name.contains("=") || name.contains("\""))
+            throw new IOException("Invalid content filename");
+        return name;
     }
     @Override public void onBackPressed() { if (!preparing) super.onBackPressed(); }
 }

@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
 from check_upstream import check
 from scene_assets import select
+from payload import installed_data, partition, validate_paths, verify_parts, write_zip
 
 
 def digest(path):
@@ -140,7 +141,10 @@ def main():
     parser.add_argument('--sdk', required=True, type=Path)
     parser.add_argument('--gradle', required=True, type=Path)
     parser.add_argument('--native-runtime', type=Path, help='External audited native source-build runtime directory')
+    parser.add_argument('--all-assets', action='store_true', help='Package every installed Data file as a signed APK set')
     args = parser.parse_args()
+    if args.all_assets and not args.native_runtime:
+        parser.error('--all-assets requires the source-built native runtime')
     work, data, template, donor, apk = map(outside, (args.work, args.data, args.template, args.donor, args.upstream_apk))
     lock = json.loads((ROOT / 'docs/research/upstreams.lock.json').read_text())['Andiweli/OpenMW-Android']
     check(donor, 'Andiweli/OpenMW-Android')
@@ -256,22 +260,55 @@ def main():
         # Read-only QA sampling, without the rejected pre-physics Lua filter.
         paths += [(ROOT / 'tools/android/native_stair_qa.omwscripts', 'qa/native_stair_qa.omwscripts'),
                   (ROOT / 'tools/android/scripts/openoblivion_stair_qa.lua', 'qa/scripts/openoblivion_stair_qa.lua')]
-    selection = work / 'scene-data'
-    if selection.exists():
-        if selection.is_symlink(): raise ValueError('Selection directory must not be a symlink')
-        shutil.rmtree(selection)
-    paths += select(data, outside(args.assetlab), selection)
-    game_names = ['Oblivion.esm']
-    paths += [(data / name, 'data/' + name) for name in game_names]
+    if args.all_assets:
+        game_paths, archives, plugins = installed_data(data)
+        # The base APK holds the runtime/template and master. Asset-only splits
+        # hold the remaining original Data files, with identical source bytes.
+        paths += [(data / 'Oblivion.esm', 'data/Oblivion.esm')]
+        base_paths = paths[:]
+        paths += [(file, name) for file, name in game_paths if name != 'data/Oblivion.esm']
+    else:
+        selection = work / 'scene-data'
+        if selection.exists():
+            if selection.is_symlink(): raise ValueError('Selection directory must not be a symlink')
+            shutil.rmtree(selection)
+        paths += select(data, outside(args.assetlab), selection)
+        paths += [(data / 'Oblivion.esm', 'data/Oblivion.esm')]
+    validate_paths(paths)
     files = [{'path': name, 'size': file.stat().st_size, 'sha256': digest(file)} for file, name in paths]
     identity = hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()
-    manifest = {'schema': 1, 'id': identity, 'unpacked_bytes': sum(f['size'] for f in files), 'files': files}
+    manifest = {'schema': 2 if args.all_assets else 1, 'id': identity,
+                'unpacked_bytes': sum(f['size'] for f in files), 'files': files}
     manifest_path = assets / 'payload-manifest.json'
     payload = assets / 'payload.zip'
     # Reuse only a byte-verified previous payload, never stale game/source changes.
     cache = work / 'payload-cache.json'
     previous = json.loads(cache.read_text()) if cache.exists() else {}
-    if previous.get('id') != identity or not payload.is_file() or digest(payload) != previous.get('zip_sha256'):
+    if args.all_assets:
+        parts_dir = work / 'payload-parts'; parts_dir.mkdir(exist_ok=True)
+        groups = [base_paths, *partition([(file, name) for file, name in game_paths if name != 'data/Oblivion.esm'])]
+        parts = []
+        for index, group in enumerate(groups):
+            name = f'payload-{index:03d}.zip'
+            out = parts_dir / name
+            prior = next((p for p in previous.get('parts', []) if p['asset'] == name), {})
+            if previous.get('id') != identity or not out.is_file() or digest(out) != prior.get('sha256'):
+                print('Packing installed-data payload part: ' + name, flush=True)
+                part = write_zip(out, group)
+            else:
+                part = prior
+            parts.append(part)
+        manifest.update({'parts': parts, 'content_scope': 'installed-data', 'archives': archives, 'plugins': plugins})
+        print('Verifying every installed-data payload entry', flush=True)
+        verify_parts(parts_dir, manifest)
+        cache.write_text(json.dumps({'id': identity, 'parts': parts}) + '\n')
+        # Remove previous monolithic assets from a reused staging directory.
+        payload.unlink(missing_ok=True)
+        for old in assets.glob('payload-*.zip'): old.unlink()
+        shutil.copyfile(parts_dir / parts[0]['asset'], assets / parts[0]['asset'])
+        (parts_dir / 'payload-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+        payload_bytes = sum(part['size'] for part in parts)
+    elif previous.get('id') != identity or not payload.is_file() or digest(payload) != previous.get('zip_sha256'):
         print('Packing private visual assets (no voices, DLC or game binaries)', flush=True)
         with zipfile.ZipFile(payload, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=1) as out:
             for file, name in paths:
@@ -280,16 +317,21 @@ def main():
         if payload.stat().st_size > 1900 * 1024 * 1024:
             raise ValueError('Payload too large for this single-APK test budget')
         cache.write_text(json.dumps({'id': identity, 'zip_sha256': digest(payload)}) + '\n')
+    if not args.all_assets:
+        for old in assets.glob('payload-*.zip'): old.unlink()
+        payload_bytes = payload.stat().st_size
     manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
     provenance = {'schema': 1, 'purpose': 'Personal owner-data scene preview, never a public release',
                   'donor': lock, 'java_sha256': java_hashes, 'native_sha256': native_hashes,
-                  'payload_id': identity, 'payload_bytes': payload.stat().st_size,
+                  'payload_id': identity, 'payload_bytes': payload_bytes,
                   'unpacked_bytes': manifest['unpacked_bytes'], 'template_revision': check(template, 'OpenMW/example-suite')}
+    provenance['content_scope'] = 'installed-data' if args.all_assets else 'vilverin-slice'
     provenance['native_source_build'] = native_build
     provenance['host_source_sha256'] = {file.relative_to(ROOT / 'android/host').as_posix(): digest(file)
                                        for file in sorted((ROOT / 'android/host').rglob('*')) if file.is_file()}
     provenance['preview_tools_sha256'] = {file.relative_to(ROOT).as_posix(): digest(file) for file in
-        (Path(__file__).resolve(), ROOT / 'tools/android/scene_assets.py',
+        (Path(__file__).resolve(), ROOT / 'tools/android/scene_assets.py', ROOT / 'tools/android/payload.py',
+         ROOT / 'tools/android/split_assets.py',
          ROOT / 'tools/android/phone_qa.omwscripts', ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua',
          ROOT / 'tools/android/look_name.omwscripts', ROOT / 'tools/android/scripts/openoblivion_look_name.lua',
          ROOT / 'tools/android/container.omwscripts', ROOT / 'tools/android/scripts/openoblivion_container.lua',
@@ -306,7 +348,8 @@ def main():
     if result.is_symlink(): raise ValueError('Generated APK must not be a symlink')
     result.unlink(missing_ok=True)
     subprocess.run([str(args.gradle.resolve()), '--no-daemon', '--console=plain',
-                    '-PooNativeGroundedEye=' + ('true' if native_build else 'false'), 'assembleDebug'], cwd=host, check=True)
+                    '-PooNativeGroundedEye=' + ('true' if native_build else 'false'),
+                    '-PooInstalledAssets=' + ('true' if args.all_assets else 'false'), 'assembleDebug'], cwd=host, check=True)
     with zipfile.ZipFile(result) as built:
         if result.stat().st_size > sum(entry.compress_size for entry in built.infolist()) + 16*1024*1024:
             raise ValueError('APK contains excessive unused ZIP space; regenerate the APK')
@@ -323,6 +366,9 @@ def main():
         raise ValueError('APK changed while copying')
     provenance['apk_sha256'] = digest(output)
     provenance['apk_bytes'] = output.stat().st_size
+    if args.all_assets:
+        from split_assets import build as build_split_assets
+        provenance['apk_set'] = build_split_assets(output, parts_dir, args.sdk, work / 'apk-set', Path.home() / '.android/debug.keystore')
     (work / 'build-manifest.json').write_text(json.dumps(provenance, indent=2) + '\n')
     print(json.dumps({'apk': str(output), 'bytes': provenance['apk_bytes'], 'sha256': provenance['apk_sha256']}))
 

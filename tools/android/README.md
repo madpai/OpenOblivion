@@ -51,6 +51,21 @@ dependency resolver. Reports list unresolved requests; SpeedTree and some
 unused expansion terrain paths remain unsupported/unbundled. Sound, voices,
 DLC plugins and game executables are excluded.
 
+For a complete private installation snapshot, add `--all-assets` and
+`--native-runtime /outside/native-android/runtime`, using a separate work
+directory. This produces `apk-set/openoblivion-installed-assets.zip`: a signed
+base APK plus asset-only APK splits, original install scripts, checksums and
+instructions. Every Data file is included, with identical bytes. The measured
+5.50 GB compressed Data exceeds a single signed ZIP32 APK; the outer download
+ZIP may use ZIP64. Unzip it on a computer and run `install.cmd` or
+`sh install.sh` with adb and the phone connected. Install all APKs together.
+The standalone base APK from that build requires the other splits.
+Allow about 18 GB free for downloading, installing and unpacking the set.
+This is an adb-installable APK set, not a bundletool `.apks` file. See
+[complete installed assets](../../docs/research/INSTALLED_ASSETS.md) for exact
+scope, enabled plugins and limitations. Asset presence does not implement
+original quests, animation, combat or audio/video playback.
+
 First launch streams and verifies each payload entry into private app storage,
 rejects traversal/unknown entries and insufficient space, and marks completion
 only after all hashes match. A separate scene process protects the launcher
@@ -121,6 +136,9 @@ from retaining a replaced large payload as hundreds of MiB of dead bytes.
 Copy the verified APK into an external private directory. Create `download.json`
 with `build`, `validation`, and `downloads` (each has `name`, `size`, `sha256`).
 Optional `qa_id` and `qa_objective` describe the current device test.
+An optional `asset_set` with `name` and `build` displays a complete APK-set ZIP
+from the same allowlisted downloads. It retains the smaller single APK as a
+separate choice and explains installation/storage requirements.
 Allowlist `openoblivion-personal-preview.apk`, `SHA256SUMS.txt` and
 `source-notes.txt`. Then run:
 
