@@ -2,6 +2,16 @@
 
 Research snapshot: 2026-09-30. Original OpenOblivion code is **GPL-3.0-only**.
 
+## TES4 player body and locomotion audit (2026-10-03)
+
+Intended change: with `OPENOBLIVION_TES4_PLAYER=1`, `apps/openmw/mwrender/npcanimation.cpp`
+(desktop blob `fc49369e4a8194034530335edacb02cd70f185b8`, OpenMW GPLv3 project grant) builds the player from the
+owner's TES4 Player record, original skeletons, body parts and KF clips. Only
+original OpenOblivion code (`tools/native/tes4_player.hpp`, receipt tool,
+patches) is published; owner meshes and animations stay private. Pre-change
+SHA256s are in `tools/native/tes4_player.lock.json`; the receipt follows the
+movement receipt.
+
 ## TES4 player ground-speed audit (2026-10-03)
 
 Intended change: with `OPENOBLIVION_TES4_MOVEMENT=1`, compute the player's

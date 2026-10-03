@@ -30,6 +30,11 @@ return {
         onFrame = function()
             if not ready or not self.cell or core.isWorldPaused() or finished then return end
             interfaces.Controls.overrideMovementControls(true)
+            if config.camera == 'third' and camera.getMode() ~= camera.MODE.ThirdPerson then
+                camera.setMode(camera.MODE.ThirdPerson, true)
+                camera.setPreferredThirdPersonDistance(260)
+                camera.instantTransition()
+            end
             self.controls.movement = phase() == 'walk' and 1 or 0
             self.controls.sideMovement = 0
             self.controls.run = config.gait == 'run'
@@ -54,7 +59,7 @@ return {
                 print(string.format('OPENOBLIVION_PLAYER_VIEW t=%.6f camera_z=%.6f tracked_z=%.6f pitch=%.6f yaw=%.6f',
                     elapsed, camera.getPosition().z, camera.getTrackedPosition().z, camera.getPitch(), camera.getYaw()))
             end
-            if not captured and elapsed >= 6.5 then
+            if not captured and elapsed >= (config.shot or 6.5) then
                 captured = true
                 print('OPENOBLIVION_SCENE_PROBE cell=' .. tostring(self.cell.id)
                     .. ' name=' .. tostring(self.cell.name)

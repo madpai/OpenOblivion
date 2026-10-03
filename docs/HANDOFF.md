@@ -1,5 +1,14 @@
 # Maintainer handoff
 
+Oblivion player, 2026-10-03 (owner approved the "make Vilverin playable" plan:
+TES4 player, stats/inventory, measured melee, bandit AI, looting; trees and
+water in parallel). Step 1 landed as `tes4_player` (after `tes4_movement`),
+served as `0.29-tes4-player`; see [TES4_PLAYER.md](research/TES4_PLAYER.md).
+The private original reference game must be started from its `game/`
+folder (`original-reference-20261003/launch_reference.sh`); launching elsewhere
+crashed at `oblivion+0x18dc7c` looking for `Data\Menus\strings.xml`.
+Next: step 2, TES4 stats/inventory and the Player's starting clothes on the body.
+
 Sky and default run, 2026-10-03: served build `0.28-sky-run`. Android's COLLADA
 loader rejects every template `.dae`, so the sky lost its atmosphere layer.
 `tools/android/overlay/meshes/sky_atmosphere.osgt` is the CC0 template mesh

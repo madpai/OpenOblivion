@@ -1,0 +1,73 @@
+--- a/apps/openmw/mwrender/npcanimation.cpp
++++ b/apps/openmw/mwrender/npcanimation.cpp
+@@ -46,6 +46,11 @@
+ #include "rotatecontroller.hpp"
+ #include "vismask.hpp"
+ 
++#include <components/resource/keyframemanager.hpp>
++
++#include "openoblivion_tes4_player.hpp"
++#include "openoblivion_tes4_skin.hpp"
++
+ namespace
+ {
+ 
+@@ -493,6 +498,47 @@
+         bool is1stPerson = mViewMode == VM_FirstPerson;
+         bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
+ 
++        // OpenOblivion: render the player as the master's TES4 Player record
++        // with its original skeletons and locomotion clips.
++        if (const ESM4::Npc* tes4Player = OpenOblivion::tes4PlayerRecordFor(mPtr, store))
++            {
++                const std::string skeleton = OpenOblivion::tes4PlayerSkeleton(
++                    Misc::ResourceHelpers::correctActorModelPath(
++                        Misc::ResourceHelpers::correctMeshPath(VFS::Path::Normalized(OpenOblivion::tes4PathText(tes4Player->mModel))), mResourceSystem->getVFS())
++                        .value(),
++                    is1stPerson);
++                setObjectRoot(skeleton, true, true, false);
++                Resource::SceneManager* manager = mResourceSystem->getSceneManager();
++                for (const std::string& part : OpenOblivion::tes4PlayerPartModels(*tes4Player, store, is1stPerson))
++                    OpenOblivion::Skin::attach(manager->getTemplate(Misc::ResourceHelpers::correctMeshPath(
++                                                   VFS::Path::Normalized(part))),
++                        mObjectRoot.get(), manager);
++                // The host camera tracks a "Head" bone; TES4 skeletons name it "Bip01 Head".
++                NodeMap& nodes = const_cast<NodeMap&>(getNodeMap());
++                if (const auto head = nodes.find("bip01 head"); head != nodes.end())
++                    nodes.emplace("head", head->second);
++                const std::string directory = skeleton.substr(0, skeleton.find_last_of('/') + 1);
++                for (const auto& [file, group] : OpenOblivion::tes4LocomotionGroups())
++                {
++                    const VFS::Path::Normalized clip(directory + std::string(file));
++                    if (!mResourceSystem->getVFS()->exists(clip))
++                        continue;
++                    osg::ref_ptr<const SceneUtil::KeyframeHolder> loaded = mResourceSystem->getKeyframeManager()->get(clip);
++                    if (loaded)
++                        addKeyframeSource(OpenOblivion::tes4RenamedKeyframes(*loaded, group), clip, skeleton);
++                }
++                if (is1stPerson)
++                {
++                    mObjectRoot->setNodeMask(Mask_FirstPerson);
++                    mObjectRoot->addCullCallback(new OverrideFieldOfViewCallback(
++                        mFirstPersonFieldOfView, MWBase::Environment::get().getWorld()->getRenderingManager()));
++                }
++                Log(Debug::Info) << "OPENOBLIVION_TES4_PLAYER skeleton=" << skeleton
++                                 << " groups=" << mSupportedAnimations.size();
++                mWeaponAnimationTime->updateStartTime();
++                return;
++            }
++
+         std::string_view base;
+         if (!isWerewolf)
+         {
+@@ -568,6 +614,10 @@
+         if (!mObjectRoot.get())
+             return;
+ 
++        // OpenOblivion: the TES4 player body has no template body parts.
++        if (OpenOblivion::tes4PlayerRecordFor(mPtr, *MWBase::Environment::get().getESMStore()))
++            return;
++
+         NpcType curType = getNpcType();
+         if (curType != mNpcType)
+         {
