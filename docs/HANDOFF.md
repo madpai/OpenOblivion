@@ -1,5 +1,17 @@
 # Maintainer handoff
 
+Sky and default run, 2026-10-03: served build `0.28-sky-run`. Android's COLLADA
+loader rejects every template `.dae`, so the sky lost its atmosphere layer.
+`tools/android/overlay/meshes/sky_atmosphere.osgt` is the CC0 template mesh
+converted with plain OSG classes; desktop probes render it identically to the
+`.dae` (`evidence/tes4-sky-{dae,osgt}-02`, mean pixel difference 0.005).
+Running is the default as in Oblivion (overlay run gate pins always-run on;
+WALK holds Shift), which also removes the lost-first-Shift-press problem.
+Overlay files (`tools/android/overlay`, see its README) ship in the APK and
+override payload copies without changing the payload ID. Next: the same
+COLLADA failure leaves the player without `BasicPlayer.dae` animations; then
+jump height (`fJumpHeightMin/Max`) from the original executable.
+
 Run/sneak and start, 2026-10-03: the owner reported sneak doing nothing and no
 walk/run difference. The player had no locomotion animation states, so the
 borrowed engine always used walk speed. `tes4_movement` (after `tes4_body`)
