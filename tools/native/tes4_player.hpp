@@ -14,6 +14,8 @@
 #include <components/debug/debuglog.hpp>
 #include <components/esm/formid.hpp>
 #include <components/esm/refid.hpp>
+#include <components/esm4/loadarmo.hpp>
+#include <components/esm4/loadclot.hpp>
 #include <components/esm4/loadhair.hpp>
 #include <components/esm4/loadnpc.hpp>
 #include <components/esm4/loadrace.hpp>
@@ -88,6 +90,42 @@ namespace OpenOblivion
         return (npc.mBaseConfig.tes4.flags & ESM4::Npc::TES4_Female) != 0;
     }
 
+    // TES4 biped slot bits (BMDT) that hide the bare body piece they cover.
+    inline constexpr std::uint32_t sTes4SlotHead = 0x01, sTes4SlotHair = 0x02, sTes4SlotUpper = 0x04,
+                                   sTes4SlotLower = 0x08, sTes4SlotHand = 0x10, sTes4SlotFoot = 0x20;
+
+    struct Tes4Worn
+    {
+        std::vector<std::string> mModels;
+        std::uint32_t mCovered = 0;
+    };
+
+    // Everything wearable in the Player record's starting inventory, equipped
+    // the way the TES4 NPC renderer equips a base inventory.
+    inline Tes4Worn tes4PlayerWorn(const ESM4::Npc& npc, const MWWorld::ESMStore& store)
+    {
+        Tes4Worn worn;
+        const bool female = tes4PlayerFemale(npc);
+        auto add = [&](const auto& record, std::uint32_t flags) {
+            std::string model = tes4PathText(female ? record.mModelFemale : record.mModelMale);
+            if (model.empty())
+                model = tes4PathText(record.mModel);
+            if (model.empty())
+                return;
+            worn.mModels.push_back(model);
+            worn.mCovered |= flags & 0xffff;
+        };
+        for (const ESM4::InventoryItem& item : npc.mInventory)
+        {
+            const ESM::FormId id = ESM::FormId::fromUint32(item.item);
+            if (const ESM4::Clothing* clothing = store.get<ESM4::Clothing>().search(id))
+                add(*clothing, clothing->mClothingFlags);
+            else if (const ESM4::Armor* armor = store.get<ESM4::Armor>().search(id))
+                add(*armor, armor->mArmorFlags);
+        }
+        return worn;
+    }
+
     // Body, head and hair meshes, in the order the TES4 NPC renderer attaches them.
     // First person uses the original _1stperson skeleton/clips and only body parts
     // (arms and hands); the head and hair would sit in front of the camera.
@@ -95,12 +133,17 @@ namespace OpenOblivion
         const ESM4::Npc& npc, const MWWorld::ESMStore& store, bool firstPerson)
     {
         std::vector<std::string> models;
+        const Tes4Worn worn = tes4PlayerWorn(npc, store);
         // TES4 race records carry body textures, not body meshes; the bare body
         // is the fixed set in Characters\_Male (female meshes share that folder).
+        // A worn item replaces the body piece in its slot.
         const std::string_view prefix = tes4PlayerFemale(npc) ? "female" : "";
-        for (std::string_view piece : { "upperbody", "lowerbody", "hand", "foot" })
-            if (!firstPerson || piece == "upperbody" || piece == "hand")
+        const std::pair<std::string_view, std::uint32_t> pieces[] = { { "upperbody", sTes4SlotUpper },
+            { "lowerbody", sTes4SlotLower }, { "hand", sTes4SlotHand }, { "foot", sTes4SlotFoot } };
+        for (const auto& [piece, slot] : pieces)
+            if ((worn.mCovered & slot) == 0 && (!firstPerson || slot == sTes4SlotUpper || slot == sTes4SlotHand))
                 models.push_back("Characters\\_Male\\" + std::string(prefix) + std::string(piece) + ".nif");
+        models.insert(models.end(), worn.mModels.begin(), worn.mModels.end());
         const ESM4::Race* race = store.get<ESM4::Race>().search(npc.mRace);
         if (race != nullptr)
         {
@@ -112,7 +155,7 @@ namespace OpenOblivion
                     if (!part.mesh.empty())
                         models.push_back(part.mesh);
         }
-        if (!firstPerson && !npc.mHair.isZeroOrUnset())
+        if (!firstPerson && (worn.mCovered & (sTes4SlotHead | sTes4SlotHair)) == 0 && !npc.mHair.isZeroOrUnset())
             if (const ESM4::Hair* hair = store.get<ESM4::Hair>().search(npc.mHair))
                 if (!tes4PathText(hair->mModel).empty())
                     models.push_back(tes4PathText(hair->mModel));

@@ -24,6 +24,20 @@ TES4 animation. With `OPENOBLIVION_TES4_PLAYER=1` the `tes4_player` receipt
 - Template body parts are skipped for this player. Mechanics, inventory and the
   measured collision hull are unchanged; speed stays the TES4 formula.
 
+## Outfit and stats (0.30)
+
+- The Player record's starting inventory is worn: Sack Cloth Shirt, Pants and
+  Sandals and Wrist Irons (the original reference shows the same outfit). Each
+  item's BMDT slot bits hide the bare body piece it covers.
+- Starting stats are read from the owner's master at package time
+  (`tools/android/tes4_stats.py`, values never committed) and applied by an
+  overlay player script, which also exposes TES4 skills as interface
+  `TES4Stats`. The original console reports, for this record: health 80,
+  magicka 100, fatigue 150, level 1, Strength 50, Endurance 40, Speed 40, i.e.
+  health = 2 x Endurance, magicka = 2 x Intelligence, fatigue = Strength +
+  Willpower + Agility + Endurance. The record's base health (45) is not the
+  player's health.
+
 ## Evidence
 
 Desktop, same recorded binary, owner data: the player loads with 22 groups in
@@ -35,7 +49,7 @@ requests 355.6 units/s. Android ARM64 builds and is packaged as
 
 ## Not yet
 
-Face textures/FaceGen (the head is untextured-dark), starting clothes and
-equipment on the body, weapon/hand-to-hand/jump/attack clips, race skin
+Face textures/FaceGen (the head is untextured-dark), a real TES4 inventory
+and equipping (the worn outfit is cosmetic), weapon/hand-to-hand/jump/attack clips, race skin
 texture overrides, female/beast players, and a bare body under NPC armour
 (NPCs still attach only what they wear).

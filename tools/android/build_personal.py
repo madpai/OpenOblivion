@@ -298,6 +298,9 @@ def main():
             target = overlay / source.relative_to(overlay_source)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, target)
+    # Starting stats come from the owner's master at build time; not committed.
+    from tes4_stats import lua as stats_lua, stats as master_stats
+    (overlay / 'scripts/openoblivion_tes4_stats_values.lua').write_text(stats_lua(master_stats(data / 'Oblivion.esm')))
     (stage / 'template-settings.cfg').write_text(player_collision_settings((template / 'settings.cfg').read_text()))
     paths = [(file, 'template/' + file.relative_to(template / 'game_template/data').as_posix())
              for file in sorted((template / 'game_template/data').rglob('*')) if file.is_file()]

@@ -1,1 +1,2 @@
 GLOBAL: scripts/openoblivion_start_position.lua
+PLAYER: scripts/openoblivion_tes4_stats.lua

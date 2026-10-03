@@ -45,6 +45,7 @@ parser.add_argument('--authored-collision', action='store_true', help='Enable th
 parser.add_argument('--original-body', action='store_true', help='Enable the measured classic TES4 player hull in a recorded body build')
 parser.add_argument('--tes4-movement', action='store_true', help='Enable the classic TES4 player ground-speed formula in a recorded build')
 parser.add_argument('--tes4-player', action='store_true', help='Render the player as the TES4 Player record in a recorded player build')
+parser.add_argument('--phone-overlay', action='store_true', help='Mount the phone launcher overlay (scripts, sky, generated TES4 stats) as on Android')
 parser.add_argument('--sky-osgt', action='store_true', help='Use the phone overlay OSGT sky atmosphere instead of the template COLLADA file')
 parser.add_argument('--async-physics-threads', type=int, choices=range(5), help='Explicit physics worker count for a controlled comparison')
 parser.add_argument('--camera-motion', action='store_true', help='Bounded movement/turning probe; changes controls for two seconds')
@@ -209,7 +210,15 @@ else:
     for archive in ([] if scene_data or args.movement_fixture else sorted(data.glob('*.bsa'))):
         if archive.name.startswith('Oblivion - '):
             cfg.append('fallback-archive=' + archive.name)
-if args.sky_osgt:
+if args.phone_overlay:
+    overlay_dir = output / 'phone-overlay'
+    shutil.copytree(ROOT / 'tools/android/overlay', overlay_dir)
+    sys.path.insert(0, str(ROOT / 'tools/android'))
+    from tes4_stats import lua as stats_lua, stats as master_stats
+    (overlay_dir / 'scripts/openoblivion_tes4_stats_values.lua').write_text(stats_lua(master_stats(data / 'Oblivion.esm')))
+    args.sky_osgt = True
+    cfg += ['data=/phone-overlay', 'content=start_position.omwscripts']
+elif args.sky_osgt:
     cfg.append('data=/phone-overlay')
 (config / 'openmw.cfg').write_text('\n'.join(cfg) + '\n')
 settings = (template / 'settings.cfg').read_text()
@@ -247,7 +256,8 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
              ['--volume', f'{data / "Oblivion.esm"}:/scene-master/Oblivion.esm:ro',
               '--volume', f'{scene_data}:/scene-slice:ro'] if scene_data else ['--volume', f'{data}:/game:ro']),
            *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa or args.camera_repair or args.tes4_interactions else []),
-           *(['--volume', f'{ROOT / "tools/android/overlay"}:/phone-overlay:ro'] if args.sky_osgt else []),
+           *(['--volume', f'{output / "phone-overlay"}:/phone-overlay:ro'] if args.phone_overlay else
+             ['--volume', f'{ROOT / "tools/android/overlay"}:/phone-overlay:ro'] if args.sky_osgt else []),
            '--volume', f'{template}:/template:ro',
            '--volume', f'{ROOT / "tools/upstream"}:/probe-data:ro',
            *(['--volume', f'{door_data}:/door-data:ro'] if args.tes4_doors else []),

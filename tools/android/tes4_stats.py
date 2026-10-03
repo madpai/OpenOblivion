@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-only
+"""Read the classic master's Player record and write its starting stats for the
+phone overlay script. Generated into private build output, never committed.
+
+Derived values follow the original game's console readings for this record
+(2026-10-03): health = 2 x Endurance, magicka = 2 x Intelligence,
+fatigue = Strength + Willpower + Agility + Endurance.
+"""
+import argparse
+from pathlib import Path
+import struct
+import sys
+import zlib
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from scene_assets import subrecords
+
+SKILLS = ('armorer', 'athletics', 'blade', 'block', 'blunt', 'handToHand', 'heavyArmor', 'alchemy',
+          'alteration', 'conjuration', 'destruction', 'illusion', 'mysticism', 'restoration',
+          'acrobatics', 'lightArmor', 'marksman', 'mercantile', 'security', 'sneak', 'speechcraft')
+ATTRIBUTES = ('strength', 'intelligence', 'willpower', 'agility', 'speed', 'endurance', 'personality', 'luck')
+
+
+def player_record(master):
+    plugin = master.read_bytes()
+    pos, end = 0, len(plugin)
+    stack = [end]
+    while pos < len(plugin):
+        tag, size = struct.unpack_from('<4sI', plugin, pos)
+        if tag == b'GRUP':
+            pos += 20
+            continue
+        flags, fid = struct.unpack_from('<II', plugin, pos + 8)
+        raw = plugin[pos + 20:pos + 20 + size]
+        pos += 20 + size
+        if tag == b'NPC_' and fid == 0x7:
+            if flags & 0x40000:
+                raw = zlib.decompress(raw[4:])
+            return dict(subrecords(raw))
+    raise ValueError('Player record 00000007 not found')
+
+
+def stats(master):
+    fields = player_record(master)
+    data = fields[b'DATA']
+    if len(data) < 33:
+        raise ValueError('Unexpected Player DATA size')
+    skills = dict(zip(SKILLS, data[:21]))
+    attributes = dict(zip(ATTRIBUTES, data[25:33]))
+    level = struct.unpack_from('<h', fields[b'ACBS'], 10)[0]
+    return {'level': level, 'skills': skills, 'attributes': attributes,
+            'health': 2 * attributes['endurance'], 'magicka': 2 * attributes['intelligence'],
+            'fatigue': sum(attributes[a] for a in ('strength', 'willpower', 'agility', 'endurance'))}
+
+
+def lua(values):
+    def table(d):
+        return '{' + ', '.join(f'{k} = {v}' for k, v in d.items()) + '}'
+    return ('-- Generated from the owner\'s Oblivion.esm Player record; private build output.\n'
+            f"return {{level = {values['level']}, health = {values['health']}, magicka = {values['magicka']}, "
+            f"fatigue = {values['fatigue']},\n  attributes = {table(values['attributes'])},\n"
+            f"  skills = {table(values['skills'])}}}\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('master', type=Path)
+    parser.add_argument('output', type=Path)
+    args = parser.parse_args()
+    args.output.write_text(lua(stats(args.master)))
+
+
+if __name__ == '__main__':
+    main()
