@@ -1,0 +1,155 @@
+--- a/apps/openmw/mwlua/types/types.cpp
++++ b/apps/openmw/mwlua/types/types.cpp
+@@ -41,6 +41,7 @@
+         constexpr std::string_view ESM4Book = "ESM4Book";
+         constexpr std::string_view ESM4Clothing = "ESM4Clothing";
+         constexpr std::string_view ESM4Container = "ESM4Container";
++        constexpr std::string_view ESM4Creature = "ESM4Creature";
+         constexpr std::string_view ESM4Door = "ESM4Door";
+         constexpr std::string_view ESM4Flora = "ESM4Flora";
+         constexpr std::string_view ESM4Furniture = "ESM4Furniture";
+@@ -49,6 +50,7 @@
+         constexpr std::string_view ESM4Light = "ESM4Light";
+         constexpr std::string_view ESM4MiscItem = "ESM4Miscellaneous";
+         constexpr std::string_view ESM4MovableStatic = "ESM4MovableStatic";
++        constexpr std::string_view ESM4Npc = "ESM4Npc";
+         constexpr std::string_view ESM4Potion = "ESM4Potion";
+         constexpr std::string_view ESM4Static = "ESM4Static";
+         constexpr std::string_view ESM4StaticCollection = "ESM4StaticCollection";
+@@ -88,6 +90,7 @@
+             { ESM::REC_BOOK4, ObjectTypeName::ESM4Book },
+             { ESM::REC_CLOT4, ObjectTypeName::ESM4Clothing },
+             { ESM::REC_CONT4, ObjectTypeName::ESM4Container },
++            { ESM::REC_CREA4, ObjectTypeName::ESM4Creature },
+             { ESM::REC_DOOR4, ObjectTypeName::ESM4Door },
+             { ESM::REC_FLOR4, ObjectTypeName::ESM4Flora },
+             { ESM::REC_FURN4, ObjectTypeName::ESM4Furniture },
+@@ -96,6 +99,7 @@
+             { ESM::REC_LIGH4, ObjectTypeName::ESM4Light },
+             { ESM::REC_MISC4, ObjectTypeName::ESM4MiscItem },
+             { ESM::REC_MSTT4, ObjectTypeName::ESM4MovableStatic },
++            { ESM::REC_NPC_4, ObjectTypeName::ESM4Npc },
+             { ESM::REC_ALCH4, ObjectTypeName::ESM4Potion },
+             { ESM::REC_STAT4, ObjectTypeName::ESM4Static },
+             { ESM::REC_SCOL4, ObjectTypeName::ESM4StaticCollection },
+@@ -235,7 +239,8 @@
+         addType(ObjectTypeName::ESM4Armor, { ESM::REC_ARMO4 });
+         addType(ObjectTypeName::ESM4Book, { ESM::REC_BOOK4 });
+         addType(ObjectTypeName::ESM4Clothing, { ESM::REC_CLOT4 });
+-        addType(ObjectTypeName::ESM4Container, { ESM::REC_CONT4 });
++        addESM4ContainerBindings(addType(ObjectTypeName::ESM4Container, { ESM::REC_CONT4 }, ObjectTypeName::Lockable), context);
++        addESM4CreatureBindings(addType(ObjectTypeName::ESM4Creature, { ESM::REC_CREA4 }), context);
+         addESM4DoorBindings(addType(ObjectTypeName::ESM4Door, { ESM::REC_DOOR4 }, ObjectTypeName::Lockable), context);
+         addType(ObjectTypeName::ESM4Flora, { ESM::REC_FLOR4 });
+         addType(ObjectTypeName::ESM4Furniture, { ESM::REC_FURN4 });
+@@ -244,6 +249,7 @@
+         addType(ObjectTypeName::ESM4Light, { ESM::REC_LIGH4 });
+         addType(ObjectTypeName::ESM4MiscItem, { ESM::REC_MISC4 });
+         addType(ObjectTypeName::ESM4MovableStatic, { ESM::REC_MSTT4 });
++        addESM4NpcBindings(addType(ObjectTypeName::ESM4Npc, { ESM::REC_NPC_4 }), context);
+         addType(ObjectTypeName::ESM4Potion, { ESM::REC_ALCH4 });
+         addType(ObjectTypeName::ESM4Static, { ESM::REC_STAT4 });
+         addType(ObjectTypeName::ESM4StaticCollection, { ESM::REC_SCOL4 });
+@@ -266,3 +272,5 @@
+         return lua["openmw_types"];
+     }
+ }
++
++#include "openoblivion_tes4_bindings.hpp"
+--- a/apps/openmw/mwlua/types/types.hpp
++++ b/apps/openmw/mwlua/types/types.hpp
+@@ -70,6 +70,9 @@
+     void addLevelledCreatureBindings(sol::table list, const Context& context);
+ 
+     void addESM4DoorBindings(sol::table door, const Context& context);
++    void addESM4NpcBindings(sol::table npc, const Context& context);
++    void addESM4CreatureBindings(sol::table creature, const Context& context);
++    void addESM4ContainerBindings(sol::table container, const Context& context);
+     void addESM4TerminalBindings(sol::table term, const Context& context);
+ }
+ 
+--- a/apps/openmw/mwrender/esm4npcanimation.cpp
++++ b/apps/openmw/mwrender/esm4npcanimation.cpp
+@@ -11,6 +11,7 @@
+ #include <components/misc/resourcehelpers.hpp>
+ #include <components/resource/resourcesystem.hpp>
+ #include <components/resource/scenemanager.hpp>
++#include <components/sceneutil/attach.hpp>
+ 
+ #include "../mwbase/environment.hpp"
+ #include "../mwclass/esm4npc.hpp"
+@@ -23,6 +24,7 @@
+         : Animation(ptr, std::move(parentNode), resourceSystem)
+     {
+         setObjectRoot(mPtr.getClass().getCorrectedModel(mPtr), true, true, false);
++        Log(Debug::Info) << "OPENOBLIVION_NPC skeleton_nodes=" << getNodeMap().size();
+         updateParts();
+     }
+ 
+@@ -52,8 +54,12 @@
+     {
+         if (model.empty())
+             return;
+-        mResourceSystem->getSceneManager()->getInstance(
+-            Misc::ResourceHelpers::correctMeshPath(VFS::Path::Normalized(model)), mObjectRoot.get());
++        auto* manager = mResourceSystem->getSceneManager();
++        auto part = manager->getTemplate(Misc::ResourceHelpers::correctMeshPath(VFS::Path::Normalized(model)));
++        // A part's private skeleton must not shadow the actor's live bones.
++        // SceneUtil::attach copies skinned geometry onto the actor skeleton.
++        SceneUtil::attach(part, mObjectRoot.get(), "", mObjectRoot.get(), manager);
++        Log(Debug::Info) << "OPENOBLIVION_NPC attached_part=" << model;
+     }
+ 
+     template <class Record>
+@@ -72,7 +78,7 @@
+         const ESM4::Race* race = MWClass::ESM4Npc::getRace(mPtr);
+         bool isFemale = MWClass::ESM4Npc::isFemale(mPtr);
+ 
+-        // TODO: Body and head parts are placed incorrectly, need to attach to bones
++        // Skinned parts share the actor skeleton via insertPart.
+ 
+         for (const ESM4::Race::BodyPart& bodyPart : (isFemale ? race->mBodyPartsFemale : race->mBodyPartsMale))
+             insertPart(bodyPart.mesh);
+--- a/apps/openmw/mwlua/cellbindings.cpp
++++ b/apps/openmw/mwlua/cellbindings.cpp
+@@ -27,6 +27,8 @@
+ #include <components/esm4/loadbook.hpp>
+ #include <components/esm4/loadclot.hpp>
+ #include <components/esm4/loadcont.hpp>
++#include <components/esm4/loadcrea.hpp>
++#include <components/esm4/loadnpc.hpp>
+ #include <components/esm4/loaddoor.hpp>
+ #include <components/esm4/loadflor.hpp>
+ #include <components/esm4/loadfurn.hpp>
+@@ -251,6 +253,12 @@
+                             break;
+                         case ESM::REC_CONT4:
+                             cell.mStore->template forEachType<ESM4::Container>(visitor);
++                            break;
++                        case ESM::REC_CREA4:
++                            cell.mStore->template forEachType<ESM4::Creature>(visitor);
++                            break;
++                        case ESM::REC_NPC_4:
++                            cell.mStore->template forEachType<ESM4::Npc>(visitor);
+                             break;
+                         case ESM::REC_DOOR4:
+                             cell.mStore->template forEachType<ESM4::Door>(visitor);
+--- a/components/esm4/loadrefr.cpp
++++ b/components/esm4/loadrefr.cpp
+@@ -25,6 +25,7 @@
+ 
+ */
+ #include "loadrefr.hpp"
++#include "openoblivion_reference_locks.hpp"
+ 
+ #include <stdexcept>
+ 
+@@ -33,6 +34,8 @@
+ 
+ void ESM4::Reference::load(ESM4::Reader& reader)
+ {
++    // OpenOblivion: reset absent optional XLOC fields before record reuse.
++    OpenOblivion::resetReferenceLocks(*this);
+     mId = reader.hdr().record.getFormId();
+     reader.adjustFormId(mId);
+     mFlags = reader.hdr().record.flags;

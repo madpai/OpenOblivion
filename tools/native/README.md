@@ -1,5 +1,28 @@
 # Native stair camera integration
 
+## TES4 interaction continuation
+
+After applying the existing camera/static-strip integration, apply the name,
+container, shared-skeleton and optional reference-lock reset patch to the
+external engine tree. It accepts clean audited files or the exact interrupted
+handoff hashes, and verifies an existing receipt on repeat application.
+
+```sh
+python3 tools/native/tes4_interactions.py apply --source /outside/native-desktop/source \
+  --revision 46bd4599203ee52ffc0f3e8edb3fc159a0303a49
+# Rebuild openmw in the existing container, then update its camera build receipt:
+python3 tools/native/tes4_interactions.py record --source /outside/native-desktop/source \
+  --binary /outside/native-desktop/build/openmw --manifest /outside/native-desktop/build-manifest.json
+```
+
+Android uses the engine tree beneath the donor build and revision
+`f4bec41444214a7903bebd178389ca22ca13f646`. Rebuild `openmw`, recreate any
+corrupted generated static archive before relinking, then strip debug info
+into the private runtime's `libopenmw.so`. Record against that library and
+the runtime's existing `build-manifest.json`. The packager validates the
+interaction tools as well as all six packaged library hashes.
+See [the measured scope](../../docs/research/TES4_INTERACTIONS.md).
+
 This is a small, opt-in patch against audited OpenMW sources. It changes eye
 presentation after physics updates the actor, before the existing camera sphere
 casts. It does not change actor movement, collision geometry, heading, jump,

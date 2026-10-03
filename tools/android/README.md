@@ -88,7 +88,12 @@ packager. Controlled original stairs improve, but real Vilverin ascent exposes
 a frame-timing regression. The private experimental 0.4 APK is withheld, and the
 working phone baseline 0.3 is archived. See [movement research](../../docs/PLAYER_MOVEMENT.md).
 
-Personal preview **0.11-fit** (versionCode 11) is the served package. It keeps the 0.9 movement and strip collision. The closed overlay is documented in [TOUCH_ACTIONS.md](../../docs/TOUCH_ACTIONS.md). The name bar is in [LOOK_NAME.md](../../docs/LOOK_NAME.md). The hall-gate measurement is in [VILVERIN_GATE.md](../../docs/research/VILVERIN_GATE.md). `0.10-touch-name` and `0.9-authored-collision` are archived.
+Personal preview **0.12-containers** (versionCode 12) is the served package.
+It adds native TES4 names, read-only base-container inspection, shared NPC
+skeleton attachment, reference lock reset and GUI taps. It keeps the previous
+movement, stair filter and strip collision. See
+[TES4_INTERACTIONS.md](../../docs/research/TES4_INTERACTIONS.md) for measured
+scope and phone QA limitations. `0.11-fit` is archived alongside older builds.
 
 Personal preview **0.9-authored-collision** uses the native engine with fixed
 `OL_STATIC` strip collision enabled. USE is the
@@ -103,9 +108,9 @@ to the packager command to use its verified six-library set and exact build
 resources/defaults/notices. The host enables the native post-physics filter and
 bounded read-only stair sampling; the rejected Lua filter remains excluded.
 Without that option the released 0.3 path remains available. The current
-private download offers 0.11-fit for owner QA. It uses the
+private download offers 0.12-containers for owner QA. It uses the
 native engine with the static-collision switch on, the collapsed touch overlay,
-the template collision box, and the name bar. 0.10, 0.9, 0.8-run, and 0.5 remain archived, and 0.3 is preserved separately.
+the template collision box, and the name bar. 0.11, 0.10, 0.9, 0.8-run, and 0.5 remain archived, and 0.3 is preserved separately.
 
 The packager recreates the generated APK while retaining compilation caches,
 then rejects excessive unused ZIP space. This prevents incremental APK updates

@@ -39,6 +39,31 @@ repository or dependencies of the native reader executables.
 
 ## Audited linked slice
 
+### TES4 interaction integration (2026-10-03)
+
+Desktop OpenMW `46bd4599203ee52ffc0f3e8edb3fc159a0303a49` and Android engine
+`f4bec41444214a7903bebd178389ca22ca13f646`: changes to
+`apps/openmw/mwlua/types/{types.cpp,types.hpp}` and
+`apps/openmw/mwlua/cellbindings.cpp` and
+`apps/openmw/mwrender/esm4npcanimation.cpp` use the project's GPLv3 grant.
+Existing notices remain in the external source trees. The new bindings header,
+patch application tool and container scripts are independently authored
+GPL-3.0-only integration code. The existing OpenMW record, scene instance and
+skinning APIs are used rather than copying game executable code.
+`components/esm4/{loadcont,loadnpc,loadcrea,inventory}.hpp` are read unchanged;
+their cc9cii zlib notices stay with the external dependency. Intended use is
+private Linux/Android builds; public distribution contains source patches and
+original test fixtures only. Names and base inventory snapshots do not imply
+loot transfer, leveled-item evaluation, TES4 saves or dialogue compatibility.
+
+The same integration adds a lock-state reset at the start of
+`components/esm4/loadrefr.cpp` (cc9cii zlib notice at the revisions above),
+using an original helper. All existing notices stay intact; patches explicitly
+mark the altered behavior. `loadrefr.cpp` is compiled unchanged for the public
+synthetic regression fixture; only the external runtime applies the patch.
+TES4 XLOC definitions in the pinned TES5Edit checkout are research references;
+no xEdit source is copied or linked by this change.
+
 CMake lists 14 upstream translation units: `components/esm4/{reader,loadtes4}.cpp`, `components/esm/{formid,refid,stringrefid,generatedrefid,indexrefid,esm3exteriorcellrefid}.cpp`, `components/files/{constrainedfilestreambuf,conversion}.cpp`, `components/platform/fileposix.cpp`, `components/toutf8/toutf8.cpp`, `components/debug/debuglog.cpp`, and `components/vfs/manager.cpp`. Their headers are read from the same verified commit. Reader/header files credit **cc9cii** under zlib notices; files without narrower grants are treated under the OpenMW project GPLv3. The checkout and notices remain unchanged. The build checker verifies every tracked blob before building, including edits hidden by Git index flags.
 
 `src/inspect.cpp` and `src/vulkan_probe.cpp` are independently authored orchestration. There is no copied OpenMW traversal helper: the scanner uses the reader API directly to avoid the final-record omission documented in [REPRODUCTION.md](REPRODUCTION.md).

@@ -1,3 +1,13 @@
+# Latest continuation: 0.12-containers
+
+Current private download, 2026-10-03: `0.12-containers`, versionCode 12,
+QA `OO-ANDROID-012`. APK SHA256
+`f588257abe91344ce187cb34ed81f40a9c6dd7278242c717b89f6991a7bfac00`
+(661,254,187 bytes). Names, read-only base-container inspection, lock-state
+reset, shared NPC skeleton attachment and GUI taps are documented in
+[TES4_INTERACTIONS.md](TES4_INTERACTIONS.md). The older observations and
+remaining animation/body research below remain historical evidence.
+
 # What the phone preview can already play
 
 Date: 2026-10-01. This is a read of the published Vilverin captures and the
@@ -56,7 +66,7 @@ exist on that skeleton.
 
 ## Working tree after this pass
 
-Version name `0.11-fit`, versionCode 11, is the served download.
+Version name `0.11-fit`, versionCode 11, was the previous served download and is archived.
 Physics is the 0.9 library. APK SHA256
 `6dede3d7b7c16633ea07a232aa5131f70f6182fcf9052f4bda6f6f5b538050a4`
 (656,483,887 bytes). QA objective `OO-ANDROID-011`.

@@ -28,6 +28,7 @@ parser.add_argument('--output', required=True, type=Path, help='Fresh private ev
 parser.add_argument('--image', default='openoblivion-research-build:founding')
 parser.add_argument('--scene-data', type=Path, help='Optional private loose visual slice; mount only the master, without full BSAs')
 parser.add_argument('--phone-qa', action='store_true', help='Also exercise the original read-only phone camera/player diagnostics')
+parser.add_argument('--tes4-interactions', action='store_true', help='Exercise native TES4 names, container snapshots and preview UI')
 parser.add_argument('--camera-repair', action='store_true', help='Exercise the original preview camera fallback')
 parser.add_argument('--grounded-eye', action='store_true', help='Explicitly enable the unshipped stair eye-height experiment')
 parser.add_argument('--native-manifest', type=Path, help='External recorded native camera integration build')
@@ -113,6 +114,8 @@ cfg = ['replace=content', 'replace=fallback-archive',
 if args.phone_qa or args.camera_repair:
     cfg += ['data=/phone-qa-data']
 if args.phone_qa: cfg += ['content=phone_qa.omwscripts']
+if args.tes4_interactions:
+    cfg += ['data=/phone-qa-data', 'content=container.omwscripts', 'content=tes4_interactions_probe.omwscripts']
 if args.camera_repair:
     cfg += ['content=' + ('camera_stairs_candidate.omwscripts' if args.grounded_eye else 'camera_repair.omwscripts')]
 if args.camera_motion: cfg += ['content=camera_motion_probe.omwscripts']
@@ -155,7 +158,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            *(['--volume', f'{fixture_data}:/fixture-data:ro'] if args.movement_fixture else
              ['--volume', f'{data / "Oblivion.esm"}:/scene-master/Oblivion.esm:ro',
               '--volume', f'{scene_data}:/scene-slice:ro'] if scene_data else ['--volume', f'{data}:/game:ro']),
-           *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa or args.camera_repair else []),
+           *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa or args.camera_repair or args.tes4_interactions else []),
            '--volume', f'{template}:/template:ro',
            '--volume', f'{ROOT / "tools/upstream"}:/probe-data:ro',
            *(['--volume', f'{movement_data}:/movement-data:ro'] if args.player_movement else []),
@@ -187,6 +190,12 @@ complete = ('OPENOBLIVION_SCENE_PROBE_DONE' in log and bool(screens) and result.
             and revision_matches and cell_matches)
 if args.native_grounded_eye and 'OPENOBLIVION_NATIVE_GROUNDED_EYE enabled:' not in log:
     complete = False
+interactions_verified = ('OPENOBLIVION_TES4_INTERACTIONS actors=' in log
+                         and 'OPENOBLIVION_CONTAINER name=' in log
+                         and 'OPENOBLIVION_CONTAINER_UI_CAPTURED' in log
+                         and 'OPENOBLIVION_NPC skeleton_nodes=' in log
+                         and 'Lua error:' not in log)
+if args.tes4_interactions and not interactions_verified: complete = False
 repair_activated = 'OPENOBLIVION_CAMERA_REPAIR activated:' in log
 motion = re.search(r'OPENOBLIVION_CAMERA_MOTION distance=([\d.eE+-]+) camera_player_distance=([\d.eE+-]+) yaw=([\d.eE+-]+)', log)
 motion_verified = bool(motion and float(motion[1]) > 1 and float(motion[2]) < 256 and abs(float(motion[3])) > 0.1)
@@ -208,6 +217,8 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'engine_kind': 'openoblivion-native-integration' if native_manifest else 'stock-upstream',
            'native_integration': native_manifest, 'native_grounded_eye_enabled': args.native_grounded_eye,
            'bounded_visual_slice': bool(scene_data), 'phone_qa_enabled': args.phone_qa,
+           'tes4_interactions_enabled': args.tes4_interactions,
+           'tes4_interactions_verified': interactions_verified,
            'camera_repair_enabled': args.camera_repair, 'missing_player_model_injected': args.missing_player_model,
            'experimental_grounded_eye_enabled': args.grounded_eye,
            'camera_motion_enabled': args.camera_motion,
@@ -222,6 +233,14 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'player_movement': movement,
            'screenshots': screens, 'scope': 'Private scene load/screenshot; software OpenGL, not Vulkan or gameplay'}
 probe_sources = [Path(__file__).resolve()]
+if args.tes4_interactions:
+    probe_sources += [ROOT / 'tools/upstream/tes4_interactions_probe.omwscripts',
+                      ROOT / 'tools/upstream/scripts/openoblivion_tes4_interactions_probe.lua',
+                      ROOT / 'tools/upstream/scripts/openoblivion_tes4_interactions_close_probe.lua',
+                      ROOT / 'tools/android/container.omwscripts',
+                      ROOT / 'tools/android/scripts/openoblivion_container.lua',
+                      ROOT / 'tools/android/scripts/openoblivion_container_items.lua',
+                      ROOT / 'tools/android/scripts/openoblivion_container_ui.lua']
 if args.camera_repair:
     probe_sources += [ROOT / 'tools/android/camera_repair.omwscripts',
                       ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua']

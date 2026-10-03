@@ -1,5 +1,16 @@
 # Maintainer handoff
 
+Current continuation, 2026-10-03: the owner now prioritizes a 1:1 classic
+Oblivion Android port and explicitly authorizes source/docs publishing and
+private sideload APK updates. [PARITY.md](PARITY.md) supersedes the older
+statement below that one-to-one gameplay was not the current target.
+The interrupted native binding declarations and container UI are completed
+as a measured inspection checkpoint. The inherited door sequence hook still
+uses the fallback because embedded sequence playback is unimplemented.
+See [TES4_INTERACTIONS.md](research/TES4_INTERACTIONS.md) for native names,
+container/window verification, reference lock reset, shared-skeleton scope,
+build receipts and remaining work. Movement constants remain unchanged.
+
 Founding checkpoint: 2026-09-30. The owner authorized publication to
 https://github.com/madpai/OpenOblivion on 2026-10-01. Original project code is
 GPL-3.0-only; owner content stays private.
@@ -13,14 +24,15 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
 and the owner's earlier failed physical-phone views. The served download is
-`0.11-fit` (versionCode 11), QA objective `OO-ANDROID-011`. Its APK
-SHA256 is `6dede3d7b7c16633ea07a232aa5131f70f6182fcf9052f4bda6f6f5b538050a4`
-(656,483,887 bytes). It keeps the 0.5 stair filter, the fixed `OL_STATIC`
+`0.12-containers` (versionCode 12), QA objective `OO-ANDROID-012`. Its APK
+SHA256 is `f588257abe91344ce187cb34ed81f40a9c6dd7278242c717b89f6991a7bfac00`
+(661,254,187 bytes). It adds TES4 names, base-container inspection, shared
+NPC skeleton attachment and correct optional lock reset. It keeps the 0.5 stair filter, the fixed `OL_STATIC`
 strip collision, and the 0.9 movement library. The closed overlay is the
 stick plus USE, JUMP, ATK, and MORE. Actor models use the template Collision
 box in `basicplayer.osgt`. Same-cell doors stay open until used again. See
 [the Vilverin gate note](research/VILVERIN_GATE.md) and
-[preview play](research/PREVIEW_PLAY.md). `0.10-touch-name` and
+[preview play](research/PREVIEW_PLAY.md). `0.11-fit`, `0.10-touch-name` and
 `0.9-authored-collision` are archived.
 The 0.9 package keeps the 0.5 stair filter and adds fixed `OL_STATIC` strip collision.
 USE is the lower-right button, JUMP

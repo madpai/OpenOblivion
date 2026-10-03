@@ -114,9 +114,16 @@ top button holds Shift for run after always-run is pinned off, and starts on
 run. The 0.7 log stayed at walk speed. Swimming and the meter are observations;
 depletion/recovery and drowning remain untested.
 
-The served package is **0.11-fit** (versionCode 11). It does not change the motor, the stair filter, or the strip loader. The closed overlay is the move stick plus USE, JUMP, ATK, and MORE; the other controls are on that tray. USE, JUMP, and attack leave the bottom 13% clear for the minimap. A player script draws a top name bar when Lua has a record name, and does not print record ids. TES4 actor names stay on the engine tooltip. GUI scale and font size stay at the engine defaults. Actor models use the template Collision box, and a same-cell door stays open until used again. That package is the served download, QA `OO-ANDROID-011`. See [preview play](research/PREVIEW_PLAY.md) and [the Vilverin gate note](research/VILVERIN_GATE.md).
+The served package is **0.12-containers** (versionCode 12), QA
+`OO-ANDROID-012`. It adds native TES4 actor/container names, base-container
+inspection, shared NPC skeleton attachment, correct reference lock defaults and
+absolute GUI taps. It keeps the motor, stair filter, strip loader, template
+collision box and closed touch overlay. Read-only inventory inspection is not
+loot transfer; original animation and phone acceptance remain unverified.
+See [the interaction checkpoint](research/TES4_INTERACTIONS.md) and
+[the parity ledger](PARITY.md).
 
-The private download is 0.11-fit; 0.10-touch-name, 0.9-authored-collision, and 0.8-run are archived, 0.6 and 0.7 are withdrawn, 0.5 remains the stair comparison, and the complete working 0.3 APK/page/notes are archived
+The private download is 0.12-containers; 0.11-fit, 0.10-touch-name, 0.9-authored-collision, and 0.8-run are archived, 0.6 and 0.7 are withdrawn, 0.5 remains the stair comparison, and the complete working 0.3 APK/page/notes are archived
 for recovery/comparison. The rejected 0.4 Lua-filter APK remains withheld.
 Native 0.5 keeps the original movement and camera collision paths and adds
 bounded read-only QA samples. It remains OpenGL, with animation, general TES4

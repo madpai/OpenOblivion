@@ -1,0 +1,2 @@
+GLOBAL: scripts/openoblivion_container.lua
+PLAYER: scripts/openoblivion_container_ui.lua

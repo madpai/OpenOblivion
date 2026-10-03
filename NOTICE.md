@@ -17,6 +17,14 @@ filter and the strip expander are independently authored OpenOblivion code.
 See tools/native and the exact-file license ledger; this is not an official
 OpenMW engine release.
 
+The optional TES4 interaction patches modify external OpenMW type/cell
+bindings and NPC scene assembly under its GPLv3 project grant, and reset
+optional reference lock fields in the cc9cii zlib-licensed record loader.
+Existing dependency notices remain intact. The bindings/reset helpers,
+application tool, container UI and regression fixtures are original
+OpenOblivion GPL-3.0-only code. Public tests compile the external reference
+loader unchanged; OpenSceneGraph headers remain an external dependency.
+
 No source from TES3MP, vsgopenmw, NifTools, xEdit, xOBSE, SDL, ENet, Bullet,
 MegaMod or Asset Lab is copied into this checkout. Those projects are studied
 as documented in docs/research/LICENSE_MATRIX.md; Asset Lab original fixture

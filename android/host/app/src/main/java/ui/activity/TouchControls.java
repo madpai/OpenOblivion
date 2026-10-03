@@ -28,6 +28,9 @@ final class TouchControls extends View {
     private boolean sneaking;
     private boolean ctrlSent;
     private boolean moreOpen;
+    private boolean guiMode;
+    private int guiPointer = -1;
+    private float guiX, guiY;
     private final int[] directions = {KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_D};
 
     TouchControls(GameActivity a) { super(a); activity = a; setFocusable(false); }
@@ -47,6 +50,7 @@ final class TouchControls extends View {
     private float bottomGap() { return getHeight() * .13f; }
 
     @Override protected void onDraw(Canvas c) {
+        if (SDLActivity.isMouseShown() != 0) return;
         float r = radius(); paint.setColor(0x55777777); c.drawCircle(cx(), cy(), r, paint);
         paint.setColor(Color.WHITE); paint.setTextSize(Math.max(16, getHeight() * .035f));
         c.drawText("MOVE", cx() - r * .42f, cy() + 8, paint);
@@ -181,6 +185,8 @@ final class TouchControls extends View {
     }
 
     void release() {
+        if (guiPointer != -1) SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_UP, guiX, guiY, false);
+        guiPointer = -1;
         for (int k : new HashSet<>(keys)) key(k, false);
         if (shiftSent) SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_SHIFT_LEFT);
         shiftSent = false;
@@ -194,6 +200,26 @@ final class TouchControls extends View {
 
     @Override public boolean onTouchEvent(MotionEvent e) {
         int a = e.getActionMasked(), ix = e.getActionIndex(), id = e.getPointerId(ix);
+        boolean gui = SDLActivity.isMouseShown() != 0;
+        if (gui != guiMode) { release(); guiMode = gui; moreOpen = false; invalidate(); }
+        if (gui) {
+            if (a == MotionEvent.ACTION_CANCEL) { release(); return true; }
+            if (a == MotionEvent.ACTION_DOWN && guiPointer == -1) {
+                guiPointer = id; guiX = e.getX(ix); guiY = e.getY(ix);
+                SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_DOWN, guiX, guiY, false);
+            } else if (a == MotionEvent.ACTION_MOVE) {
+                int pointer = e.findPointerIndex(guiPointer);
+                if (pointer >= 0) {
+                    guiX = e.getX(pointer); guiY = e.getY(pointer);
+                    SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_MOVE, guiX, guiY, false);
+                }
+            } else if ((a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_POINTER_UP) && id == guiPointer) {
+                guiX = e.getX(ix); guiY = e.getY(ix);
+                SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_UP, guiX, guiY, false);
+                guiPointer = -1;
+            }
+            return true;
+        }
         if (a == MotionEvent.ACTION_CANCEL) { release(); return true; }
         if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_POINTER_DOWN) {
             float x = e.getX(ix), y = e.getY(ix);

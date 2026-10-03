@@ -67,6 +67,15 @@ endif()
 
 include(CTest)
 if(BUILD_TESTING AND NOT ANDROID)
+    find_path(OO_OSG_INCLUDE_DIR osg/Vec3f REQUIRED)
+    add_executable(oo_reference_lock_test tests/test_reference_locks.cpp
+        "${OO_OPENMW_SOURCE}/components/esm4/loadrefr.cpp")
+    target_include_directories(oo_reference_lock_test PRIVATE tools/native)
+    target_include_directories(oo_reference_lock_test SYSTEM PRIVATE "${OO_OSG_INCLUDE_DIR}")
+    target_link_libraries(oo_reference_lock_test PRIVATE oo_openmw_reader)
+    target_compile_options(oo_reference_lock_test PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME reference-lock-fixtures COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_reference_locks.py" "$<TARGET_FILE:oo_reference_lock_test>")
     add_executable(oo_native_grounded_eye_test tests/test_native_grounded_eye.cpp)
     target_include_directories(oo_native_grounded_eye_test PRIVATE tools/native)
     target_compile_options(oo_native_grounded_eye_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
@@ -92,4 +101,8 @@ if(BUILD_TESTING AND NOT ANDROID)
         "${CMAKE_SOURCE_DIR}/tests/test_grounded_eye.lua" "${CMAKE_SOURCE_DIR}")
     add_test(NAME look-name-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_look_name.lua" "${CMAKE_SOURCE_DIR}")
+    add_test(NAME container-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_container.lua" "${CMAKE_SOURCE_DIR}")
+    add_test(NAME door-activation-fixtures COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_door_activation.py")
 endif()

@@ -15,8 +15,11 @@
 
 OpenOblivion is an open-source project exploring a modern engine/runtime for
 **The Elder Scrolls IV: Oblivion**, using the player's own game installation.
-The goal is native Android and desktop play, Vulkan rendering and persistent,
-server-authoritative cooperative RPG modes.
+The primary goal is a **1:1 port of classic Oblivion to Android**, including
+the original gameplay and content from the player's installation. Linux is
+the development/reference platform. Vulkan and persistent, server-authoritative
+cooperative modes remain additional engineering goals. The
+[parity ledger](docs/PARITY.md) tracks what still needs implementation.
 
 Think **OpenMW/TES3MP philosophy for Oblivion**, with the cooperative energy of
 **Sven Co-op**: players can die, respawn and keep their progress. Multiplayer
@@ -49,7 +52,8 @@ reports very smooth stairs with subtle stepping they like, plus swimming and
 a visible breath indicator. The uploaded log confirms the native camera filter
 runs on the phone. Desktop Vilverin comparisons reduce measured view-jolt
 variation by about **60% uphill / 76% downhill**, with movement checks passing.
-**Next: recover the character body before changing the motor.** A desktop
+**Next: original animation and live inventory, with controller recovery before
+changing the motor.** A desktop
 switch can load fixed static Havok strip meshes, and `arwhallstairs01` contact
 changes with that switch on. Phone preview 0.9 carries that switch. Travel
 speed is still the borrowed walk. The stair filter stays as in 0.5. See
@@ -68,6 +72,7 @@ phone baseline is archived and the earlier Lua experiment is withheld.
 | Android preview | Original launcher, touch controls, private asset packaging and screenshot/QA upload tools. Phone scene visibility and look confirmed; basic traversal reported by the owner. |
 | Native stair smoothing | Source-built Android 0.51 engine with an opt-in camera patch; desktop stairs/ramp/wall/ceiling checks pass. Phone log confirms activation; owner reports smooth stairs with subtle stepping. Original movement calibration remains. |
 | Movement diagnostics | Native walk/stop/jump trajectories, original stair fixtures and separate player/view measurements. Discontinuities cannot count as successful movement. |
+| TES4 interaction inspection | Native actor/container names, base inventory snapshots, correct optional lock reset and shared-skeleton attachment. Desktop Vilverin window capture/close passes; loot transfer and original animation remain. See [the interaction checkpoint](docs/research/TES4_INTERACTIONS.md). |
 | Android toolchain | Inspector and Vulkan capability probe cross-compile for ARM64/API 29. |
 | Vulkan | Device/graphics-queue enumeration only; no OpenOblivion Vulkan scene renderer yet. |
 | Publication checks | Source, staged files and Git history checked for game data. Only three approved documentation screenshots have exact hash/size exceptions. |
@@ -104,7 +109,8 @@ The selected progress screenshots are documentation captures, with separate
 ## Build on Linux
 
 Requirements: C++20 compiler, CMake >= 3.24, Ninja, Python >= 3.10, Git,
-zlib development files, Vulkan development files and LuaJIT for the movement
+zlib development files, Vulkan development files, OpenSceneGraph headers for
+the native reference regression, and LuaJIT for the movement
 presentation fixtures. No game data is required
 to build or run the public tests. The renderer-independent inspector can be
 built with `-DOO_BUILD_VULKAN_PROBE=OFF`.

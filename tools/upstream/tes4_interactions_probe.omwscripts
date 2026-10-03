@@ -1,0 +1,2 @@
+GLOBAL: scripts/openoblivion_tes4_interactions_probe.lua
+PLAYER: scripts/openoblivion_tes4_interactions_close_probe.lua

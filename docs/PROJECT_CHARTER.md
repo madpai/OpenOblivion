@@ -1,11 +1,15 @@
 # Project charter
 
 OpenOblivion aims to load an owner's classic The Elder Scrolls IV: Oblivion
-installation in a native Android ARM64/desktop Linux runtime. Vulkan,
-touch controls, cooperative play and persistent server-owned progression are
-first-class requirements. Oblivion Remastered is a separate unresearched target.
+installation in a native Android ARM64/desktop Linux runtime. On 2026-10-03,
+the owner made a 1:1 classic Oblivion Android port the primary objective.
+Original controls, movement, animation, UI, combat, quests, dialogue, AI,
+audio and save behavior need measured parity. Linux provides reference and
+development checks. Vulkan, cooperative play and persistent server-owned
+progression remain additional requirements. Oblivion Remastered is a separate
+unresearched target. See [the parity ledger](PARITY.md).
 
-The first multiplayer experience is a small cooperative dungeon: alternate
+The planned first multiplayer experience is a small cooperative dungeon: alternate
 start, movement, combat, shared enemies, death, respawn and durable rewards.
 Persistent Cyrodiil, arena survival and Gatebound-like PvE build on this slice.
 A classic single-player ruleset remains possible by running the same authority
@@ -42,4 +46,3 @@ reproduces a native reader and establishes builds/tests/content safeguards.
 It does not declare completion of the long-term engine objective. The original
 request ended during the license-matrix list; any continuation can extend this
 charter without discarding the reproduced work.
-

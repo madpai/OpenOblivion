@@ -79,17 +79,41 @@ local types = require('openmw.types')
 local world = require('openmw.world')
 local auxUtil = require('openmw_aux.util')
 
+local swung = {}
+
+local function playNamed(door, name)
+    local play = types.ESM4Door.playSequence
+    if type(play) ~= 'function' then return false end
+    local ok, started = pcall(play, door, name)
+    return ok and started == true
+end
+
 local function ESM4DoorActivation(door, actor)
     -- TODO: Implement lockpicking minigame
-    -- TODO: Play the Open and Close sequences. The mesh is hidden until then.
-    -- A same-cell door stays that way until it is used again.
+    -- Play the mesh sequence when the engine has one. Otherwise hide the mesh.
     local Door4 = types.ESM4Door
-    core.sound.playSound3d(Door4.record(door).openSound, actor)
+    local closing = swung[door.id] == true
+    local sound = Door4.record(door).openSound
+    if closing then
+        local closeSound = Door4.record(door).closeSound
+        if type(closeSound) == 'string' and closeSound ~= '' then sound = closeSound end
+    end
+    core.sound.playSound3d(sound, actor)
     if Door4.isTeleport(door) then
         actor:teleport(Door4.destCell(door), Door4.destPosition(door), Door4.destRotation(door))
     else
-        print('OPENOBLIVION_DOOR toggle enabled=' .. tostring(door.enabled))
-        door.enabled = not door.enabled
+        local sequence = closing and 'Close' or 'Open'
+        if not playNamed(door, sequence) then
+            sequence = closing and 'Backward' or 'Forward'
+            if not playNamed(door, sequence) then sequence = nil end
+        end
+        if sequence ~= nil then
+            swung[door.id] = not closing
+            print('OPENOBLIVION_DOOR swing sequence=' .. sequence)
+        else
+            print('OPENOBLIVION_DOOR toggle enabled=' .. tostring(door.enabled))
+            door.enabled = not door.enabled
+        end
     end
     return false -- disable activation handling in C++ mwmechanics code
 end
@@ -154,6 +178,13 @@ def main():
     if args.native_runtime:
         runtime = outside(args.native_runtime)
         native_build = json.loads((runtime / 'build-manifest.json').read_text())
+        if native_build.get('tes4_interactions'):
+            sys.path.insert(0, str(ROOT / 'tools/native'))
+            from tes4_interactions import tools_identity
+            receipt = native_build['tes4_interactions']
+            if (receipt.get('base_revision') != lock['engine_base_revision']
+                    or receipt.get('tools_sha256') != tools_identity(lock['engine_base_revision'])):
+                raise ValueError('TES4 interaction integration tools differ from the native build')
         native_lock = ROOT / 'docs/research/android-native.lock.json'
         if (native_build.get('schema') != 1 or native_build.get('engine_kind') != 'openoblivion-native-integration'
                 or native_build.get('base_revision') != lock['engine_base_revision']
@@ -213,6 +244,10 @@ def main():
               (ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua', 'qa/scripts/openoblivion_phone_qa.lua'),
               (ROOT / 'tools/android/look_name.omwscripts', 'qa/look_name.omwscripts'),
               (ROOT / 'tools/android/scripts/openoblivion_look_name.lua', 'qa/scripts/openoblivion_look_name.lua'),
+              (ROOT / 'tools/android/container.omwscripts', 'qa/container.omwscripts'),
+              (ROOT / 'tools/android/scripts/openoblivion_container.lua', 'qa/scripts/openoblivion_container.lua'),
+              (ROOT / 'tools/android/scripts/openoblivion_container_ui.lua', 'qa/scripts/openoblivion_container_ui.lua'),
+              (ROOT / 'tools/android/scripts/openoblivion_container_items.lua', 'qa/scripts/openoblivion_container_items.lua'),
               (ROOT / 'tools/android/run_gate.omwscripts', 'qa/run_gate.omwscripts'),
               (ROOT / 'tools/android/scripts/openoblivion_run_gate.lua', 'qa/scripts/openoblivion_run_gate.lua'),
               (ROOT / 'tools/android/camera_repair.omwscripts', 'qa/camera_repair.omwscripts'),
@@ -257,6 +292,9 @@ def main():
         (Path(__file__).resolve(), ROOT / 'tools/android/scene_assets.py',
          ROOT / 'tools/android/phone_qa.omwscripts', ROOT / 'tools/android/scripts/openoblivion_phone_qa.lua',
          ROOT / 'tools/android/look_name.omwscripts', ROOT / 'tools/android/scripts/openoblivion_look_name.lua',
+         ROOT / 'tools/android/container.omwscripts', ROOT / 'tools/android/scripts/openoblivion_container.lua',
+         ROOT / 'tools/android/scripts/openoblivion_container_ui.lua',
+         ROOT / 'tools/android/scripts/openoblivion_container_items.lua',
          ROOT / 'tools/android/meshes/basicplayer.osgt')}
     for file in (ROOT / 'tools/android/camera_repair.omwscripts', ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua'):
         provenance['preview_tools_sha256'][file.relative_to(ROOT).as_posix()] = digest(file)

@@ -3,6 +3,11 @@
 There are no promised delivery dates. Each stage preserves the last working
 slice and resolves a concrete uncertainty before expanding scope.
 
+The owner's 2026-10-03 priority is a 1:1 classic Oblivion Android port. The
+[parity ledger](PARITY.md) now governs gameplay completion. The founding
+milestones below retain their evidence and architecture goals; cooperative
+modes do not replace original-game implementation or validation.
+
 | Milestone | Result | Acceptance / evidence | Current status |
 |---|---|---|---|
 | M0: founding research | License-aware foundation and reproducible native tools | Exact upstream pins, original tests, owner master scan, Linux/ARM64 builds, publication guard | Implemented locally; see reproduction |
