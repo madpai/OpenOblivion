@@ -1,5 +1,25 @@
 # Maintainer handoff
 
+Measured player body, 2026-10-03: the original classic controller hull was
+read from the owner's running executable (Proton, isolated display, read-only
+process sampling). It is an 18-vertex eight-sided prism with pointed ends:
+radius 20.25, height 128, convex radius 0.70 units, centre 71.0 above the
+reference. It is unchanged by jump/sneak and rotates with heading. The native
+`tes4_body` receipt (after doors) gives the player that hull under
+`OPENOBLIVION_ORIGINAL_BODY=1`. It also judges the hull's walkable support
+under its centre, because the cone's edge contacts otherwise triggered the
+inherited 10-unit stair hack (3x climb speed). Same-binary desktop runs:
+stair variation is −31%/−34%/−43% (fixture up/down, Vilverin). Vilverin height
+tracks the original's own samples (RMS 5.23 vs 8.44). Gate, ramp, wall,
+ceiling, jump, idle and container checks pass. All 16 CTest groups pass.
+Packages `0.22-body` (single, versionCode 22) and `0.23-installed-body`
+(complete set, 23) enable it; `0.20-fit`/`0.21-installed-fit` are recovery.
+Not reproduced: the original's ~3 unit lower reference/float, its own stepping, gait and
+run speed. The original reference game may still be running on display :239
+for further measurements. See [TES4_PLAYER_BODY.md](research/TES4_PLAYER_BODY.md).
+Next: phone acceptance of 0.22 stairs/gate, then original walk/run speed and
+jump impulse from the same sampler.
+
 Gate-fit correction, 2026-10-03: the owner's 0.18 screenshot shows open leaves;
 report `bd8b99b04a83457c9a79d1714694c736` records the player OSGT loader failure
 and failed passage. The model's malformed Generator header and unsupported

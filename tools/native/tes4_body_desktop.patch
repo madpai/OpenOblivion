@@ -1,0 +1,76 @@
+--- a/apps/openmw/mwphysics/actor.cpp
++++ b/apps/openmw/mwphysics/actor.cpp
+@@ -14,6 +14,8 @@
+ #include "mtphysics.hpp"
+ #include "trace.h"
+ 
++#include "openoblivion_tes4_body.hpp"
++
+ #include <cmath>
+ 
+ namespace MWPhysics
+@@ -96,6 +98,23 @@
+         mConvexShape = static_cast<btConvexShape*>(mShape.get());
+         mConvexShape->setMargin(0.001); // make sure bullet isn't using the huge default convex shape margin of 0.04
+ 
++        // OpenOblivion: the measured classic TES4 player hull replaces the box
++        // only when explicitly enabled. It keeps its convex radius as margin.
++        if (OpenOblivion::tes4OriginalBodyEnabled() && ptr.getClass().isNpc()
++            && ptr.getCellRef().getRefId() == ESM::RefId::stringRefId("Player"))
++        {
++            const float halfWidth = OpenOblivion::tes4BodyHalfWidth();
++            const float halfHeight = OpenOblivion::tes4BodyHalfHeight();
++            mShape = OpenOblivion::makeTes4PlayerBody();
++            mConvexShape = static_cast<btConvexShape*>(mShape.get());
++            mOriginalHalfExtents = osg::Vec3f(halfWidth, halfWidth, halfHeight);
++            mMeshTranslation = osg::Vec3f(0.f, 0.f, halfHeight);
++            mRotationallyInvariant = false;
++            mCollisionShapeType = DetourNavigator::CollisionShapeType::RotatingBox;
++            Log(Debug::Info) << "OpenOblivion original TES4 player body: half extents " << halfWidth << " "
++                             << halfWidth << " " << halfHeight;
++        }
++
+         mCollisionObject = std::make_unique<btCollisionObject>();
+         mCollisionObject->setCollisionFlags(btCollisionObject::CF_KINEMATIC_OBJECT);
+         mCollisionObject->setActivationState(DISABLE_DEACTIVATION);
+--- a/apps/openmw/mwphysics/movementsolver.cpp
++++ b/apps/openmw/mwphysics/movementsolver.cpp
+@@ -22,6 +22,8 @@
+ #include "stepper.hpp"
+ #include "trace.h"
+ 
++#include "openoblivion_tes4_body.hpp"
++
+ #include <cmath>
+ 
+ namespace MWPhysics
+@@ -388,7 +390,8 @@
+                 if (!isActor(tracer.mHitObject))
+                 {
+                     isOnGround = true;
+-                    isOnSlope = !isWalkableSlope(tracer.mPlaneNormal);
++                    isOnSlope = !isWalkableSlope(OpenOblivion::tes4SupportNormal(
++                        actor.mCollisionObject, collisionWorld, tracer.mEndPos, tracer.mPlaneNormal));
+                     actor.mStandingOn = tracer.mHitObject;
+ 
+                     if (actor.mStandingOn->getBroadphaseHandle()->m_collisionFilterGroup == CollisionType_Water)
+--- a/apps/openmw/mwphysics/stepper.cpp
++++ b/apps/openmw/mwphysics/stepper.cpp
+@@ -8,6 +8,7 @@
+ #include "collisiontype.hpp"
+ #include "constants.hpp"
+ #include "movementsolver.hpp"
++#include "openoblivion_tes4_body.hpp"
+ 
+ namespace MWPhysics
+ {
+@@ -124,6 +125,9 @@
+                 downStepSize = moveDistance + upDistance + sStepSizeDown;
+             mDownStepper.doTrace(
+                 mColObj, tracerDest, tracerDest + osg::Vec3f(0.0f, 0.0f, -downStepSize), mColWorld, onGround);
++            if (mDownStepper.mHitObject)
++                mDownStepper.mPlaneNormal = OpenOblivion::tes4SupportNormal(
++                    mColObj, mColWorld, mDownStepper.mEndPos, mDownStepper.mPlaneNormal);
+ 
+             // can't step down onto air, non-walkable-slopes, or actors
+             // NOTE: using a capsule causes isWalkableSlope (used in canStepDown) to fail on certain geometry that were

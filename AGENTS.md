@@ -22,8 +22,11 @@ docs/decisions/0001-foundation.md and docs/HANDOFF.md first.
 - Run CTest and the public-content guard after changes. For reader changes,
   use original fixtures first, then an owner-supplied local installation.
 - Never publish or push without a user instruction covering that action.
-- Player movement continues from `docs/HANDOFF.md` and
-  `docs/research/HAVOK_COLLISION.md`. Fixed `OL_STATIC` strips load when
-  `OPENOBLIVION_AUTHORED_COLLISION=1`. Do not invent the character capsule,
-  and do not retune gait, step height, or the 0.5 camera filter until that
-  body is measured on the authored surface.
+- Player movement continues from `docs/HANDOFF.md`,
+  `docs/research/HAVOK_COLLISION.md` and `docs/research/TES4_PLAYER_BODY.md`.
+  Fixed `OL_STATIC` strips load when `OPENOBLIVION_AUTHORED_COLLISION=1`; the
+  measured classic player hull loads when `OPENOBLIVION_ORIGINAL_BODY=1`.
+  Do not substitute an invented capsule for that hull. Gait, run speed and step
+  height remain unmeasured; the measured reference-to-hull float is not yet
+  reproduced; the 0.5 camera filter is unchanged. Change these only from
+  original-executable evidence.

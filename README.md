@@ -32,6 +32,14 @@ engineering milestones. See the [foundation decision](docs/decisions/0001-founda
 
 ## Progress so far
 
+**New in 0.22-body:** the original Oblivion player collision body was measured
+in the running original game: an eight-sided prism with pointed ends, 20.25
+units in radius and 128 units tall. Phone builds now use it instead of a
+borrowed template box. On desktop it rides stairs 31–43% more smoothly, follows
+the original's own Vilverin stair heights closely (RMS 5.2 vs 8.4 units), and
+still passes the gate, ramp, wall, ceiling, jump and NPC regressions. Phone
+confirmation is pending. See [the player body](docs/research/TES4_PLAYER_BODY.md).
+
 The latest phone report shows the hall gate opening but blocking passage.
 Its player collision model failed to load and was replaced by the oversized
 error marker. **0.20-fit** fixes the model serialization; **0.21-installed-fit**

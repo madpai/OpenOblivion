@@ -1,5 +1,12 @@
 # Native stair camera integration
 
+The player-body continuation follows the door receipt:
+`tes4_body.py apply`, rebuild, then `tes4_body.py record`. It adds the measured
+classic TES4 player hull and its centre-support check, both inactive unless
+`OPENOBLIVION_ORIGINAL_BODY=1`. Strip Android output with
+`llvm-strip --strip-debug` to keep the symbol table that earlier phone
+packages carried. See [player body measurement and limits](../../docs/research/TES4_PLAYER_BODY.md).
+
 The door continuation follows the recorded animation integration:
 `tes4_doors.py apply`, rebuild, then `tes4_doors.py record`. It adds embedded
 classic transform clips, TES4 door clocks/queued requests and authored

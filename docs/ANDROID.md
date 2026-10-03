@@ -6,6 +6,17 @@ audited external OpenMW Android 0.51 runtime and OpenGL ES. See
 private APK bundles a bounded owner-data scene slice and installs it without
 manual file copying. Public APKs must still contain no game data.
 
+Measured-body checkpoint, 2026-10-03: `0.22-body` (single APK) and
+`0.23-installed-body` (complete set) enable the original player hull measured
+in the running classic executable, with centre-support stepping. Desktop
+stairs, gate, ramp, wall, ceiling, idle and container regressions pass; the
+packages pass signature, alignment, CRC, nested-APK and payload-identity
+checks. They were not run on the emulator this time: only the engine library,
+one launcher environment line and the version changed, and the emulator
+cannot render scenes anyway. Phone acceptance is pending; `0.20-fit` and
+`0.21-installed-fit` remain the recovery builds. See
+[TES4_PLAYER_BODY.md](research/TES4_PLAYER_BODY.md).
+
 Gate-fit correction: the owner's 0.18 phone report shows open leaves but failed
 passage. A malformed OSGT player model loaded the oversized error-marker body.
 `0.20-fit` corrects the serialization, and `0.21-installed-fit` carries the same

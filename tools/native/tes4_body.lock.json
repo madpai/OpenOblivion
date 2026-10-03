@@ -1,0 +1,12 @@
+{
+  "desktop": {
+    "apps/openmw/mwphysics/actor.cpp": "e57d13fc8c9919dd56f847bf030331798d2c8e86dc30e207ac9b716e6d680dd2",
+    "apps/openmw/mwphysics/movementsolver.cpp": "5c0cb9b243f324eb14e28099ada20900c2d3f0d70027c543b3abe063f17f73ce",
+    "apps/openmw/mwphysics/stepper.cpp": "98ec4da832fd3e9f15b708c9103578479a709b4b02bf1cf3d3d29dbb08a02300"
+  },
+  "android": {
+    "apps/openmw/mwphysics/actor.cpp": "cad286abae8f7a5d51f43df18d74e75206aea79881d798b56d3b91feb95ae98c",
+    "apps/openmw/mwphysics/movementsolver.cpp": "5c0cb9b243f324eb14e28099ada20900c2d3f0d70027c543b3abe063f17f73ce",
+    "apps/openmw/mwphysics/stepper.cpp": "98ec4da832fd3e9f15b708c9103578479a709b4b02bf1cf3d3d29dbb08a02300"
+  }
+}

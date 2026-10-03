@@ -41,6 +41,8 @@ parser.add_argument('--native-manifest', type=Path, help='External recorded nati
 parser.add_argument('--native-grounded-eye', action='store_true', help='Enable the post-physics native filter in that build')
 parser.add_argument('--missing-player-model', action='store_true', help='Fault injection: deliberately omit the base player model')
 parser.add_argument('--player-collision-model', type=Path, help='Load this exact OSGT player model using the Android preview settings rewrite')
+parser.add_argument('--authored-collision', action='store_true', help='Enable the native fixed OL_STATIC strip loader without the door driver')
+parser.add_argument('--original-body', action='store_true', help='Enable the measured classic TES4 player hull in a recorded body build')
 parser.add_argument('--async-physics-threads', type=int, choices=range(5), help='Explicit physics worker count for a controlled comparison')
 parser.add_argument('--camera-motion', action='store_true', help='Bounded movement/turning probe; changes controls for two seconds')
 parser.add_argument('--player-movement', action='store_true', help='Native player trajectory: walk, stop, jump and landing; no scripted camera motion')
@@ -62,6 +64,8 @@ if args.tes4_doors and (args.start != 'Vilverin' or args.player_movement or args
     parser.error('Door observations require native Vilverin without another automation driver')
 if args.tes4_animation and (args.player_movement or args.tes4_interactions or not args.native_manifest):
     parser.error('Animation observation requires a native build without the movement/container driver')
+if args.original_body and (not args.native_manifest or not args.player_collision_model):
+    parser.error('--original-body requires --native-manifest and the Android --player-collision-model')
 if args.movement_surface != 'stairs' and not args.movement_fixture:
     parser.error('Original surface selection requires --movement-fixture')
 if args.native_grounded_eye and (not args.native_manifest or not args.camera_repair or args.grounded_eye):
@@ -134,6 +138,8 @@ cfg = ['replace=content', 'replace=fallback-archive',
                     'tes4_doors_probe.omwscripts' if args.tes4_doors else
                     'tes4_animation_probe.omwscripts' if args.tes4_animation else 'scene_probe.omwscripts'),
        'encoding=win1252']
+if args.original_body and not native_manifest.get('tes4_body'):
+    parser.error('--original-body requires a recorded body integration')
 if args.tes4_doors:
     if not native_manifest.get('tes4_doors'):
         parser.error('Door observations require a recorded door integration')
@@ -217,7 +223,8 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            '--env', 'XDG_RUNTIME_DIR=/evidence/runtime',
            '--env', 'LIBGL_ALWAYS_SOFTWARE=1', '--env', 'ALSOFT_DRIVERS=' + ('wave' if args.audio_capture else 'null'),
            *(['--env', 'ALSOFT_CONF=/evidence/alsoft.conf'] if args.audio_capture else []),
-           *(['--env', 'OPENOBLIVION_AUTHORED_COLLISION=1'] if args.tes4_doors else []),
+           *(['--env', 'OPENOBLIVION_AUTHORED_COLLISION=1'] if args.tes4_doors or args.authored_collision else []),
+           *(['--env', 'OPENOBLIVION_ORIGINAL_BODY=1'] if args.original_body else []),
            *(['--env', 'OPENOBLIVION_GROUNDED_EYE=1'] if args.native_grounded_eye else []),
            '--volume', f'{work}:/work:ro',
            *(['--volume', f'{fixture_data}:/fixture-data:ro'] if args.movement_fixture else
@@ -410,6 +417,13 @@ if args.player_collision_model:
         'sha256': hashlib.sha256(player_model.read_bytes()).hexdigest(), 'load_failed': failed,
         'settings_rewrite_sha256': hashlib.sha256((ROOT / 'tools/android/build_personal.py').read_bytes()).hexdigest()}
     complete = complete and not failed
+    metrics['probe_complete'] = complete
+metrics['authored_collision_enabled'] = args.tes4_doors or args.authored_collision
+metrics['original_body_enabled'] = args.original_body
+body_logged = 'OpenOblivion original TES4 player body: half extents' in log
+metrics['original_body_logged'] = body_logged
+if body_logged != args.original_body:
+    complete = False
     metrics['probe_complete'] = complete
 if args.async_physics_threads is not None:
     metrics['async_physics_threads'] = args.async_physics_threads

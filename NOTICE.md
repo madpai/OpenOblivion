@@ -33,6 +33,12 @@ fixtures are OpenOblivion GPL-3.0-only code. Exact file revisions and changes
 are recorded in docs/research/LICENSE_MATRIX.md. No proprietary game or Havok
 runtime code is copied into these implementations.
 
+The optional TES4 player-body patch changes external OpenMW actor shape
+creation and two support checks in its movement solver/stepper under the same
+GPLv3 project grant. The measured hull constants, helper header and fixtures
+are original OpenOblivion GPL-3.0-only code; they record numbers measured from
+the owner's licensed executable and contain no Bethesda or Havok code.
+
 No source from TES3MP, vsgopenmw, NifTools, xEdit, xOBSE, SDL, ENet, Bullet,
 MegaMod or Asset Lab is copied into this checkout. Those projects are studied
 as documented in docs/research/LICENSE_MATRIX.md; Asset Lab original fixture

@@ -131,11 +131,11 @@ Remaining physical collision/controller work:
    [Havok collision](research/HAVOK_COLLISION.md). Do not repeat that audit.
    Public fixtures still do not contain a visible mesh that differs from its
    authored surface; the comparison used the owner's stair NIFs outside Git.
-3. Recover the character body radius, height, and step offset from a source
-   other than these stair NIFs. Do not invent the numbers, and do not change
-   the cylinder or the 34/62 step constants until that source exists. Then
-   repeat the stair trace. Short/tall steps, ramp, ceiling, wall, descent,
-   jump/landing, and stopping stay in that later pass.
+3. Done 2026-10-03: the original controller hull was measured in the
+   running executable and the stair, ramp, wall, ceiling, descent, jump and
+   stopping traces were repeated with it. See
+   [TES4_PLAYER_BODY.md](research/TES4_PLAYER_BODY.md). Step height, gait and
+   run speed are still unmeasured.
 4. Preview 0.9 already contains the strip loader. Another phone package waits
    on a measured body change or on the owner's 0.9 stair report.
 
@@ -215,7 +215,8 @@ Private evidence names are `native-stair-ascent-{raw,smoothed}-05`,
 `native-surface-{stairs,ramp,wall,ceiling}-05`, `native-look-control-05` and
 `native-healthy-tracking-control-05`. Native source/build instructions are in
 [tools/native](../tools/native/README.md). The latest owner phone feedback now
-supports stair comfort on 0.5, separately from these desktop metrics. Further
-motor tuning is blocked on the still-unknown character body. The static
+supports stair comfort on 0.5, separately from these desktop metrics. The
+character body is now measured ([TES4_PLAYER_BODY.md](research/TES4_PLAYER_BODY.md));
+motor tuning still needs original gait/speed recordings. The static
 surface comparison is in [HAVOK_COLLISION.md](research/HAVOK_COLLISION.md).
 The 0.5 stair filter stays.

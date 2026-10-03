@@ -210,6 +210,12 @@ def main():
             validate_door_tools(receipt)
             if receipt.get('base_revision') != lock['engine_base_revision']:
                 raise ValueError('TES4 door tools differ from the native build')
+        if native_build.get('tes4_body'):
+            from tes4_body import tools_identity as body_tools
+            receipt = native_build['tes4_body']
+            if (receipt.get('base_revision') != lock['engine_base_revision']
+                    or receipt.get('tools_sha256') != body_tools(receipt['base_revision'])):
+                raise ValueError('TES4 body tools differ from the native build')
         native_lock = ROOT / 'docs/research/android-native.lock.json'
         if (native_build.get('schema') != 1 or native_build.get('engine_kind') != 'openoblivion-native-integration'
                 or native_build.get('base_revision') != lock['engine_base_revision']

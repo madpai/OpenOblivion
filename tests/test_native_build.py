@@ -13,6 +13,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/native'))
 import prepare_android
 import tes4_animation
+import tes4_body
 import tes4_interactions
 
 LIBRARIES = {'libopenmw.so', 'libSDL2.so', 'libGL.so', 'libopenal.so', 'libcollada-dom2.5-dp.so', 'libc++_shared.so'}
@@ -121,6 +122,29 @@ class NativeBuildReceipt(unittest.TestCase):
                 with self.assertRaises(KeyError):
                     prepare_android.stage_native(source, root, 1)
             self.assertFalse((root / 'runtime/build-manifest.json').exists())
+
+
+class NativeBodyReceipt(unittest.TestCase):
+    def test_tool_identity_covers_patch_header_lock_and_tool(self):
+        for revision, name in tes4_body.REVISIONS.items():
+            identity = tes4_body.tools_identity(revision)
+            self.assertEqual(set(identity), {'tools/native/tes4_body.py', 'tools/native/tes4_body.lock.json',
+                                             'tools/native/tes4_body_' + name + '.patch', 'tools/native/tes4_body.hpp'})
+
+    def test_lock_matches_patch_targets_and_avoids_door_inputs(self):
+        lock = json.loads((Path(tes4_body.HERE) / 'tes4_body.lock.json').read_text())
+        doors = json.loads((Path(tes4_body.HERE) / 'tes4_doors.lock.json').read_text())
+        for name in ('desktop', 'android'):
+            patch_text = (Path(tes4_body.HERE) / ('tes4_body_' + name + '.patch')).read_text()
+            targets = {line[6:] for line in patch_text.splitlines() if line.startswith('+++ b/')}
+            self.assertEqual(targets, set(lock[name]))
+            self.assertFalse(set(lock[name]) & set(doors[name]))
+            self.assertIn('tes4OriginalBodyEnabled()', patch_text)
+
+    def test_unrecorded_source_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(FileNotFoundError):
+                tes4_body.verify(Path(tmp))
 
 
 if __name__ == '__main__':

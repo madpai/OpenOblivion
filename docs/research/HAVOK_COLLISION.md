@@ -141,6 +141,12 @@ layer-8 ragdoll limbs. OpenMW's default actor shape is an axis-aligned box
 still the Morrowind constants. Changing them is not supported by a recovered
 Oblivion body. See [preview play](PREVIEW_PLAY.md).
 
+Update 2026-10-03: the live controller hull was measured in the owner's
+running original executable: an eight-sided prism with pointed ends, radius
+20.25 units, height 128 units, convex radius 0.70 units. It is identical while
+standing, walking, jumping and sneaking. See [TES4_PLAYER_BODY.md](TES4_PLAYER_BODY.md).
+The step constants remain the Morrowind values.
+
 ## What is required, and what is not
 
 Required before another movement tune:
@@ -264,10 +270,10 @@ link succeed. The cylinder and the stair filter are unchanged. Preview
 ## Smallest next steps
 
 1. The stair report and this static loader comparison are done.
-2. The character body is still unknown. Radius, height and step offset are
-   not in these NIFs. Do not invent them, and do not change the cylinder or
-   the step constants until a source for those values is identified. Repeat
-   the stair trace with that body before tuning speed.
+2. Done 2026-10-03: the character hull was measured in the original
+   executable and is loaded by `OPENOBLIVION_ORIGINAL_BODY=1`; see
+   [TES4_PLAYER_BODY.md](TES4_PLAYER_BODY.md). The 34/62 step constants and
+   the original controller's own stepping remain unmeasured.
 3. Oblivion's normal run speed comes after the body is standing on the
    authored surface. The 0.8 log already shows that another key binding does
    not create that speed.

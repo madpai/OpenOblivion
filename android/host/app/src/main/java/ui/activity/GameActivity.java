@@ -21,6 +21,7 @@ public final class GameActivity extends SDLActivity {
             if (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE) {
                 Os.setenv("OPENOBLIVION_GROUNDED_EYE", "1", true);
                 Os.setenv("OPENOBLIVION_AUTHORED_COLLISION", "1", true);
+                Os.setenv("OPENOBLIVION_ORIGINAL_BODY", "1", true);
             }
             Os.setenv("OPENMW_USER_FILE_STORAGE", new File(getFilesDir(), "preview-user").getPath() + "/", true);
         } catch (android.system.ErrnoException e) { throw new RuntimeException(e); }

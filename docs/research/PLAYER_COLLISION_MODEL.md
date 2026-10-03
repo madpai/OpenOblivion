@@ -1,5 +1,9 @@
 # Phone gate blockage: preview player model loading
 
+Successor, 2026-10-03: the original controller dimensions are now measured and
+the phone packages from 0.22 use them; see [TES4_PLAYER_BODY.md](TES4_PLAYER_BODY.md).
+The OSGT below is still loaded; with the switch on, the hull replaces its Collision box.
+
 Date: 2026-10-03. Owner report `bd8b99b04a83457c9a79d1714694c736`
 identifies `0.18-audio`; its download SHA agrees with the served build. The
 private screenshot shows both hall-gate leaves open. The log records successful

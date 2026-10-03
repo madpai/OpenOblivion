@@ -2,7 +2,42 @@
 
 Research snapshot: 2026-09-30. Original OpenOblivion code is **GPL-3.0-only**.
 
-## Embedded TES4 door integration audit (2026-10-03)
+## Measured TES4 player body audit (2026-10-03)
+
+Intended change: when `OPENOBLIVION_ORIGINAL_BODY=1`, give only the player
+actor a Bullet convex hull built from the classic controller hull measured in
+the owner's running original executable, and judge that hull's walkable
+support from the surface beneath its centre. Other actors, the motor, gait,
+step sizes and the 0.5 camera filter are unchanged. Only measured numbers are
+published; no Bethesda or Havok executable code, data layout or bytecode is
+copied or linked. The xOBSE headers listed below stay research-only and were
+not used for this implementation; the live structure offsets came from
+inspection of the owner's process.
+
+The following OpenMW files were inspected at desktop base
+`46bd4599203ee52ffc0f3e8edb3fc159a0303a49`. Their project GPLv3 grant applies;
+none has a narrower file grant. Existing upstream notices remain in the
+external trees and patch context. Public output is one original header
+(`tools/native/tes4_body.hpp`), small source patches and synthetic fixtures.
+
+| Interface / proposed patch target | Inspected Git blob |
+|---|---|
+| `apps/openmw/mwphysics/actor.cpp` | `f2e9cffec1a0753ff4d6f990e03189f10790d5a6` |
+| `apps/openmw/mwphysics/movementsolver.cpp` | `93473c467cb1b671799a2e45e7351db7f57a1366` |
+| `apps/openmw/mwphysics/stepper.cpp` | `5b7cde3015f58d74c34801dd386182906ed40f31` |
+| `apps/openmw/mwphysics/constants.hpp` | `0b3c71408e9dd051d83873d6d95fb457365604fb` |
+| `apps/openmw/mwphysics/collisiontype.hpp` | `5dda2a6aebd88346d08454f60b71cf851f32266d` |
+| `components/misc/convert.hpp` | `2ed0baeaee8d039675e4a6e3fffe3d5913a42902` |
+| `components/misc/constants.hpp` | `eb40b1d5843a861593fcabd90847f71dd357a0ec` |
+
+The Android counterpart uses engine base
+`f4bec41444214a7903bebd178389ca22ca13f646`. Actual pre-change SHA256s are
+locked in `tools/native/tes4_body.lock.json`; the receipt validates the door
+receipt as its predecessor and rejects overlapping inputs. The public
+`tes4-body-fixtures` CTest compiles the header against the system Bullet
+library (zlib license) and synthetic geometry only. This audit covers the
+interfaces and intended implementation, not original controller parity.
+
 
 Intended changes: load each embedded NiControllerManager sequence into an
 independent immutable clip, retain its animated scene nodes, register TES4 door
