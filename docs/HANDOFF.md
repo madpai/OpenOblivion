@@ -15,8 +15,11 @@ ceiling, jump, idle and container checks pass. All 16 CTest groups pass.
 Packages `0.22-body` (single, versionCode 22) and `0.23-installed-body`
 (complete set, 23) enable it; `0.20-fit`/`0.21-installed-fit` are recovery.
 Not reproduced: the original's ~3 unit lower reference/float, its own stepping, gait and
-run speed. The original reference game may still be running on display :239
-for further measurements. See [TES4_PLAYER_BODY.md](research/TES4_PLAYER_BODY.md).
+run speed. The private reference game hung on `coc ICMarketDistrict` under
+software rendering and was stopped. Relaunching with the recorded Proton command
+now crashes at startup (null read at `oblivion+0x18dc7c`) although the isolated
+ini is unchanged; diagnose that before the next measurement, and measure in
+Vilverin rather than the Imperial City. See [TES4_PLAYER_BODY.md](research/TES4_PLAYER_BODY.md).
 Next: phone acceptance of 0.22 stairs/gate, then original walk/run speed and
 jump impulse from the same sampler.
 
