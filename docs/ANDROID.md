@@ -6,6 +6,21 @@ audited external OpenMW Android 0.51 runtime and OpenGL ES. See
 private APK bundles a bounded owner-data scene slice and installs it without
 manual file copying. Public APKs must still contain no game data.
 
+Phone-only complete install, 2026-10-03: `0.25-download-assets` (versionCode 25)
+is one 286 MB APK holding the engine and master. On first launch it downloads
+the other five owner payload parts (5.3 GB) from the private Tailscale sideload
+server with HTTP range resume, verifies each part's SHA256, unpacks and deletes
+it. No computer or adb is needed, and later engine updates keep the unpacked
+data when its payload ID is unchanged. Packaging: add
+`--download-assets http://<tailscale-ip>:<port>/` to `--all-assets`; the address
+is written only into the private build copy. Emulator checks against the live
+server: upgrade from the 0.21 split install keeps data; a cleared install
+downloads every part and all 824 files verify (about 5.5 minutes locally); a
+forced stop mid-part resumes with a 206 range request. During testing this
+host's faulty RAM corrupted a cached part. The app rejected it every time; the
+server now drops cached pages before each download, and the app gives up with a
+message after five damaged copies of one part.
+
 Measured-body checkpoint, 2026-10-03: `0.22-body` (single APK) and
 `0.23-installed-body` (complete set) enable the original player hull measured
 in the running classic executable, with centre-support stepping. Desktop

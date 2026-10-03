@@ -212,7 +212,7 @@ public final class MainActivity extends Activity {
     /** Resumable download of one private payload part, verified before use. */
     private void download(String url, File dest, long size, String sha, int number, int count) throws Exception {
         byte[] buffer = new byte[1024 * 1024];
-        int failures = 0;
+        int failures = 0, rejected = 0;
         while (true) {
             long have = dest.isFile() ? dest.length() : 0;
             if (have > size) { dest.delete(); have = 0; }
@@ -258,7 +258,10 @@ public final class MainActivity extends Activity {
             try (InputStream in = new FileInputStream(dest)) { for (int n; (n = in.read(buffer)) != -1;) hash.update(buffer, 0, n); }
             if (hex(hash.digest()).equals(sha)) return;
             dest.delete();
-            if (++failures > 3) throw new IOException("Downloaded part " + number + " failed verification repeatedly");
+            if (++rejected >= 5) throw new IOException("Downloaded part " + number + " failed verification " + rejected
+                + " times; the server may be serving damaged data. Try again later");
+            final int count2 = rejected;
+            runOnUiThread(() -> status.setText("Part " + number + " arrived damaged and was discarded; downloading it again (" + count2 + ")…"));
         }
     }
     private static String read(File f) throws IOException { return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8); }

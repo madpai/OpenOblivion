@@ -1,5 +1,11 @@
 # Maintainer handoff
 
+Phone-only complete data, 2026-10-03: the served build is `0.25-download-assets`,
+a single APK that downloads and verifies the full installed Data from the
+sideload server on first launch (see [ANDROID.md](ANDROID.md)). The payload
+parts live in the sideload root next to the APK and are allowlisted in
+`download.json`. 0.22/0.23 are archived in `sideload-history/0.23-installed-body`.
+
 Measured player body, 2026-10-03: the original classic controller hull was
 read from the owner's running executable (Proton, isolated display, read-only
 process sampling). It is an 18-vertex eight-sided prism with pointed ends:

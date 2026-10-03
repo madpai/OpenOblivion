@@ -8,6 +8,7 @@ import html
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import ipaddress
 import json
+import os
 from pathlib import Path
 import re
 import threading
@@ -239,6 +240,10 @@ def main():
             if not body: return
             try:
                 with file.open('rb') as stream:
+                    # Re-read large downloads from disk for every request so the
+                    # filesystem checksums them again; a corrupted cached page
+                    # (seen on this host's faulty RAM) is never served twice.
+                    os.posix_fadvise(stream.fileno(), 0, 0, os.POSIX_FADV_DONTNEED)
                     stream.seek(start); remaining = end-start+1
                     while remaining:
                         block = stream.read(min(1024*1024, remaining))
@@ -246,6 +251,9 @@ def main():
                         self.wfile.write(block); remaining -= len(block)
             except (BrokenPipeError, ConnectionResetError):
                 pass
+            except OSError as error:
+                # The client resumes with a range request; log the read failure.
+                self.log_message('Download read failed for %s: %s', name, error)
     server = ThreadingHTTPServer((args.bind, args.port), Handler)
     server.daemon_threads = True
     print(f'Private sideload server: http://{args.bind}:{args.port}/', flush=True)
