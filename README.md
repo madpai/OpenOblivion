@@ -130,8 +130,8 @@ The selected progress screenshots are documentation captures, with separate
 Requirements: C++20 compiler, CMake >= 3.24, Ninja, Python >= 3.10, Git,
 zlib development files, Vulkan development files, OpenSceneGraph headers for
 the native reference regression, OpenSceneGraph development libraries for the
-collision-model loading regression, and LuaJIT for the movement
-presentation fixtures. No game data is required
+collision-model loading regression, Bullet development files for the
+measured player-body fixture, and LuaJIT for the movement presentation fixtures. No game data is required
 to build or run the public tests. The renderer-independent inspector can be
 built with `-DOO_BUILD_VULKAN_PROBE=OFF`.
 
