@@ -1,0 +1,65 @@
+--- a/components/nifosg/nifloader.cpp
++++ b/components/nifosg/nifloader.cpp
+@@ -1,4 +1,5 @@
+ #include "nifloader.hpp"
++#include "openoblivion_tes4_kf.hpp"
+ 
+ #include <mutex>
+ #include <string_view>
+@@ -337,6 +338,8 @@
+ 
+         void loadKf(Nif::FileView nif, SceneUtil::KeyframeHolder& target) const
+         {
++            if (OpenOblivion::Animation::loadSequence(nif, target))
++                return;
+             const Nif::NiSequenceStreamHelper* seq = nullptr;
+             const size_t numRoots = nif.numRoots();
+             for (size_t i = 0; i < numRoots; ++i)
+--- a/apps/openmw/mwrender/esm4npcanimation.cpp
++++ b/apps/openmw/mwrender/esm4npcanimation.cpp
+@@ -1,4 +1,5 @@
+ #include "esm4npcanimation.hpp"
++#include "openoblivion_tes4_skin.hpp"
+ 
+ #include <components/esm4/loadarma.hpp>
+ #include <components/esm4/loadarmo.hpp>
+@@ -26,6 +27,18 @@
+         setObjectRoot(mPtr.getClass().getCorrectedModel(mPtr), true, true, false);
+         Log(Debug::Info) << "OPENOBLIVION_NPC skeleton_nodes=" << getNodeMap().size();
+         updateParts();
++        const auto* traits = MWClass::ESM4Npc::getTraitsRecord(mPtr);
++        if (traits && traits->mIsTES4)
++        {
++            const std::string model = mPtr.getClass().getCorrectedModel(mPtr);
++            const auto directory = model.find_last_of("/\\");
++            if (directory != std::string::npos)
++            {
++                const VFS::Path::Normalized idle(model.substr(0, directory + 1) + "idle.kf");
++                if (addSingleAnimSource(idle, model))
++                    Log(Debug::Info) << "OPENOBLIVION_NPC idle_source=" << idle;
++            }
++        }
+     }
+ 
+     void ESM4NpcAnimation::updateParts()
+@@ -58,7 +71,7 @@
+         auto part = manager->getTemplate(Misc::ResourceHelpers::correctMeshPath(VFS::Path::Normalized(model)));
+         // A part's private skeleton must not shadow the actor's live bones.
+         // SceneUtil::attach copies skinned geometry onto the actor skeleton.
+-        SceneUtil::attach(part, mObjectRoot.get(), "", mObjectRoot.get(), manager);
++        OpenOblivion::Skin::attach(part, mObjectRoot.get(), manager);
+         Log(Debug::Info) << "OPENOBLIVION_NPC attached_part=" << model;
+     }
+ 
+--- a/apps/openmw/mwclass/esm4npc.hpp
++++ b/apps/openmw/mwclass/esm4npc.hpp
+@@ -54,6 +54,9 @@
+             return ESM4Impl::getToolTipInfo(getName(ptr), count);
+         }
+ 
++        // Register the existing non-actor animation clock; TES4 AI/stats remain separate.
++        bool useAnim() const override { return true; }
++
+         VFS::Path::NormalizedView getModel(const MWWorld::ConstPtr& ptr) const override;
+         std::string_view getName(const MWWorld::ConstPtr& ptr) const override;
+ 

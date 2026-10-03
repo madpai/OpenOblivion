@@ -184,11 +184,18 @@ def main():
         native_build = json.loads((runtime / 'build-manifest.json').read_text())
         if native_build.get('tes4_interactions'):
             sys.path.insert(0, str(ROOT / 'tools/native'))
-            from tes4_interactions import tools_identity
+            from tes4_interactions import validate_tools
             receipt = native_build['tes4_interactions']
-            if (receipt.get('base_revision') != lock['engine_base_revision']
-                    or receipt.get('tools_sha256') != tools_identity(lock['engine_base_revision'])):
+            validate_tools(receipt)
+            if receipt.get('base_revision') != lock['engine_base_revision']:
                 raise ValueError('TES4 interaction integration tools differ from the native build')
+        if native_build.get('tes4_animation'):
+            sys.path.insert(0, str(ROOT / 'tools/native'))
+            from tes4_animation import tools_identity as animation_tools_identity
+            receipt = native_build['tes4_animation']
+            if (receipt.get('base_revision') != lock['engine_base_revision']
+                    or receipt.get('tools_sha256') != animation_tools_identity(lock['engine_base_revision'])):
+                raise ValueError('TES4 animation tools differ from the native build')
         native_lock = ROOT / 'docs/research/android-native.lock.json'
         if (native_build.get('schema') != 1 or native_build.get('engine_kind') != 'openoblivion-native-integration'
                 or native_build.get('base_revision') != lock['engine_base_revision']

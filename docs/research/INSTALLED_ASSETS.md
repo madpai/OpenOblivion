@@ -4,6 +4,14 @@ Checkpoint: 2026-10-03. The owner's request covers a complete asset package and
 the 1:1 Android port. Packaging is a separate acceptance gate from gameplay.
 The earlier single APK contains only the Vilverin visual slice.
 
+Current native continuation: **0.15-installed-idle**, versionCode 15,
+5,569,234,535 bytes, SHA256
+`c56f5b551f4f99a05137daa22c63e7013562957fc5ecb940337793cddddbaf0c`.
+It uses the same complete Data snapshot and installation structure, with the
+native NPC idle change described in [TES4_ANIMATION.md](TES4_ANIMATION.md).
+The earlier 0.13 measurements below establish the original packaging/storage
+checkpoint. Both downloads remain private; the smaller single APK is 0.14-idle.
+
 ## Measured content and format boundary
 
 The supplied classic Data directory contains **73 files / 5,820,258,458 bytes**:
@@ -70,7 +78,7 @@ classic expansion list and finish with inspected captures. This confirms those
 scenes with the complete content configuration. It does not establish every
 worldspace, expansion quest, asset format or override rule.
 
-The final `0.13-installed-assets` set is **5,569,203,949 bytes**, SHA256
+The founding `0.13-installed-assets` set is **5,569,203,949 bytes**, SHA256
 `c75804511bc434951e66acf9cb1933bb19e7b515c6d62708706122dfcbcd2474`.
 An isolated Android 14 x86_64 emulator with ARM64 translation installs all six
 signed APKs together. First-launch extraction finishes in about 94 seconds.
@@ -85,10 +93,10 @@ These are emulator installation/storage/UI checks, not Android world-rendering
 acceptance. No physical phone is connected through adb. The separate desktop
 captures show the selected scenes; the Android runtime library is unchanged.
 
-The Android runtime library and movement constants are unchanged from the
-interaction checkpoint. All content being present does not supply original
-animation, quests, combat, inventory transfer, save compatibility, audio/video
-playback or original menus. Physical-phone acceptance remains separate from
+At the 0.13 packaging checkpoint, the Android runtime library and movement
+constants were unchanged. The 0.15 continuation adds default NPC idle; full
+locomotion/attack/facial animation, quests, combat, inventory transfer, save
+compatibility, audio/video playback and original menus remain incomplete. Physical-phone acceptance remains separate from
 emulator installation/storage checks. See [the parity ledger](../PARITY.md).
 
 Private evidence: `openoblivion-private/evidence/full-content-package-20261003`

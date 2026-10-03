@@ -1,5 +1,10 @@
 # TES4 interaction checkpoint, 2026-10-03
 
+Continuation: [TES4_ANIMATION.md](TES4_ANIMATION.md) supersedes this
+checkpoint's bind-pose state. Its original renderable selector fixes the empty
+attachment filter, and default NPC idle now deforms the shared body/clothing.
+The names, base-container snapshots and lock-reset evidence below remain.
+
 The interrupted work added container Lua scripts and declared native NPC,
 creature and container bindings without implementing them. The completed
 checkpoint supplies name/base-inventory snapshots, typed cell queries,

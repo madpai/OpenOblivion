@@ -2,6 +2,64 @@
 
 Research snapshot: 2026-09-30. Original OpenOblivion code is **GPL-3.0-only**.
 
+## TES4 animation integration audit (2026-10-03)
+
+Before modifying renderer sources, inspected OpenMW's GPLv3 grant and the exact
+desktop base `46bd4599203ee52ffc0f3e8edb3fc159a0303a49`. Intended integration:
+an original NiControllerSequence/KF adapter, constant-transform defaults and
+bounded compact/float spline sampling. No proprietary code is adapted.
+`components/nifosg/nifloader.cpp` is blob
+`8bfa8de264049a9bb2d3ced5ce81831e3a607aab`; `controller.cpp` is
+`d88f617005f3cfc0a69ae516601aeaa85ca1ccbf`; `controller.hpp` is
+`8daf9545ae56cd4ee5db3883e0c45a11ae1c5d95`. The adapter uses their public
+controller/reader interfaces; these files have no narrower file-level grant.
+Patch context remains OpenMW GPLv3. Equivalent Android base
+`f4bec41444214a7903bebd178389ca22ca13f646`, with the audited donor integration,
+has inspected blobs `88b728d456ecd92cbbd0bf318721d7f0cfd23a0e`,
+`116a25684678232ab8f87a74c6ec0262a7930a7f`, and
+`cceec279b2fab21272a52a58826133621b68821e` respectively. Integration receipts
+must also lock actual file SHA256s; the nested Android sources are inside the
+donor worktree, so its Git HEAD is not the engine revision.
+
+NPC source integration extends the previously audited GPLv3
+`apps/openmw/mwrender/esm4npcanimation.cpp` after shared-skinning attachment.
+The input SHA256s are `d8d0b696c70ad1ef7d8876701994b442f8d03f3a923b1c10df38a12b30b0ebaf`
+on desktop and the Android value in `tools/native/tes4_animation.lock.json`.
+It selects `idle.kf` beside the authored skeleton and uses the existing
+animation clock; no movement constants or proprietary implementation are copied.
+The animation receipt retains the previous interaction receipt and validates
+the exact input/output hash chain for this shared source file.
+`apps/openmw/mwclass/esm4npc.hpp` is also audited under OpenMW GPLv3, desktop
+blob `ded76ffe46dfe7904c0142ee9096d889954a0d29`; both exact input SHA256s are
+in the animation lock. Its original registration omission is repaired through
+`useAnim()` so the existing non-actor clock advances; this does not implement
+TES4 AI, actor statistics or physical locomotion.
+
+Skin attachment uses the same GPLv3 SceneManager/RigGeometry interfaces at
+desktop pin `46bd4599203ee52ffc0f3e8edb3fc159a0303a49`. Inspected blobs:
+`attach.cpp` `17cdbf5be6642feb805e6702b9e03ac9911dacb8`,
+`riggeometry.cpp` `f5fbb8d2dce5f1f18d2f2929eb0d0b8189154674`,
+`riggeometry.hpp` `64f8ac3ce237c46bfb94539e9bb0a4f57525a5de`, and
+`components/resource/scenemanager.hpp` `4e2a872f6051c04dffc5f3504205bef764df0692`.
+No upstream visitor implementation is copied.
+The existing `components/sceneutil/attach.cpp` was inspected: an empty part
+filter allows its copy visitor to include the donor skeleton, which can hide
+the actor's animated bones. The new original TES4 visitor copies only the
+renderable's immediate subtree so rigs resolve the actor skeleton. Existing
+OpenMW notices remain; this is not a claim of completed equipment/body masks.
+
+Spline format semantics were checked against NifSkope at already-registered
+`3a85ac55e65cc60abc3434cc4aaca2a5cc712eef`, `src/gl/glcontroller.cpp`, SHA256
+`8f842e3bdf8317cbe29606443f99dea03fed02e1d54228a859690e8bee4b03b8`.
+Its file-level notice is BSD-3-Clause, Copyright 2005-2015 NIF File Format
+Library and Tools; project LICENSE.md SHA256 is
+`565cf4270dfd82d48f63f37dfc904934eae2095f6ad271895b265ed2c1c4601f`.
+The new evaluator is independently written, using the documented control-point
+layout and clamped cubic basis; Qt code and bundled Havok/MOPP are not copied.
+Preserve reference credit and this audit. Any later direct adaptation must
+retain the full BSD notice. NIFXML/PyFFI are unchanged private inspection inputs,
+not generated/vendored implementation. Owner clips and raw reports stay private.
+
 This is a per-candidate reuse register, not permission to copy an entire repository. Exact revisions are immutable below and in [upstreams.lock.json](upstreams.lock.json). GitHub license hints were checked against actual license text where stated. Unclear or mixed rights remain explicit. No engine/game binary from Bethesda or Havok is included.
 
 | Repository / exact revision studied | License evidence | Relevant systems | Compatibility decision | Reuse status | Attribution / distribution requirements |

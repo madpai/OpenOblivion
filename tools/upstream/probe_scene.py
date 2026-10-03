@@ -30,6 +30,7 @@ parser.add_argument('--scene-data', type=Path, help='Optional private loose visu
 parser.add_argument('--installed-data', action='store_true', help='Load all installed BSAs and the measured classic expansion plugins')
 parser.add_argument('--phone-qa', action='store_true', help='Also exercise the original read-only phone camera/player diagnostics')
 parser.add_argument('--tes4-interactions', action='store_true', help='Exercise native TES4 names, container snapshots and preview UI')
+parser.add_argument('--tes4-animation', action='store_true', help='Observe default TES4 NPC idle over two loops and capture its body pose')
 parser.add_argument('--camera-repair', action='store_true', help='Exercise the original preview camera fallback')
 parser.add_argument('--grounded-eye', action='store_true', help='Explicitly enable the unshipped stair eye-height experiment')
 parser.add_argument('--native-manifest', type=Path, help='External recorded native camera integration build')
@@ -44,6 +45,8 @@ parser.add_argument('--movement-fixture', action='store_true', help='Use the ori
 parser.add_argument('--movement-surface', choices=('stairs', 'ramp', 'wall', 'ceiling'), default='stairs')
 parser.add_argument('--raw-eye', action='store_true', help='Diagnostic control: disable only the grounded eye filter')
 args = parser.parse_args()
+if args.tes4_animation and (args.player_movement or args.tes4_interactions or not args.native_manifest):
+    parser.error('Animation observation requires a native build without the movement/container driver')
 if args.movement_surface != 'stairs' and not args.movement_fixture:
     parser.error('Original surface selection requires --movement-fixture')
 if args.native_grounded_eye and (not args.native_manifest or not args.camera_repair or args.grounded_eye):
@@ -112,7 +115,8 @@ cfg = ['replace=content', 'replace=fallback-archive',
          ['data=/scene-master', 'data=/scene-slice'] if scene_data else ['data=/game']),
        'data=/probe-data', 'content=template.omwgame',
        'content=' + ('original_movement.esp' if args.movement_fixture else 'Oblivion.esm'),
-       'content=' + ('player_movement_probe.omwscripts' if args.player_movement else 'scene_probe.omwscripts'),
+       'content=' + ('player_movement_probe.omwscripts' if args.player_movement else
+                    'tes4_animation_probe.omwscripts' if args.tes4_animation else 'scene_probe.omwscripts'),
        'encoding=win1252']
 if args.phone_qa or args.camera_repair:
     cfg += ['data=/phone-qa-data']
@@ -206,6 +210,20 @@ interactions_verified = ('OPENOBLIVION_TES4_INTERACTIONS actors=' in log
                          and 'OPENOBLIVION_NPC skeleton_nodes=' in log
                          and 'Lua error:' not in log)
 if args.tes4_interactions and not interactions_verified: complete = False
+animation_samples = {}
+for sample in re.finditer(r'OPENOBLIVION_ANIMATION_SAMPLE id=(\S+) elapsed=([\d.]+) time=([\d.]+) loops=(\d+)', log):
+    animation_samples.setdefault(sample[1], {})[float(sample[2])] = (float(sample[3]), int(sample[4]))
+animation_observations = {}
+for actor, samples in animation_samples.items():
+    values = [value for _, value in sorted(samples.items())]
+    wraps = sum(after[0] < before[0] for before, after in zip(values, values[1:]))
+    animation_observations[actor] = {'samples': len(values), 'loop_wraps': wraps,
+        'first_time': values[0][0], 'last_time': values[-1][0]}
+animation_verified = (bool(animation_observations) and 'Lua error:' not in log
+                      and 'OPENOBLIVION_NPC idle_source=' in log
+                      and all(row['samples'] >= 10 and row['loop_wraps'] >= 2
+                              for row in animation_observations.values()))
+if args.tes4_animation and not animation_verified: complete = False
 repair_activated = 'OPENOBLIVION_CAMERA_REPAIR activated:' in log
 motion = re.search(r'OPENOBLIVION_CAMERA_MOTION distance=([\d.eE+-]+) camera_player_distance=([\d.eE+-]+) yaw=([\d.eE+-]+)', log)
 motion_verified = bool(motion and float(motion[1]) > 1 and float(motion[2]) < 256 and abs(float(motion[3])) > 0.1)
@@ -214,6 +232,9 @@ if args.camera_repair and args.missing_player_model and not repair_activated: co
 movement = analyze_movement(log) if args.player_movement else None
 if movement is not None and not movement['trajectory_complete']: complete = False
 metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_complete': complete,
+           'tes4_animation_enabled': args.tes4_animation,
+           'tes4_animation_verified': animation_verified,
+           'tes4_animation_observations': animation_observations,
            'elapsed_seconds': round(time.monotonic() - start, 4), 'start_cell': args.start,
            'template_revision': check(template, 'OpenMW/example-suite'),
            'expected_engine_revision': expected_revision, 'engine_revision_matches': revision_matches,
@@ -244,6 +265,11 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'player_movement': movement,
            'screenshots': screens, 'scope': 'Private scene load/screenshot; software OpenGL, not Vulkan or gameplay'}
 probe_sources = [Path(__file__).resolve()]
+if args.tes4_animation:
+    probe_sources += [ROOT / 'tools/upstream/tes4_animation_probe.omwscripts',
+                      ROOT / 'tools/upstream/scripts/openoblivion_tes4_animation_global.lua',
+                      ROOT / 'tools/upstream/scripts/openoblivion_tes4_animation_actor.lua',
+                      ROOT / 'tools/upstream/scripts/openoblivion_tes4_animation_player.lua']
 if args.tes4_interactions:
     probe_sources += [ROOT / 'tools/upstream/tes4_interactions_probe.omwscripts',
                       ROOT / 'tools/upstream/scripts/openoblivion_tes4_interactions_probe.lua',

@@ -1,5 +1,16 @@
 # Maintainer handoff
 
+Animation continuation, 2026-10-03: default TES4 NPC idle now advances and
+skins the attached body/clothing. Both native engines build; transform decoding
+is cross-checked independently; full-data and bounded-slice desktop probes
+observe five NPCs through two loops and inspect the clothed pose. Public CTest
+now has 14 groups. See [TES4_ANIMATION.md](research/TES4_ANIMATION.md) for exact
+source receipts, reproduction, package hashes and remaining original-animation
+work. Current private packages are `0.14-idle` (single Vilverin APK) and
+`0.15-installed-idle` (complete installed-data APK set). Previous 0.12/0.13 are
+retained for recovery. No movement/body/stair constants were changed. Physical
+phone idle acceptance remains pending; the 1:1 goal remains active.
+
 Current continuation, 2026-10-03: the owner now prioritizes a 1:1 classic
 Oblivion Android port and explicitly authorizes source/docs publishing and
 private sideload APK updates. [PARITY.md](PARITY.md) supersedes the older

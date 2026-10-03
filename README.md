@@ -44,7 +44,7 @@ current compatibility checkpoint; Vulkan and multiplayer are still planned.
 | Vilverin interior | Entrance stairs and NPC |
 | --- | --- |
 | ![Lit Vilverin chamber with textured architecture and props](docs/media/android-vilverin-interior.jpg) | ![Vilverin entrance stairs with a clothed NPC in a T-pose](docs/media/android-vilverin-stairs.jpg) |
-| Architecture, lighting and scene props render. | NPC assets load; original skeletal animation is unresolved. |
+| Architecture, lighting and scene props render. | Historical phone capture before the native NPC idle checkpoint. |
 
 The phone playtest reports walking, stopping on release, ordinary collision,
 jumping and looking around working. On private preview **0.5**, the owner now
@@ -52,7 +52,7 @@ reports very smooth stairs with subtle stepping they like, plus swimming and
 a visible breath indicator. The uploaded log confirms the native camera filter
 runs on the phone. Desktop Vilverin comparisons reduce measured view-jolt
 variation by about **60% uphill / 76% downhill**, with movement checks passing.
-**Next: original animation and live inventory, with controller recovery before
+**Next: locomotion/attack animation and live inventory, with controller recovery before
 changing the motor.** A desktop
 switch can load fixed static Havok strip meshes, and `arwhallstairs01` contact
 changes with that switch on. Phone preview 0.9 carries that switch. Travel
@@ -72,12 +72,13 @@ phone baseline is archived and the earlier Lua experiment is withheld.
 | Android preview | Original launcher, touch controls, private scene APK and complete installed-data APK-set packaging. Phone scene visibility and look confirmed; basic traversal reported by the owner. See [installed assets](docs/research/INSTALLED_ASSETS.md). |
 | Native stair smoothing | Source-built Android 0.51 engine with an opt-in camera patch; desktop stairs/ramp/wall/ceiling checks pass. Phone log confirms activation; owner reports smooth stairs with subtle stepping. Original movement calibration remains. |
 | Movement diagnostics | Native walk/stop/jump trajectories, original stair fixtures and separate player/view measurements. Discontinuities cannot count as successful movement. |
-| TES4 interaction inspection | Native actor/container names, base inventory snapshots, correct optional lock reset and shared-skeleton attachment. Desktop Vilverin window capture/close passes; loot transfer and original animation remain. See [the interaction checkpoint](docs/research/TES4_INTERACTIONS.md). |
+| TES4 interaction inspection | Native actor/container names, base inventory snapshots and correct optional lock reset. Desktop Vilverin window capture/close passes; loot transfer remains. See [the interaction checkpoint](docs/research/TES4_INTERACTIONS.md). |
+| TES4 NPC idle | Original transform KF loading, constant/spline channels and live shared skinning. Five desktop NPCs advance through two idle loops; clothed pose inspected. Android builds and private packages include the change; phone idle acceptance is pending. See [animation evidence](docs/research/TES4_ANIMATION.md). |
 | Android toolchain | Inspector and Vulkan capability probe cross-compile for ARM64/API 29. |
 | Vulkan | Device/graphics-queue enumeration only; no OpenOblivion Vulkan scene renderer yet. |
 | Publication checks | Source, staged files and Git history checked for game data. Only three approved documentation screenshots have exact hash/size exceptions. |
 
-This is an early engineering project. Original quests, combat, animation,
+This is an early engineering project. Original quests, combat, full animation,
 multiplayer authority and persistence have not passed their implementation
 gates. There is no public playable release or public asset-packed APK.
 

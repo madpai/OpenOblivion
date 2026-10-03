@@ -1,5 +1,12 @@
 # Native stair camera integration
 
+The current native animation continuation follows the interaction patch:
+`tes4_animation.py apply`, rebuild, then `tes4_animation.py record`.
+It adds TES4 transform KF decoding and default NPC idle with live skinning.
+`run_kf_fixtures.py` proves original in-memory fixtures against the same Linux
+components library. See [animation reproduction and limits](../../docs/research/TES4_ANIMATION.md).
+The exact actor input/output chain keeps the preceding interaction receipt valid.
+
 ## TES4 interaction continuation
 
 After applying the existing camera/static-strip integration, apply the name,

@@ -48,7 +48,11 @@ def visual_links(tag, fields):
     paths, links = [], set()
     for key, value in fields:
         if key in (b'MODL', b'MOD2', b'MOD3', b'MOD4') and value.rstrip(b'\0'):
-            paths.append('meshes/' + value.rstrip(b'\0').decode('cp1252'))
+            model = 'meshes/' + value.rstrip(b'\0').decode('cp1252')
+            paths.append(model)
+            if tag == b'NPC_' and key == b'MODL' and model.lower().endswith('.nif'):
+                # Default TES4 idle is a sibling of the authored NPC skeleton.
+                paths.append(model.replace('\\', '/').rsplit('/', 1)[0] + '/idle.kf')
         if key == b'ICON' and value.rstrip(b'\0'):
             if tag == b'LTEX': prefix = 'textures/landscape/'
             elif tag in (b'RACE', b'EYES'): prefix = 'textures/'

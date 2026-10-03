@@ -1,0 +1,12 @@
+{
+  "desktop": {
+    "components/nifosg/nifloader.cpp": "02cd2ef2ae17a477f9861f107dcf157653941acef128b12c9dc6e8f59a592e82",
+    "apps/openmw/mwrender/esm4npcanimation.cpp": "d8d0b696c70ad1ef7d8876701994b442f8d03f3a923b1c10df38a12b30b0ebaf",
+    "apps/openmw/mwclass/esm4npc.hpp": "b36fd0384e64e78bdeb48ad6215605e408be9f80cae2d0c3f48b87014cc7ab21"
+  },
+  "android": {
+    "components/nifosg/nifloader.cpp": "1d7f6faf987923212cd7595ced46f6e4519c37cf0d03ab4339f8da2bf14c0dfa",
+    "apps/openmw/mwrender/esm4npcanimation.cpp": "70851d55bd0fa1863e7cd325f0e6b7dff7e3ac7b684e7f9250efcb2ea4548182",
+    "apps/openmw/mwclass/esm4npc.hpp": "1e7c28eaff73d943a96dfafb79dac62d6e02f41a113903951f3d9821e3880e26"
+  }
+}

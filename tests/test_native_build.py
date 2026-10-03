@@ -12,8 +12,58 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/native'))
 import prepare_android
+import tes4_animation
+import tes4_interactions
 
 LIBRARIES = {'libopenmw.so', 'libSDL2.so', 'libGL.so', 'libopenal.so', 'libcollada-dom2.5-dp.so', 'libc++_shared.so'}
+
+
+class NativeAnimationReceipt(unittest.TestCase):
+    def test_chained_actor_hashes_allow_only_the_audited_successor(self):
+        revision = next(iter(tes4_animation.REVISIONS))
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            source, helper = root / 'source', root / 'tools'
+            helper.mkdir(); source.mkdir()
+            actor = tes4_animation.ACTOR
+            files = {actor: b'Original changed actor fixture',
+                     'components/nifosg/nifloader.cpp': b'Original loader fixture'}
+            files.update({value: key.encode() for key, value in tes4_animation.HEADERS.items()})
+            for path, data in files.items():
+                out = source / path; out.parent.mkdir(parents=True, exist_ok=True); out.write_bytes(data)
+            old_actor_hash = hashlib.sha256(b'Original previous actor fixture').hexdigest()
+            inputs = {actor: old_actor_hash, 'components/nifosg/nifloader.cpp': 'a' * 64}
+            (helper / 'tes4_animation.lock.json').write_text(json.dumps({'desktop': inputs}))
+            predecessor = {'base_revision': revision,
+                'tools_sha256': tes4_interactions.tools_identity(revision),
+                'source_sha256': {actor: old_actor_hash}}
+            predecessor['tools_sha256']['tools/native/tes4_interactions.py'] = tes4_interactions.PREVIOUS_TOOL
+            prior = source / tes4_animation.PREDECESSOR
+            prior.write_text(json.dumps(predecessor))
+            identity = {'original-fixture-tool': 'b' * 64}
+            record = {'schema': 1, 'base_revision': revision, 'tools_sha256': identity,
+                'input_sha256': inputs, 'predecessor_sha256': tes4_animation.digest(prior),
+                'source_sha256': {p: tes4_animation.digest(source / p) for p in files}}
+            (source / tes4_animation.STAMP).write_text(json.dumps(record))
+            with patch.object(tes4_animation, 'HERE', helper), \
+                    patch.object(tes4_animation, 'tools_identity', return_value=identity):
+                self.assertEqual(tes4_interactions.verify(source), predecessor)
+                # A changed skin header must invalidate the whole chain.
+                skin = source / tes4_animation.HEADERS['tes4_skin.hpp']
+                original = skin.read_bytes(); skin.write_bytes(b'Unexpected skin source')
+                with self.assertRaises(ValueError): tes4_interactions.verify(source)
+                skin.write_bytes(original)
+                # An edited predecessor receipt cannot be hidden by good outputs.
+                prior.write_text(json.dumps(dict(predecessor, unexpected='edit')))
+                with self.assertRaises(ValueError): tes4_animation.verify(source)
+
+    def test_previous_tool_allowance_does_not_allow_other_changed_tools(self):
+        revision = next(iter(tes4_animation.REVISIONS))
+        record = {'base_revision': revision, 'tools_sha256': tes4_interactions.tools_identity(revision)}
+        record['tools_sha256']['tools/native/tes4_interactions.py'] = tes4_interactions.PREVIOUS_TOOL
+        tes4_interactions.validate_tools(record)
+        record['tools_sha256']['tools/native/tes4_bindings.hpp'] = '0' * 64
+        with self.assertRaises(ValueError): tes4_interactions.validate_tools(record)
 
 
 class NativeBuildReceipt(unittest.TestCase):

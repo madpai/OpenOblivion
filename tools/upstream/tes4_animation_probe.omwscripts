@@ -1,0 +1,3 @@
+GLOBAL: scripts/openoblivion_tes4_animation_global.lua
+CUSTOM: scripts/openoblivion_tes4_animation_actor.lua
+PLAYER: scripts/openoblivion_tes4_animation_player.lua

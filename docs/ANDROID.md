@@ -7,12 +7,13 @@ private APK bundles a bounded owner-data scene slice and installs it without
 manual file copying. Public APKs must still contain no game data.
 
 Complete installed-data checkpoint, 2026-10-03: the separate private
-`0.13-installed-assets` package carries every supplied Data file in a signed
+`0.15-installed-idle` package carries every supplied Data file in a signed
 APK set. The 5.57 GB download contains six APKs and computer install scripts;
 the complete Data does not fit one signed APK. Android emulator installation,
 all 824 extracted file hashes/sizes, the complete archive/plugin configuration,
-obsolete loose-file removal and launcher controls pass. It uses the same native
-library as `0.12-containers`, which remains the smaller single-APK option.
+obsolete loose-file removal and launcher controls pass. The native idle
+continuation is described in [TES4_ANIMATION.md](research/TES4_ANIMATION.md);
+`0.14-idle` is the smaller single-APK option.
 See [installed assets](research/INSTALLED_ASSETS.md) for exact content, checksum
 and installation instructions. Full content availability does not establish
 phone rendering, original audio/video playback or gameplay parity.
@@ -125,17 +126,22 @@ top button holds Shift for run after always-run is pinned off, and starts on
 run. The 0.7 log stayed at walk speed. Swimming and the meter are observations;
 depletion/recovery and drowning remain untested.
 
-The served package is **0.12-containers** (versionCode 12), QA
-`OO-ANDROID-012`. It adds native TES4 actor/container names, base-container
-inspection, shared NPC skeleton attachment, correct reference lock defaults and
-absolute GUI taps. It keeps the motor, stair filter, strip loader, template
-collision box and closed touch overlay. Read-only inventory inspection is not
-loot transfer; original animation and phone acceptance remain unverified.
-See [the interaction checkpoint](research/TES4_INTERACTIONS.md) and
-[the parity ledger](PARITY.md).
+The served package is **0.14-idle** (versionCode 14), QA
+`OO-ANDROID-014`. It adds original TES4 transform KF decoding, constant/spline
+channels and default NPC idle with live shared skinning. Five desktop NPCs
+advance through two loops and the clothed pose is inspected. The bounded slice
+includes its original idle clip. Phone idle rendering acceptance is pending.
+The motor, stair filter, strip loader, template collision box, container
+inspection and touch overlay remain. Locomotion, combat and live loot transfer
+are still incomplete. See [animation evidence](research/TES4_ANIMATION.md).
 
-The private download is 0.12-containers; 0.11-fit, 0.10-touch-name, 0.9-authored-collision, and 0.8-run are archived, 0.6 and 0.7 are withdrawn, 0.5 remains the stair comparison, and the complete working 0.3 APK/page/notes are archived
-for recovery/comparison. The rejected 0.4 Lua-filter APK remains withheld.
+The complete installation option is **0.15-installed-idle**, versionCode 15,
+with all 73 supplied Data files in six signed APKs. Unzip on a computer and run
+the included adb install script. See [installed assets](research/INSTALLED_ASSETS.md).
+The previous 0.12 single APK and 0.13 full set are retained privately for recovery.
+Earlier 0.11/0.10/0.9/0.8 checkpoints are archived; 0.6/0.7 are withdrawn,
+0.5 remains the stair comparison and 0.3 remains the phone visibility baseline.
+The rejected 0.4 Lua-filter APK remains withheld.
 Native 0.5 keeps the original movement and camera collision paths and adds
 bounded read-only QA samples. It remains OpenGL, with animation, general TES4
 collision accuracy, Vulkan and multiplayer unresolved.

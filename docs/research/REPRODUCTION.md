@@ -1,5 +1,15 @@
 # Reproduction evidence
 
+Latest native continuation, 2026-10-03: [TES4_ANIMATION.md](TES4_ANIMATION.md)
+records original TES4 transform sequence/default/spline decoding, live NPC idle
+and a corrected shared-skin attachment. Both native builds and 14 public CTest
+groups pass. Full-data and bounded-slice desktop probes observe five NPCs
+through two loops; private captures show the clothed idle pose. The single APK
+and complete six-APK set carry this native library, with verified signatures,
+payload hashes and emulator installation/storage checks. Physical-phone idle
+acceptance and full 1:1 gameplay remain pending. Older measurements below are
+historical checkpoints with their own scope.
+
 Date: 2026-09-30. All game files, raw reports and binaries remain outside the
 public checkout. Counts below are a reviewed summary. This is an M0 tooling
 checkpoint and partial M1 reproduction, not playable Oblivion or multiplayer evidence.

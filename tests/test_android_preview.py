@@ -136,6 +136,13 @@ class SceneDependencies(unittest.TestCase):
                                  'meshes/fixture/hair.nif', 'textures/fixture/eyes.dds',
                                  'meshes/fixture/boots.nif', 'meshes/fixture/shirt.nif'})
 
+    def test_npc_skeleton_includes_default_idle_without_changing_equipment(self):
+        paths, links = scene_assets.visual_links(b'NPC_', [(b'MODL', b'Characters\\Fixture\\Skeleton.NIF\0')])
+        self.assertEqual(paths, ['meshes/Characters\\Fixture\\Skeleton.NIF', 'meshes/Characters/Fixture/idle.kf'])
+        self.assertFalse(links)
+        paths, _ = scene_assets.visual_links(b'ARMO', [(b'MODL', b'Fixture\\Armor.NIF\0')])
+        self.assertEqual(paths, ['meshes/Fixture\\Armor.NIF'])
+
     def test_leveled_variants_cycles_and_missing_forms(self):
         fields = [(b'LVLO', struct.pack('<hIh', 1, 2, 1)),
                   (b'LVLO', struct.pack('<hHIhH', 2, 0, 3, 1, 0))]

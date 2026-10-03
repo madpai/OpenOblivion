@@ -67,6 +67,10 @@ endif()
 
 include(CTest)
 if(BUILD_TESTING AND NOT ANDROID)
+    add_executable(oo_tes4_animation_test tests/test_tes4_animation.cpp)
+    target_include_directories(oo_tes4_animation_test PRIVATE tools/native)
+    target_compile_options(oo_tes4_animation_test PRIVATE -Wall -Wextra -Wpedantic -Werror -UNDEBUG)
+    add_test(NAME tes4-animation-fixtures COMMAND oo_tes4_animation_test)
     find_path(OO_OSG_INCLUDE_DIR osg/Vec3f REQUIRED)
     add_executable(oo_reference_lock_test tests/test_reference_locks.cpp
         "${OO_OPENMW_SOURCE}/components/esm4/loadrefr.cpp")

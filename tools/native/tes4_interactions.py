@@ -18,6 +18,9 @@ REVISIONS = {
 HEADER = 'apps/openmw/mwlua/types/openoblivion_tes4_bindings.hpp'
 LOCK_HEADER = 'components/esm4/openoblivion_reference_locks.hpp'
 STAMP = '.openoblivion-tes4-interactions.json'
+ACTOR_SOURCE = 'apps/openmw/mwrender/esm4npcanimation.cpp'
+# Published 0.12/0.13 tool identity. All other tool hashes must still match.
+PREVIOUS_TOOL = '6b49cc0edb6e87594fa6029a0b5b357bfa1dbf40ef7f6b413a38a8dbe65ebc10'
 
 
 def digest(path):
@@ -36,6 +39,14 @@ def tools_identity(revision):
     return {p.relative_to(ROOT).as_posix(): digest(p) for p in
             (Path(__file__), HERE / 'tes4_bindings.hpp', HERE / 'reference_locks.hpp', HERE / 'tes4_interactions.lock.json',
              HERE / ('tes4_interactions_' + label + '.patch'))}
+
+
+def validate_tools(record):
+    expected = tools_identity(record['base_revision'])
+    actual = record['tools_sha256']
+    previous = dict(expected, **{'tools/native/tes4_interactions.py': PREVIOUS_TOOL})
+    if actual not in (expected, previous):
+        raise ValueError('Interaction tools have changed')
 
 
 def remove_partial(text):
@@ -100,10 +111,14 @@ def apply(source, revision):
 
 def verify(source):
     record = json.loads((source / STAMP).read_text())
-    if record['tools_sha256'] != tools_identity(record['base_revision']):
-        raise ValueError('Interaction tools have changed')
+    validate_tools(record)
     for name, expected in record['source_sha256'].items():
         if digest(source / name) != expected:
+            if name == ACTOR_SOURCE and (source / '.openoblivion-tes4-animation.json').exists():
+                from tes4_animation import verify as verify_animation
+                successor = verify_animation(source)
+                if successor['input_sha256'].get(name) == expected:
+                    continue
             raise ValueError('Interaction source has changed: ' + name)
     return record
 
