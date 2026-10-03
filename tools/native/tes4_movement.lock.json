@@ -1,0 +1,8 @@
+{
+  "desktop": {
+    "apps/openmw/mwclass/npc.cpp": "497a13d2ea6b312cad729b98766c4f19b09689df1c135ece5a76a7e79d04299e"
+  },
+  "android": {
+    "apps/openmw/mwclass/npc.cpp": "e2ec2ea3712afc0238348a018e3f432552d7ae4e232a11455e4e4bdfb84e714e"
+  }
+}

@@ -22,6 +22,7 @@ public final class GameActivity extends SDLActivity {
                 Os.setenv("OPENOBLIVION_GROUNDED_EYE", "1", true);
                 Os.setenv("OPENOBLIVION_AUTHORED_COLLISION", "1", true);
                 Os.setenv("OPENOBLIVION_ORIGINAL_BODY", "1", true);
+                Os.setenv("OPENOBLIVION_TES4_MOVEMENT", "1", true);
             }
             Os.setenv("OPENMW_USER_FILE_STORAGE", new File(getFilesDir(), "preview-user").getPath() + "/", true);
         } catch (android.system.ErrnoException e) { throw new RuntimeException(e); }
@@ -31,7 +32,7 @@ public final class GameActivity extends SDLActivity {
     @Override protected String getMainSharedObject() { return getApplicationInfo().nativeLibraryDir + "/libopenmw.so"; }
     @Override protected String[] getArguments() {
         String cell = getIntent().getStringExtra("cell");
-        if (!"VilverinExterior".equals(cell)) cell = "Vilverin";
+        if (!"VilverinExterior".equals(cell) && !"ICPrisonSewerExit01".equals(cell)) cell = "Vilverin";
         return new String[]{"--resources", new File(getFilesDir(), "payload/resources").getPath(),
             "--config", new File(getFilesDir(), "preview-user/config").getPath(), "--skip-menu", "--start", cell};
     }

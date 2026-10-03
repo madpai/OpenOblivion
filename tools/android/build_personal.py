@@ -220,6 +220,12 @@ def main():
             validate_door_tools(receipt)
             if receipt.get('base_revision') != lock['engine_base_revision']:
                 raise ValueError('TES4 door tools differ from the native build')
+        if native_build.get('tes4_movement'):
+            from tes4_movement import tools_identity as movement_tools
+            receipt = native_build['tes4_movement']
+            if (receipt.get('base_revision') != lock['engine_base_revision']
+                    or receipt.get('tools_sha256') != movement_tools(receipt['base_revision'])):
+                raise ValueError('TES4 movement tools differ from the native build')
         if native_build.get('tes4_body'):
             from tes4_body import tools_identity as body_tools
             receipt = native_build['tes4_body']
@@ -275,6 +281,14 @@ def main():
         if digest(runtime / 'third-party-notices.txt') != native_build['notices_sha256']:
             raise ValueError('Native source notices mismatch')
         shutil.copyfile(runtime / 'third-party-notices.txt', notices / 'native-source-third-party.txt')
+    # Small launcher scripts ship in the APK, outside the payload, so changing
+    # them never changes the payload ID or forces a data re-download.
+    overlay = assets / 'overlay'
+    if overlay.exists(): shutil.rmtree(overlay)
+    (overlay / 'scripts').mkdir(parents=True)
+    for source, name in [(ROOT / 'tools/android/start_position.omwscripts', 'start_position.omwscripts'),
+                         (ROOT / 'tools/android/scripts/openoblivion_start_position.lua', 'scripts/openoblivion_start_position.lua')]:
+        shutil.copyfile(source, overlay / name)
     (stage / 'template-settings.cfg').write_text(player_collision_settings((template / 'settings.cfg').read_text()))
     paths = [(file, 'template/' + file.relative_to(template / 'game_template/data').as_posix())
              for file in sorted((template / 'game_template/data').rglob('*')) if file.is_file()]
@@ -378,7 +392,8 @@ def main():
          ROOT / 'tools/android/container.omwscripts', ROOT / 'tools/android/scripts/openoblivion_container.lua',
          ROOT / 'tools/android/scripts/openoblivion_container_ui.lua',
          ROOT / 'tools/android/scripts/openoblivion_container_items.lua',
-         ROOT / 'tools/android/meshes/basicplayer.osgt')}
+         ROOT / 'tools/android/meshes/basicplayer.osgt',
+         ROOT / 'tools/android/start_position.omwscripts', ROOT / 'tools/android/scripts/openoblivion_start_position.lua')}
     for file in (ROOT / 'tools/android/camera_repair.omwscripts', ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua'):
         provenance['preview_tools_sha256'][file.relative_to(ROOT).as_posix()] = digest(file)
     (assets / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')

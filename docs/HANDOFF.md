@@ -1,5 +1,13 @@
 # Maintainer handoff
 
+Run/sneak and start, 2026-10-03: the owner reported sneak doing nothing and no
+walk/run difference. The player had no locomotion animation states, so the
+borrowed engine always used walk speed. `tes4_movement` (after `tes4_body`)
+applies the original executable's speed formula to the player (walk 116.6,
+run 355.6, sneak 70 units/s on desktop). Phone build `0.27-run-sneak` also
+starts at the original prologue sewer exit by default, and fixes menu tap
+scaling and overlay redraw (0.26). See [TES4_MOVEMENT.md](research/TES4_MOVEMENT.md).
+
 Phone-only complete data, 2026-10-03: the served build is `0.25-download-assets`,
 a single APK that downloads and verifies the full installed Data from the
 sideload server on first launch (see [ANDROID.md](ANDROID.md)). The payload

@@ -1,0 +1,24 @@
+--- a/apps/openmw/mwclass/npc.cpp
++++ b/apps/openmw/mwclass/npc.cpp
+@@ -33,6 +33,8 @@
+ #include "../mwlua/localscripts.hpp"
+ 
+ #include "../mwmechanics/actorutil.hpp"
++
++#include "openoblivion_tes4_movement.hpp"
+ #include "../mwmechanics/aisetting.hpp"
+ #include "../mwmechanics/autocalcspell.hpp"
+ #include "../mwmechanics/combat.hpp"
+@@ -948,6 +950,12 @@
+         }
+         else if (world->isSwimming(ptr))
+             moveSpeed = getSwimSpeed(ptr);
++        else if (OpenOblivion::tes4MovementEnabled() && ptr == MWMechanics::getPlayer())
++            // OpenOblivion: classic TES4 player ground speed from the run/sneak
++            // stances, independent of the borrowed walk/run animation states.
++            moveSpeed = OpenOblivion::tes4PlayerGroundSpeed(stats.getStance(MWMechanics::CreatureStats::Stance_Run),
++                stats.getStance(MWMechanics::CreatureStats::Stance_Sneak),
++                stats.getDrawState() != MWMechanics::DrawState::Nothing);
+         else if (running && !MWBase::Environment::get().getMechanicsManager()->isSneaking(ptr))
+             moveSpeed = getRunSpeed(ptr);
+         else

@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/native'))
 import prepare_android
 import tes4_animation
 import tes4_body
+import tes4_movement
 import tes4_interactions
 
 LIBRARIES = {'libopenmw.so', 'libSDL2.so', 'libGL.so', 'libopenal.so', 'libcollada-dom2.5-dp.so', 'libc++_shared.so'}
@@ -145,6 +146,16 @@ class NativeBodyReceipt(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(FileNotFoundError):
                 tes4_body.verify(Path(tmp))
+
+
+class NativeMovementReceipt(unittest.TestCase):
+    def test_lock_matches_patch_targets(self):
+        lock = json.loads((Path(tes4_movement.HERE) / 'tes4_movement.lock.json').read_text())
+        for name in ('desktop', 'android'):
+            text = (Path(tes4_movement.HERE) / ('tes4_movement_' + name + '.patch')).read_text()
+            self.assertEqual({l[6:] for l in text.splitlines() if l.startswith('+++ b/')}, set(lock[name]))
+            self.assertIn('tes4MovementEnabled()', text)
+        self.assertEqual(tes4_movement.PARENT, '.openoblivion-tes4-body.json')
 
 
 if __name__ == '__main__':

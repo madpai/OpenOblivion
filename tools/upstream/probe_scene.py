@@ -43,9 +43,11 @@ parser.add_argument('--missing-player-model', action='store_true', help='Fault i
 parser.add_argument('--player-collision-model', type=Path, help='Load this exact OSGT player model using the Android preview settings rewrite')
 parser.add_argument('--authored-collision', action='store_true', help='Enable the native fixed OL_STATIC strip loader without the door driver')
 parser.add_argument('--original-body', action='store_true', help='Enable the measured classic TES4 player hull in a recorded body build')
+parser.add_argument('--tes4-movement', action='store_true', help='Enable the classic TES4 player ground-speed formula in a recorded build')
 parser.add_argument('--async-physics-threads', type=int, choices=range(5), help='Explicit physics worker count for a controlled comparison')
 parser.add_argument('--camera-motion', action='store_true', help='Bounded movement/turning probe; changes controls for two seconds')
 parser.add_argument('--player-movement', action='store_true', help='Native player trajectory: walk, stop, jump and landing; no scripted camera motion')
+parser.add_argument('--movement-gait', choices=('walk', 'run', 'sneak'), default='walk', help='Gait the movement probe requests')
 parser.add_argument('--movement-turn', type=float, default=0, help='Initial turn in degrees through native player controls')
 parser.add_argument('--movement-position', type=float, nargs=3, help='Optional private test placement X Y Z in the selected cell')
 parser.add_argument('--movement-heading', type=float, default=0, help='World Z rotation in degrees for optional test placement')
@@ -138,6 +140,8 @@ cfg = ['replace=content', 'replace=fallback-archive',
                     'tes4_doors_probe.omwscripts' if args.tes4_doors else
                     'tes4_animation_probe.omwscripts' if args.tes4_animation else 'scene_probe.omwscripts'),
        'encoding=win1252']
+if args.tes4_movement and (not native_manifest or not native_manifest.get('tes4_movement')):
+    parser.error('--tes4-movement requires a recorded movement integration')
 if args.original_body and not native_manifest.get('tes4_body'):
     parser.error('--original-body requires a recorded body integration')
 if args.tes4_doors:
@@ -180,7 +184,7 @@ if args.player_movement:
     position = '{' + ','.join(repr(v) for v in args.movement_position) + '}' if args.movement_position else 'nil'
     (movement_data / 'scripts/openoblivion_movement_config.lua').write_text(
         'return {turn=' + repr(math.radians(args.movement_turn)) + ', position=' + position
-        + ', heading=' + repr(math.radians(args.movement_heading)) + '}\n')
+        + ', heading=' + repr(math.radians(args.movement_heading)) + ', gait=' + repr(args.movement_gait) + '}\n')
     cfg += ['data=/movement-data']
     if args.raw_eye:
         (movement_data / 'scripts/openoblivion_grounded_eye.lua').write_text(
@@ -225,6 +229,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            *(['--env', 'ALSOFT_CONF=/evidence/alsoft.conf'] if args.audio_capture else []),
            *(['--env', 'OPENOBLIVION_AUTHORED_COLLISION=1'] if args.tes4_doors or args.authored_collision else []),
            *(['--env', 'OPENOBLIVION_ORIGINAL_BODY=1'] if args.original_body else []),
+           *(['--env', 'OPENOBLIVION_TES4_MOVEMENT=1'] if args.tes4_movement else []),
            *(['--env', 'OPENOBLIVION_GROUNDED_EYE=1'] if args.native_grounded_eye else []),
            '--volume', f'{work}:/work:ro',
            *(['--volume', f'{fixture_data}:/fixture-data:ro'] if args.movement_fixture else
@@ -420,6 +425,7 @@ if args.player_collision_model:
     metrics['probe_complete'] = complete
 metrics['authored_collision_enabled'] = args.tes4_doors or args.authored_collision
 metrics['original_body_enabled'] = args.original_body
+metrics['tes4_movement_enabled'] = args.tes4_movement
 body_logged = 'OpenOblivion original TES4 player body: half extents' in log
 metrics['original_body_logged'] = body_logged
 if body_logged != args.original_body:

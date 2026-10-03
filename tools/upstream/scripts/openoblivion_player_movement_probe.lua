@@ -32,7 +32,8 @@ return {
             interfaces.Controls.overrideMovementControls(true)
             self.controls.movement = phase() == 'walk' and 1 or 0
             self.controls.sideMovement = 0
-            self.controls.run = false
+            self.controls.run = config.gait == 'run'
+            self.controls.sneak = config.gait == 'sneak'
             self.controls.jump = phase() == 'jump'
             self.controls.yawChange = turned and 0 or config.turn
             turned = true
@@ -46,6 +47,10 @@ return {
                 print(string.format('OPENOBLIVION_PLAYER_MOVEMENT t=%.6f phase=%s x=%.6f y=%.6f z=%.6f grounded=%s expected_speed=%.6f',
                     elapsed, phase(), p.x, p.y, p.z,
                     tostring(types.Actor.isOnGround(self)), types.Actor.getWalkSpeed(self)))
+                print(string.format('OPENOBLIVION_PLAYER_GAIT t=%.6f gait=%s walk_speed=%.6f run_speed=%.6f current_speed=%.6f running=%s sneaking=%s',
+                    elapsed, tostring(config.gait), types.Actor.getWalkSpeed(self), types.Actor.getRunSpeed(self),
+                    types.Actor.getCurrentSpeed(self), tostring(types.Actor.isRunning and types.Actor.isRunning(self)),
+                    tostring(self.controls.sneak)))
                 print(string.format('OPENOBLIVION_PLAYER_VIEW t=%.6f camera_z=%.6f tracked_z=%.6f pitch=%.6f yaw=%.6f',
                     elapsed, camera.getPosition().z, camera.getTrackedPosition().z, camera.getPitch(), camera.getYaw()))
             end

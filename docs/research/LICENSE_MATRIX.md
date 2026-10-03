@@ -2,6 +2,18 @@
 
 Research snapshot: 2026-09-30. Original OpenOblivion code is **GPL-3.0-only**.
 
+## TES4 player ground-speed audit (2026-10-03)
+
+Intended change: with `OPENOBLIVION_TES4_MOVEMENT=1`, compute the player's
+ground speed in `apps/openmw/mwclass/npc.cpp` (desktop blob
+`85f687e8e515b8d52efad86c19fb93c311857a78`, OpenMW GPLv3 project grant) from
+the formula read from the owner's original executable, using setting values
+from the owner's master. Only numbers and the formula's structure are
+published; no executable code is copied. The header
+`tools/native/tes4_movement.hpp`, receipt tool and fixture are original
+OpenOblivion GPL-3.0-only code. Pre-change SHA256s are in
+`tools/native/tes4_movement.lock.json`; the receipt follows the body receipt.
+
 ## Measured TES4 player body audit (2026-10-03)
 
 Intended change: when `OPENOBLIVION_ORIGINAL_BODY=1`, give only the player

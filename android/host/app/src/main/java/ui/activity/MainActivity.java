@@ -46,6 +46,7 @@ public final class MainActivity extends Activity {
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(100); layout.addView(progress);
         LinearLayout buttons = new LinearLayout(this); layout.addView(buttons);
+        addScene(buttons, "Sewer exit (game start)", "ICPrisonSewerExit01");
         addScene(buttons, "Vilverin interior", "Vilverin");
         addScene(buttons, "Vilverin exterior", "VilverinExterior");
         Button logs = new Button(this); logs.setText("View scene log"); buttons.addView(logs);
@@ -286,9 +287,12 @@ public final class MainActivity extends Activity {
                 for (int i = 0; i < archives.length(); ++i) gameConfig.append("fallback-archive=").append(configName(archives.getString(i))).append('\n');
             }
         } catch (JSONException error) { throw new IOException("Invalid installed content list", error); }
+        File overlay = new File(getFilesDir(), "overlay");
+        copyOverlay(overlay);
         String cfg = "replace=content\nreplace=fallback-archive\nresources=" + resourcePath
-            + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ncontent=template.omwgame\n" + gameConfig
-            + "content=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\ncontent=look_name.omwscripts\ncontent=container.omwscripts\n"
+            + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ndata=" + overlay
+            + "\ncontent=template.omwgame\n" + gameConfig
+            + "content=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\ncontent=look_name.omwscripts\ncontent=container.omwscripts\ncontent=start_position.omwscripts\n"
             + (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE ? "content=native_stair_qa.omwscripts\n" : "")
             + "encoding=win1252\n"
             ;
@@ -299,6 +303,23 @@ public final class MainActivity extends Activity {
             + "\n[Shadows]\nenable shadows = false\n\n[Water]\nshader = false\n\n[Camera]\nviewing distance = 4096\n"
             + "\n[Terrain]\ndistant terrain = false\n\n[Post Processing]\nenabled = false\n";
         write(new File(user, "settings.cfg"), settings);
+    }
+    /** Launcher scripts bundled in the APK; refreshed on every launch, independent of the payload. */
+    private void copyOverlay(File overlay) throws IOException {
+        String[] top = getAssets().list("overlay");
+        if (top == null) return;
+        for (String name : top) {
+            String[] children = getAssets().list("overlay/" + name);
+            if (children != null && children.length > 0) {
+                for (String child : children) copyAsset("overlay/" + name + "/" + child, new File(overlay, name + "/" + child));
+            } else copyAsset("overlay/" + name, new File(overlay, name));
+        }
+    }
+    private void copyAsset(String path, File dest) throws IOException {
+        dest.getParentFile().mkdirs();
+        try (InputStream in = getAssets().open(path); OutputStream out = new FileOutputStream(dest)) {
+            byte[] buffer = new byte[8192]; for (int n; (n = in.read(buffer)) != -1;) out.write(buffer, 0, n);
+        }
     }
     private static String configName(String name) throws IOException {
         if (name.isEmpty() || name.contains("/") || name.contains("\\") || name.contains("\n")
