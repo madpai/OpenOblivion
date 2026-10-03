@@ -286,9 +286,12 @@ def main():
     overlay = assets / 'overlay'
     if overlay.exists(): shutil.rmtree(overlay)
     (overlay / 'scripts').mkdir(parents=True)
-    for source, name in [(ROOT / 'tools/android/start_position.omwscripts', 'start_position.omwscripts'),
-                         (ROOT / 'tools/android/scripts/openoblivion_start_position.lua', 'scripts/openoblivion_start_position.lua')]:
-        shutil.copyfile(source, overlay / name)
+    overlay_source = ROOT / 'tools/android/overlay'
+    for source in sorted(overlay_source.rglob('*')):
+        if source.is_file() and source.suffix in ('.omwscripts', '.lua', '.osgt'):
+            target = overlay / source.relative_to(overlay_source)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
     (stage / 'template-settings.cfg').write_text(player_collision_settings((template / 'settings.cfg').read_text()))
     paths = [(file, 'template/' + file.relative_to(template / 'game_template/data').as_posix())
              for file in sorted((template / 'game_template/data').rglob('*')) if file.is_file()]
@@ -393,7 +396,7 @@ def main():
          ROOT / 'tools/android/scripts/openoblivion_container_ui.lua',
          ROOT / 'tools/android/scripts/openoblivion_container_items.lua',
          ROOT / 'tools/android/meshes/basicplayer.osgt',
-         ROOT / 'tools/android/start_position.omwscripts', ROOT / 'tools/android/scripts/openoblivion_start_position.lua')}
+         *sorted(p for p in (ROOT / 'tools/android/overlay').rglob('*') if p.is_file()))}
     for file in (ROOT / 'tools/android/camera_repair.omwscripts', ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua'):
         provenance['preview_tools_sha256'][file.relative_to(ROOT).as_posix()] = digest(file)
     (assets / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')

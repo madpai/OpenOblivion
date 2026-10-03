@@ -190,9 +190,10 @@ final class TouchControls extends View {
     }
 
     void syncRun() {
-        if (running) SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_SHIFT_LEFT);
+        // Always-run is on (overlay run gate), so Shift is held only to walk.
+        if (!running) SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_SHIFT_LEFT);
         else if (shiftSent) SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_SHIFT_LEFT);
-        shiftSent = running;
+        shiftSent = !running;
         // Sneak holds Left Ctrl the same way run holds Shift. GameActivity calls syncRun() on focus.
         if (sneaking) SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_CTRL_LEFT);
         else if (ctrlSent) SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_CTRL_LEFT);

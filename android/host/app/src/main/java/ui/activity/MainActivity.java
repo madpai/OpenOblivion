@@ -299,6 +299,9 @@ public final class MainActivity extends Activity {
         write(new File(user, "openmw.cfg"), cfg);
         String settings = read(new File(root, "template-settings.cfg"));
         settings = settings.replace("[Models]", "[Models]\nload unsupported nif files = true");
+        // Android's COLLADA loader rejects every .dae; the overlay carries an OSGT sky.
+        if (new File(overlay, "meshes/sky_atmosphere.osgt").isFile())
+            settings = settings.replace("meshes/sky_atmosphere.dae", "meshes/sky_atmosphere.osgt");
         settings += "\n[Video]\nresolution x = 960\nresolution y = 540\nfullscreen = true\nvsync = true\n"
             + "\n[Shadows]\nenable shadows = false\n\n[Water]\nshader = false\n\n[Camera]\nviewing distance = 4096\n"
             + "\n[Terrain]\ndistant terrain = false\n\n[Post Processing]\nenabled = false\n";

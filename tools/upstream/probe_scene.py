@@ -44,6 +44,7 @@ parser.add_argument('--player-collision-model', type=Path, help='Load this exact
 parser.add_argument('--authored-collision', action='store_true', help='Enable the native fixed OL_STATIC strip loader without the door driver')
 parser.add_argument('--original-body', action='store_true', help='Enable the measured classic TES4 player hull in a recorded body build')
 parser.add_argument('--tes4-movement', action='store_true', help='Enable the classic TES4 player ground-speed formula in a recorded build')
+parser.add_argument('--sky-osgt', action='store_true', help='Use the phone overlay OSGT sky atmosphere instead of the template COLLADA file')
 parser.add_argument('--async-physics-threads', type=int, choices=range(5), help='Explicit physics worker count for a controlled comparison')
 parser.add_argument('--camera-motion', action='store_true', help='Bounded movement/turning probe; changes controls for two seconds')
 parser.add_argument('--player-movement', action='store_true', help='Native player trajectory: walk, stop, jump and landing; no scripted camera motion')
@@ -203,6 +204,8 @@ else:
     for archive in ([] if scene_data or args.movement_fixture else sorted(data.glob('*.bsa'))):
         if archive.name.startswith('Oblivion - '):
             cfg.append('fallback-archive=' + archive.name)
+if args.sky_osgt:
+    cfg.append('data=/phone-overlay')
 (config / 'openmw.cfg').write_text('\n'.join(cfg) + '\n')
 settings = (template / 'settings.cfg').read_text()
 # This setting belongs in the existing Models section of the upstream template.
@@ -214,6 +217,8 @@ if args.missing_player_model:
     settings = settings.replace('meshes/BasicPlayer.dae', 'meshes/openoblivion_missing_player.dae')
 if args.player_collision_model:
     settings = player_collision_settings(settings)
+if args.sky_osgt:
+    settings = settings.replace('meshes/sky_atmosphere.dae', 'meshes/sky_atmosphere.osgt')
 if args.async_physics_threads is not None:
     settings += '\n[Physics]\nasync num threads = ' + str(args.async_physics_threads) + '\n'
 (config / 'settings.cfg').write_text(settings + '\n[Video]\nresolution x = 800\nresolution y = 600\n')
@@ -236,6 +241,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
              ['--volume', f'{data / "Oblivion.esm"}:/scene-master/Oblivion.esm:ro',
               '--volume', f'{scene_data}:/scene-slice:ro'] if scene_data else ['--volume', f'{data}:/game:ro']),
            *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa or args.camera_repair or args.tes4_interactions else []),
+           *(['--volume', f'{ROOT / "tools/android/overlay"}:/phone-overlay:ro'] if args.sky_osgt else []),
            '--volume', f'{template}:/template:ro',
            '--volume', f'{ROOT / "tools/upstream"}:/probe-data:ro',
            *(['--volume', f'{door_data}:/door-data:ro'] if args.tes4_doors else []),
