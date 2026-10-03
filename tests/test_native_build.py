@@ -165,7 +165,7 @@ class NativePlayerReceipt(unittest.TestCase):
         for name in ('desktop', 'android'):
             text = (Path(tes4_player.HERE) / ('tes4_player_' + name + '.patch')).read_text()
             self.assertEqual({l[6:] for l in text.splitlines() if l.startswith('+++ b/')}, set(lock[name]))
-            self.assertIn('tes4PlayerRecordFor', text)
+            self.assertIn('tes4ActorRecordFor', text)
         self.assertEqual(tes4_player.PARENT, '.openoblivion-tes4-movement.json')
 
 

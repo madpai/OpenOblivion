@@ -16,9 +16,9 @@
          bool is1stPerson = mViewMode == VM_FirstPerson;
          bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
  
-+        // OpenOblivion: render the player as the master's TES4 Player record
-+        // with its original skeletons and locomotion clips.
-+        if (const ESM4::Npc* tes4Player = OpenOblivion::tes4PlayerRecordFor(mPtr, store))
++        // OpenOblivion: render the player (TES4 Player record) or an actor-bridge
++        // proxy (its TES4 NPC) with the original skeletons and locomotion clips.
++        if (const ESM4::Npc* tes4Player = OpenOblivion::tes4ActorRecordFor(mPtr, mNpc->mHead, store))
 +            {
 +                const std::string skeleton = OpenOblivion::tes4PlayerSkeleton(
 +                    Misc::ResourceHelpers::correctActorModelPath(
@@ -64,8 +64,8 @@
          if (!mObjectRoot.get())
              return;
  
-+        // OpenOblivion: the TES4 player body has no template body parts.
-+        if (OpenOblivion::tes4PlayerRecordFor(mPtr, *MWBase::Environment::get().getESMStore()))
++        // OpenOblivion: TES4-rendered actors have no template body parts.
++        if (OpenOblivion::tes4ActorRecordFor(mPtr, mNpc->mHead, *MWBase::Environment::get().getESMStore()))
 +            return;
 +
          NpcType curType = getNpcType();

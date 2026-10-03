@@ -54,6 +54,44 @@ def stats(master):
             'fatigue': sum(attributes[a] for a in ('strength', 'willpower', 'agility', 'endurance'))}
 
 
+def npc_table(master):
+    """Every TES4 NPC_ base record: AI aggression/confidence and base health.
+    The original console shows level-1 autocalc NPCs keep the record's health,
+    fatigue (ACBS), skills and attributes (Vilverin bandits 0006C35E, 0006C356,
+    0006C35B: health 16/20/20, fatigue 160/180/180, hand-to-hand 40/10/30,
+    strength 35/55/55)."""
+    plugin = master.read_bytes()
+    pos, rows = 0, {}
+    while pos < len(plugin):
+        tag, size = struct.unpack_from('<4sI', plugin, pos)
+        if tag == b'GRUP':
+            pos += 20
+            continue
+        flags, fid = struct.unpack_from('<II', plugin, pos + 8)
+        raw = plugin[pos + 20:pos + 20 + size]
+        pos += 20 + size
+        if tag != b'NPC_':
+            continue
+        if flags & 0x40000:
+            raw = zlib.decompress(raw[4:])
+        fields = dict(subrecords(raw))
+        aidt = fields.get(b'AIDT', b'\0' * 12)
+        data = fields.get(b'DATA', b'')
+        health = struct.unpack_from('<I', data, 21)[0] if len(data) >= 25 else 0
+        acbs = fields.get(b'ACBS', b'\0' * 16)
+        fatigue = struct.unpack_from('<H', acbs, 6)[0]
+        hand, strength, luck = (data[5], data[25], data[32]) if len(data) >= 33 else (0, 0, 0)
+        rows[fid & 0xffffff] = (aidt[0], aidt[1], health, fatigue, hand, strength, luck)
+    return rows
+
+
+def npc_lua(rows):
+    body = ',\n'.join(f'  [{fid}] = {{' + ', '.join(map(str, row)) + '}' for fid, row in sorted(rows.items()))
+    return ('-- Generated from the owner\'s Oblivion.esm NPC records; private build output.\n'
+            '-- [FormID & 0xffffff] = {aggression, confidence, health, fatigue, handToHand, strength, luck}\n'
+            'return {\n' + body + '\n}\n')
+
+
 def lua(values):
     def table(d):
         return '{' + ', '.join(f'{k} = {v}' for k, v in d.items()) + '}'
@@ -67,8 +105,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('master', type=Path)
     parser.add_argument('output', type=Path)
+    parser.add_argument('--npcs', type=Path, help='Also write the NPC table here')
     args = parser.parse_args()
     args.output.write_text(lua(stats(args.master)))
+    if args.npcs:
+        args.npcs.write_text(npc_lua(npc_table(args.master)))
 
 
 if __name__ == '__main__':

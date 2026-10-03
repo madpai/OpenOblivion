@@ -16,6 +16,7 @@
 #include <components/esm/refid.hpp>
 #include <components/esm4/loadarmo.hpp>
 #include <components/esm4/loadclot.hpp>
+#include <components/esm4/loadlvli.hpp>
 #include <components/esm4/loadhair.hpp>
 #include <components/esm4/loadnpc.hpp>
 #include <components/esm4/loadrace.hpp>
@@ -23,6 +24,7 @@
 #include <components/misc/strings/lower.hpp>
 #include <components/sceneutil/keyframe.hpp>
 
+#include "../mwclass/esm4base.hpp"
 #include "../mwworld/cellref.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/ptr.hpp"
@@ -54,11 +56,26 @@ namespace OpenOblivion
         return value != nullptr && std::strcmp(value, "1") == 0;
     }
 
-    // The master's Player NPC when the switch is on and ptr is the engine player.
-    inline const ESM4::Npc* tes4PlayerRecordFor(const MWWorld::Ptr& ptr, const MWWorld::ESMStore& store)
+    inline const ESM4::Npc* tes4PlayerRecord(const MWWorld::ESMStore& store);
+
+    // The TES4 NPC this host actor stands for: the master's Player record for the
+    // engine player, or, for an actor-bridge proxy, the ESM4 NPC whose record ID
+    // the proxy carries in its (otherwise unused) head field.
+    inline const ESM4::Npc* tes4ActorRecordFor(
+        const MWWorld::Ptr& ptr, const ESM::RefId& head, const MWWorld::ESMStore& store)
     {
-        if (!tes4PlayerEnabled() || ptr.isEmpty() || ptr.getCellRef().getRefId() != ESM::RefId::stringRefId("Player"))
+        if (!tes4PlayerEnabled() || ptr.isEmpty())
             return nullptr;
+        if (ptr.getCellRef().getRefId() == ESM::RefId::stringRefId("Player"))
+            return tes4PlayerRecord(store);
+        if (!head.is<ESM::FormId>())
+            return nullptr;
+        const ESM4::Npc* npc = store.get<ESM4::Npc>().search(head);
+        return npc != nullptr && npc->mIsTES4 && !tes4PathText(npc->mModel).empty() ? npc : nullptr;
+    }
+
+    inline const ESM4::Npc* tes4PlayerRecord(const MWWorld::ESMStore& store)
+    {
         // Load order renumbers the master's 00000007, so find it by editor ID once.
         static const ESM4::Npc* found = nullptr;
         static bool searched = false;
@@ -118,10 +135,11 @@ namespace OpenOblivion
         for (const ESM4::InventoryItem& item : npc.mInventory)
         {
             const ESM::FormId id = ESM::FormId::fromUint32(item.item);
-            if (const ESM4::Clothing* clothing = store.get<ESM4::Clothing>().search(id))
-                add(*clothing, clothing->mClothingFlags);
-            else if (const ESM4::Armor* armor = store.get<ESM4::Armor>().search(id))
+            if (const auto* armor = MWClass::ESM4Impl::resolveLevelled<ESM4::LevelledItem, ESM4::Armor>(id))
                 add(*armor, armor->mArmorFlags);
+            else if (const auto* clothing
+                = MWClass::ESM4Impl::resolveLevelled<ESM4::LevelledItem, ESM4::Clothing>(id))
+                add(*clothing, clothing->mClothingFlags);
         }
         return worn;
     }
@@ -172,9 +190,9 @@ namespace OpenOblivion
     }
 
     // Original locomotion files (next to the skeleton) and the host group names.
-    inline const std::array<std::pair<std::string_view, std::string_view>, 22>& tes4LocomotionGroups()
+    inline const std::array<std::pair<std::string_view, std::string_view>, 33>& tes4LocomotionGroups()
     {
-        static const std::array<std::pair<std::string_view, std::string_view>, 22> groups{ {
+        static const std::array<std::pair<std::string_view, std::string_view>, 33> groups{ {
             { "idle.kf", "idle" },
             { "walkforward.kf", "walkforward" },
             { "walkbackward.kf", "walkback" },
@@ -197,6 +215,19 @@ namespace OpenOblivion
             { "swimleft.kf", "swimwalkleft" },
             { "swimright.kf", "swimwalkright" },
             { "swimfastforward.kf", "swimrunforward" },
+            // Combat clips play through the TES4 rules layer (Lua), by these names.
+            { "handtohandattackright.kf", "tes4attackright" },
+            { "handtohandattackleft.kf", "tes4attackleft" },
+            { "handtohandattackpower.kf", "tes4attackpower" },
+            { "handtohandblockidle.kf", "tes4blockidle" },
+            { "handtohandrecoil.kf", "tes4recoil" },
+            { "handtohandstagger.kf", "tes4stagger" },
+            { "handtohandidle.kf", "tes4idlehh" },
+            { "jumpstart.kf", "tes4jumpstart" },
+            { "jumploop.kf", "tes4jumploop" },
+            { "jumpland.kf", "tes4jumpland" },
+            // TES4 ragdolls on death; its posed-dead idle stands in as the host death clip.
+            { "idleanims/deathidle.kf", "death1" },
         } };
         return groups;
     }

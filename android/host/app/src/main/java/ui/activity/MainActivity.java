@@ -292,7 +292,9 @@ public final class MainActivity extends Activity {
         String cfg = "replace=content\nreplace=fallback-archive\nresources=" + resourcePath
             + "\ndata=" + root + "/template\ndata=" + root + "/data\ndata=" + root + "/qa\ndata=" + overlay
             + "\ncontent=template.omwgame\n" + gameConfig
-            + "content=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\ncontent=look_name.omwscripts\ncontent=container.omwscripts\ncontent=start_position.omwscripts\n"
+            + "content=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\ncontent=look_name.omwscripts\ncontent=container.omwscripts\n"
+            + (new File(overlay, "openoblivion_rules.omwaddon").isFile() ? "content=openoblivion_rules.omwaddon\n" : "")
+            + "content=start_position.omwscripts\n"
             + (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE ? "content=native_stair_qa.omwscripts\n" : "")
             + "encoding=win1252\n"
             ;

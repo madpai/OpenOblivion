@@ -1,2 +1,5 @@
 GLOBAL: scripts/openoblivion_start_position.lua
 PLAYER: scripts/openoblivion_tes4_stats.lua
+GLOBAL: scripts/openoblivion_actor_bridge.lua
+CUSTOM: scripts/openoblivion_bridge_actor.lua
+PLAYER: scripts/openoblivion_tes4_player_combat.lua

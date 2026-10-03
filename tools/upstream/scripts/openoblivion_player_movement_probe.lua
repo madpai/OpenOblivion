@@ -13,6 +13,7 @@ local captured = false
 local finished = false
 local turned = false
 local ready = not config.position
+local nextAttack = nil
 
 local function phase()
     if elapsed < 1 then return 'settle' end
@@ -35,13 +36,17 @@ return {
                 camera.setPreferredThirdPersonDistance(260)
                 camera.instantTransition()
             end
-            self.controls.movement = phase() == 'walk' and 1 or 0
+            self.controls.movement = (phase() == 'walk' and config.gait ~= 'none') and 1 or 0
             self.controls.sideMovement = 0
             self.controls.run = config.gait == 'run'
             self.controls.sneak = config.gait == 'sneak'
             self.controls.jump = phase() == 'jump'
             self.controls.yawChange = turned and 0 or config.turn
             turned = true
+            if config.attack and elapsed >= (nextAttack or 1) then
+                nextAttack = elapsed + 1.5
+                self.object:sendEvent('TES4PlayerAttack', {})
+            end
         end,
         onUpdate = function(dt)
             if not ready or not self.cell or finished or dt <= 0 then return end
@@ -66,7 +71,7 @@ return {
                     .. ' exterior=' .. tostring(self.cell.isExterior))
                 debug.takeScreenshot()
             end
-            if elapsed >= 12 then
+            if elapsed >= (config.duration or 12) then
                 self.controls.movement = 0
                 self.controls.jump = false
                 interfaces.Controls.overrideMovementControls(false)

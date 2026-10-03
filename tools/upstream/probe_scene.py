@@ -52,7 +52,9 @@ parser.add_argument('--camera-motion', action='store_true', help='Bounded moveme
 parser.add_argument('--player-movement', action='store_true', help='Native player trajectory: walk, stop, jump and landing; no scripted camera motion')
 parser.add_argument('--movement-camera', choices=('default', 'third'), default='default', help='Camera view for the movement probe')
 parser.add_argument('--movement-shot-time', type=float, default=6.5, help='Probe time of the screenshot (seconds)')
-parser.add_argument('--movement-gait', choices=('walk', 'run', 'sneak'), default='walk', help='Gait the movement probe requests')
+parser.add_argument('--movement-duration', type=float, default=12.0, help='Seconds before the movement probe quits')
+parser.add_argument('--movement-attack', action='store_true', help='Request a TES4 player attack every 1.5 s (phone overlay)')
+parser.add_argument('--movement-gait', choices=('walk', 'run', 'sneak', 'none'), default='walk', help='Gait the movement probe requests')
 parser.add_argument('--movement-turn', type=float, default=0, help='Initial turn in degrees through native player controls')
 parser.add_argument('--movement-position', type=float, nargs=3, help='Optional private test placement X Y Z in the selected cell')
 parser.add_argument('--movement-heading', type=float, default=0, help='World Z rotation in degrees for optional test placement')
@@ -191,7 +193,7 @@ if args.player_movement:
     position = '{' + ','.join(repr(v) for v in args.movement_position) + '}' if args.movement_position else 'nil'
     (movement_data / 'scripts/openoblivion_movement_config.lua').write_text(
         'return {turn=' + repr(math.radians(args.movement_turn)) + ', position=' + position
-        + ', heading=' + repr(math.radians(args.movement_heading)) + ', gait=' + repr(args.movement_gait) + ', camera=' + repr(args.movement_camera) + ', shot=' + repr(args.movement_shot_time) + '}\n')
+        + ', heading=' + repr(math.radians(args.movement_heading)) + ', gait=' + repr(args.movement_gait) + ', camera=' + repr(args.movement_camera) + ', shot=' + repr(args.movement_shot_time) + ', attack=' + ('true' if args.movement_attack else 'false') + ', duration=' + repr(args.movement_duration) + '}\n')
     cfg += ['data=/movement-data']
     if args.raw_eye:
         (movement_data / 'scripts/openoblivion_grounded_eye.lua').write_text(
@@ -214,10 +216,13 @@ if args.phone_overlay:
     overlay_dir = output / 'phone-overlay'
     shutil.copytree(ROOT / 'tools/android/overlay', overlay_dir)
     sys.path.insert(0, str(ROOT / 'tools/android'))
-    from tes4_stats import lua as stats_lua, stats as master_stats
+    from tes4_stats import lua as stats_lua, npc_lua, npc_table, stats as master_stats
     (overlay_dir / 'scripts/openoblivion_tes4_stats_values.lua').write_text(stats_lua(master_stats(data / 'Oblivion.esm')))
+    (overlay_dir / 'scripts/openoblivion_tes4_npc_values.lua').write_text(npc_lua(npc_table(data / 'Oblivion.esm')))
+    from tes4_rules_addon import build as rules_addon
+    (overlay_dir / 'openoblivion_rules.omwaddon').write_bytes(rules_addon())
     args.sky_osgt = True
-    cfg += ['data=/phone-overlay', 'content=start_position.omwscripts']
+    cfg += ['data=/phone-overlay', 'content=openoblivion_rules.omwaddon', 'content=start_position.omwscripts']
 elif args.sky_osgt:
     cfg.append('data=/phone-overlay')
 (config / 'openmw.cfg').write_text('\n'.join(cfg) + '\n')
@@ -272,7 +277,7 @@ start = time.monotonic()
 image_id = subprocess.check_output(['docker', 'image', 'inspect', '--format', '{{.Id}}', args.image], text=True).strip()
 expected_revision = json.loads((ROOT / 'docs/research/upstreams.lock.json').read_text())['OpenMW/openmw']['revision']
 try:
-    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+    result = subprocess.run(command, capture_output=True, text=True, timeout=120 + max(0, int(args.movement_duration) - 12))
 except subprocess.TimeoutExpired as error:
     subprocess.run(['docker', 'stop', '--timeout', '5', container_name], capture_output=True, timeout=15)
     for name, content in (('stdout.txt', error.stdout), ('stderr.txt', error.stderr)):

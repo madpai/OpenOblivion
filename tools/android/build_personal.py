@@ -294,13 +294,16 @@ def main():
     (overlay / 'scripts').mkdir(parents=True)
     overlay_source = ROOT / 'tools/android/overlay'
     for source in sorted(overlay_source.rglob('*')):
-        if source.is_file() and source.suffix in ('.omwscripts', '.lua', '.osgt'):
+        if source.is_file() and source.suffix in ('.omwscripts', '.lua', '.osgt', '.omwaddon'):
             target = overlay / source.relative_to(overlay_source)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, target)
     # Starting stats come from the owner's master at build time; not committed.
-    from tes4_stats import lua as stats_lua, stats as master_stats
+    from tes4_stats import lua as stats_lua, npc_lua, npc_table, stats as master_stats
     (overlay / 'scripts/openoblivion_tes4_stats_values.lua').write_text(stats_lua(master_stats(data / 'Oblivion.esm')))
+    (overlay / 'scripts/openoblivion_tes4_npc_values.lua').write_text(npc_lua(npc_table(data / 'Oblivion.esm')))
+    from tes4_rules_addon import build as rules_addon
+    (overlay / 'openoblivion_rules.omwaddon').write_bytes(rules_addon())
     (stage / 'template-settings.cfg').write_text(player_collision_settings((template / 'settings.cfg').read_text()))
     paths = [(file, 'template/' + file.relative_to(template / 'game_template/data').as_posix())
              for file in sorted((template / 'game_template/data').rglob('*')) if file.is_file()]

@@ -1,5 +1,14 @@
 # Maintainer handoff
 
+Bandit fights, 2026-10-03: served `0.31-bandit-fights`. TES4 NPCs become host
+actor proxies (`tools/android/overlay`, actor bridge) drawn by the `tes4_player`
+renderer; hand-to-hand damage is transcribed from the executable and NPC stats
+come from the master (verified against the original console). See
+[TES4_COMBAT.md](research/TES4_COMBAT.md) for facts vs stand-ins. Player stats
+and outfit: [TES4_PLAYER.md](research/TES4_PLAYER.md). Next: weapons
+(Vilverin loot), blocking, TES4 detection/disposition, face textures, and a TES4
+inventory; then trees.
+
 Oblivion player, 2026-10-03 (owner approved the "make Vilverin playable" plan:
 TES4 player, stats/inventory, measured melee, bandit AI, looting; trees and
 water in parallel). Step 1 landed as `tes4_player` (after `tes4_movement`),
