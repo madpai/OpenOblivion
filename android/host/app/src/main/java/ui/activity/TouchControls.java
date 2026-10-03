@@ -34,6 +34,21 @@ final class TouchControls extends View {
     private final int[] directions = {KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_D};
 
     TouchControls(GameActivity a) { super(a); activity = a; setFocusable(false); }
+    // Menu taps are view pixels; the engine renders at the launcher's logical
+    // resolution. Unscaled taps beyond it clamp to the bottom-right window corner.
+    private static float gx(float x) { return SDLActivity.scaleAbsoluteMouseX(x); }
+    private static float gy(float y) { return SDLActivity.scaleAbsoluteMouseY(y); }
+    // The overlay hides while the engine shows its cursor (menus, loading). Poll
+    // that state so the buttons return without waiting for a touch.
+    private final Runnable watchCursor = new Runnable() {
+        @Override public void run() {
+            boolean gui = SDLActivity.isMouseShown() != 0;
+            if (gui != guiMode) { release(); guiMode = gui; moreOpen = false; if (!gui) syncRun(); invalidate(); }
+            postDelayed(this, 250);
+        }
+    };
+    @Override protected void onAttachedToWindow() { super.onAttachedToWindow(); post(watchCursor); }
+    @Override protected void onDetachedFromWindow() { removeCallbacks(watchCursor); super.onDetachedFromWindow(); }
     private float radius() { return Math.min(getWidth(), getHeight()) * .16f; }
     private float cx() { return radius() * 1.4f; }
     private float cy() { return getHeight() - radius() * 1.4f; }
@@ -50,7 +65,7 @@ final class TouchControls extends View {
     private float bottomGap() { return getHeight() * .13f; }
 
     @Override protected void onDraw(Canvas c) {
-        if (SDLActivity.isMouseShown() != 0) return;
+        if (guiMode) return;
         float r = radius(); paint.setColor(0x55777777); c.drawCircle(cx(), cy(), r, paint);
         paint.setColor(Color.WHITE); paint.setTextSize(Math.max(16, getHeight() * .035f));
         c.drawText("MOVE", cx() - r * .42f, cy() + 8, paint);
@@ -185,7 +200,7 @@ final class TouchControls extends View {
     }
 
     void release() {
-        if (guiPointer != -1) SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_UP, guiX, guiY, false);
+        if (guiPointer != -1) SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_UP, gx(guiX), gy(guiY), false);
         guiPointer = -1;
         for (int k : new HashSet<>(keys)) key(k, false);
         if (shiftSent) SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_SHIFT_LEFT);
@@ -206,16 +221,16 @@ final class TouchControls extends View {
             if (a == MotionEvent.ACTION_CANCEL) { release(); return true; }
             if (a == MotionEvent.ACTION_DOWN && guiPointer == -1) {
                 guiPointer = id; guiX = e.getX(ix); guiY = e.getY(ix);
-                SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_DOWN, guiX, guiY, false);
+                SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_DOWN, gx(guiX), gy(guiY), false);
             } else if (a == MotionEvent.ACTION_MOVE) {
                 int pointer = e.findPointerIndex(guiPointer);
                 if (pointer >= 0) {
                     guiX = e.getX(pointer); guiY = e.getY(pointer);
-                    SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_MOVE, guiX, guiY, false);
+                    SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_MOVE, gx(guiX), gy(guiY), false);
                 }
             } else if ((a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_POINTER_UP) && id == guiPointer) {
                 guiX = e.getX(ix); guiY = e.getY(ix);
-                SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_UP, guiX, guiY, false);
+                SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_UP, gx(guiX), gy(guiY), false);
                 guiPointer = -1;
             }
             return true;
