@@ -58,7 +58,11 @@ def visual_links(tag, fields):
             elif tag in (b'RACE', b'EYES'): prefix = 'textures/'
             else: continue
             paths.append(prefix + value.rstrip(b'\0').decode('cp1252'))
+        if tag == b'SOUN' and key == b'FNAM' and value.rstrip(b'\0'):
+            sound = value.rstrip(b'\0').decode('cp1252').replace('\\', '/')
+            paths.append(sound if sound.lower().startswith('sound/') else 'sound/' + sound)
         direct = ((tag == b'NPC_' and key in (b'RNAM', b'HNAM', b'ENAM'))
+                  or (tag == b'DOOR' and key in (b'SNAM', b'ANAM'))
                   or (tag == b'LTEX' and key == b'GNAM'))
         if direct:
             if len(value) != 4: raise ValueError('Invalid visual form reference')
@@ -145,7 +149,7 @@ def select(data, assetlab, output):
     bases = cell_bases | position_bases
     roots = bases | {fid for fid, (tag, _, _) in records.items() if tag == b'LTEX'}
     wanted, followed, missing_forms = visual_closure(records, roots)
-    archives = [Archive(data / ('Oblivion - ' + name + '.bsa')) for name in ('Meshes', 'Textures - Compressed', 'Misc')]
+    archives = [Archive(data / ('Oblivion - ' + name + '.bsa')) for name in ('Meshes', 'Textures - Compressed', 'Misc', 'Sounds')]
     providers = {key: archive for archive in archives for key in archive.entries}
     # Runtime defaults may request common water/effect textures independently
     # of a scene model. Preserve these small shared texture directories.
@@ -174,7 +178,7 @@ def select(data, assetlab, output):
         if '..' in Path(name).parts or ':' in name: raise ValueError('Invalid selected asset path')
         target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(content)
         packed.append({'path': name, 'size': len(content), 'sha256': hashlib.sha256(content).hexdigest()})
-    report = {'schema': 2, 'scope': 'Vilverin interiors and Tamriel cells 10..14,19..23 (native initial 5x5 grid); visual race/hair/eyes/inventory/leveled dependencies; all LTEX textures/grass; shared effects',
+    report = {'schema': 2, 'scope': 'Vilverin interiors and Tamriel cells 10..14,19..23 (native initial 5x5 grid); visual race/hair/eyes/inventory/leveled dependencies; door SOUN files; all LTEX textures/grass; shared effects',
               'cells': sorted(selected_cells), 'base_forms': len(bases), 'selected_files': sorted(packed, key=lambda f: f['path']),
               'position_only_base_forms': len(position_bases - cell_bases),
               'followed_forms': len(followed), 'missing_visual_forms': sorted(missing_forms),

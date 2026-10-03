@@ -253,6 +253,25 @@ the checkout; no owner geometry is adapted. Native binary/source obligations
 remain unchanged. The static strip loader is the audited insertion described
 above, not a new physics library.
 
+## Door audio connection research (2026-10-03)
+
+The audio continuation uses unchanged native APIs and independently authored
+host/packaging/probe code. Layout research inspected desktop OpenMW pin
+`46bd4599203ee52ffc0f3e8edb3fc159a0303a49` files
+`components/esm4/loadsoun.hpp` (blob `09f47e5dc2cc0f1c90fe8cce05ea8fc50b25a34c`),
+`components/esm4/loaddoor.cpp` (`10171085c325616b2b4464bede28d49c9563dca8`),
+and `apps/openmw/mwsound/soundbuffer.cpp` (`9c01569cd63241a0c9b29766b853251ce85ce6f5`).
+The first two retain cc9cii's zlib notices; the sound interface uses the OpenMW
+GPLv3 project grant. None is copied or modified for this continuation.
+Corresponding actual Android source SHA256s are respectively
+`4bf8c12e8c786e36933b10d1cbcf3e96c0bb6882127e411c2da548ebc1b402cf`,
+`6fe2b92c6ae43df7ce0afb71eae140c9dbd0d347ed0907c4559420e5b558b30b`, and
+`f321f202a21ef253d9082bb9402a5c9518cdcf18e148ccc6d6e8e7df4af182bb`.
+The already-audited Asset Lab BSA API reads original owner samples unchanged.
+Wave-backend configuration follows OpenAL Soft 1.23.1's documented settings;
+no OpenAL implementation/example code is copied. WAVs, audio mixes and raw
+analysis remain private. Attenuation and audible-phone parity remain unresolved.
+
 ## Native movement integration (2026-10-01)
 
 Before applying native changes, audited the GPLv3 project grant and exact files

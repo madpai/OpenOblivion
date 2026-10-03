@@ -33,6 +33,7 @@ parser.add_argument('--tes4-interactions', action='store_true', help='Exercise n
 parser.add_argument('--tes4-animation', action='store_true', help='Observe default TES4 NPC idle over two loops and capture its body pose')
 parser.add_argument('--tes4-doors', action='store_true', help='Activate the Vilverin gate and compare closed/open/closed collision')
 parser.add_argument('--door-traversal', action='store_true', help='Also walk the current native player body into and through the Vilverin gate')
+parser.add_argument('--audio-capture', action='store_true', help='Capture enabled door audio through OpenAL Soft wave output into private evidence')
 parser.add_argument('--camera-repair', action='store_true', help='Exercise the original preview camera fallback')
 parser.add_argument('--grounded-eye', action='store_true', help='Explicitly enable the unshipped stair eye-height experiment')
 parser.add_argument('--native-manifest', type=Path, help='External recorded native camera integration build')
@@ -47,6 +48,8 @@ parser.add_argument('--movement-fixture', action='store_true', help='Use the ori
 parser.add_argument('--movement-surface', choices=('stairs', 'ramp', 'wall', 'ceiling'), default='stairs')
 parser.add_argument('--raw-eye', action='store_true', help='Diagnostic control: disable only the grounded eye filter')
 args = parser.parse_args()
+if args.audio_capture and not (args.tes4_doors and args.door_traversal):
+    parser.error('Audio capture requires --tes4-doors --door-traversal near the sound source')
 if args.door_traversal and not args.tes4_doors:
     parser.error('Gate traversal requires --tes4-doors')
 if args.tes4_doors and (args.start != 'Vilverin' or args.player_movement or args.tes4_interactions
@@ -137,7 +140,12 @@ if args.tes4_doors:
     original = work / 'build/resources/vfs/scripts/omw/activationhandlers.lua'
     door_script.write_text(same_cell_doors_stay_open(original.read_text()))
     (door_data / 'scripts/openoblivion_door_config.lua').write_text(
-        'return {traversal=' + ('true' if args.door_traversal else 'false') + '}\n')
+        'return {traversal=' + ('true' if args.door_traversal else 'false')
+        + ',audio=' + ('true' if args.audio_capture else 'false') + '}\n')
+    if args.audio_capture:
+        (output / 'alsoft.conf').write_text(
+            '[general]\nsample-type=float32\nchannels=stereo\nfrequency=48000\ndither=false\n'
+            '[wave]\nfile=/evidence/door-audio.wav\n')
     cfg += ['data=/door-data']
 if args.phone_qa or args.camera_repair:
     cfg += ['data=/phone-qa-data']
@@ -176,6 +184,9 @@ else:
 settings = (template / 'settings.cfg').read_text()
 # This setting belongs in the existing Models section of the upstream template.
 settings = settings.replace('[Models]', '[Models]\nload unsupported nif files = true', 1)
+if args.audio_capture:
+    # Isolate effects in this evidence run; shipped volume settings stay intact.
+    settings += '\n[Sound]\nmusic volume = 0\n'
 if args.missing_player_model:
     settings = settings.replace('meshes/BasicPlayer.dae', 'meshes/openoblivion_missing_player.dae')
 (config / 'settings.cfg').write_text(settings + '\n[Video]\nresolution x = 800\nresolution y = 600\n')
@@ -187,7 +198,8 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            '--env', 'XDG_DATA_HOME=/evidence/xdg-data',
            '--env', 'XDG_CACHE_HOME=/evidence/xdg-cache',
            '--env', 'XDG_RUNTIME_DIR=/evidence/runtime',
-           '--env', 'LIBGL_ALWAYS_SOFTWARE=1', '--env', 'ALSOFT_DRIVERS=null',
+           '--env', 'LIBGL_ALWAYS_SOFTWARE=1', '--env', 'ALSOFT_DRIVERS=' + ('wave' if args.audio_capture else 'null'),
+           *(['--env', 'ALSOFT_CONF=/evidence/alsoft.conf'] if args.audio_capture else []),
            *(['--env', 'OPENOBLIVION_AUTHORED_COLLISION=1'] if args.tes4_doors else []),
            *(['--env', 'OPENOBLIVION_GROUNDED_EYE=1'] if args.native_grounded_eye else []),
            '--volume', f'{work}:/work:ro',
@@ -201,7 +213,8 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            *(['--volume', f'{movement_data}:/movement-data:ro'] if args.player_movement else []),
            '--volume', f'{output}:/evidence', '--workdir', '/work/build',
            '--entrypoint', 'xvfb-run', args.image, '-a', '-e', '/evidence/xvfb.log', '-s', '-screen 0 800x600x24',
-           './openmw', '--config', '/evidence/config', '--skip-menu', '--no-sound', '--no-grab',
+           './openmw', '--config', '/evidence/config', '--skip-menu',
+           *([] if args.audio_capture else ['--no-sound']), '--no-grab',
            '--start', args.start]
 start = time.monotonic()
 image_id = subprocess.check_output(['docker', 'image', 'inspect', '--format', '{{.Id}}', args.image], text=True).strip()
@@ -278,6 +291,11 @@ door_traversal_verified = (bool(door_blocked) and bool(door_crossed)
     and max(row[2] for row in door_blocked) - min(row[2] for row in door_blocked) < 1
     and all(row[2] > 50 for row in door_crossed))
 if args.door_traversal and not door_traversal_verified: complete = False
+audio_verified = ('OPENOBLIVION_DOOR_AUDIO open playing=true' in log
+                  and 'OPENOBLIVION_DOOR_AUDIO close playing=true' in log
+                  and (output / 'door-audio.wav').is_file()
+                  and (output / 'door-audio.wav').stat().st_size > 44)
+if args.audio_capture and not audio_verified: complete = False
 repair_activated = 'OPENOBLIVION_CAMERA_REPAIR activated:' in log
 motion = re.search(r'OPENOBLIVION_CAMERA_MOTION distance=([\d.eE+-]+) camera_player_distance=([\d.eE+-]+) yaw=([\d.eE+-]+)', log)
 motion_verified = bool(motion and float(motion[1]) > 1 and float(motion[2]) < 256 and abs(float(motion[3])) > 0.1)
@@ -286,6 +304,7 @@ if args.camera_repair and args.missing_player_model and not repair_activated: co
 movement = analyze_movement(log) if args.player_movement else None
 if movement is not None and not movement['trajectory_complete']: complete = False
 metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_complete': complete,
+           'audio_capture_enabled': args.audio_capture, 'door_audio_playback_verified': audio_verified,
            'tes4_doors_enabled': args.tes4_doors, 'tes4_doors_verified': doors_verified,
            'door_traversal_enabled': args.door_traversal, 'door_traversal_verified': door_traversal_verified,
            'door_body_samples': len(door_body), 'door_body_blocked_samples': door_blocked,

@@ -1,5 +1,22 @@
 # Maintainer handoff
 
+Audio continuation, 2026-10-03: native audio initialization is enabled and the
+bounded Vilverin scene includes 22 original door sound files. The handler emits
+opening/closing audio at the door. Full-data and bounded-slice desktop wave
+captures identify both original samples with correlation above 0.997; the same
+gate collision and ordinary traversal checks pass. No native library, movement
+or sound-distance constants change. Packages are `0.18-audio` and
+`0.19-installed-audio`; see [TES4_AUDIO.md](research/TES4_AUDIO.md) for hashes,
+reproduction and remaining attenuation/lifecycle/phone work. The preceding
+0.16/0.17 door packages remain recovery checkpoints. All 14 CTest groups pass.
+Android 14 emulator upgrades to 0.18 then 0.19, verifies all 4,192/824 payload
+hashes, installed APK hashes and ready launchers. The complete ZIP and six
+nested APKs verify independently. Audible phone and scene acceptance remain
+pending; the emulator's historical GLES translation failure still applies.
+The complete 1:1 port remains incomplete and its goal remains active.
+
+The following door, animation and interaction entries record earlier checkpoints.
+
 Door continuation, 2026-10-03: the Vilverin gate now plays original embedded
 Open/Close clips through USE, with two authored keyframed boxes following its
 leaves. Desktop full-data and bounded-slice tests verify closed/open/closed
@@ -15,8 +32,6 @@ An isolated Android 14 emulator verifies the 0.16 single APK and 0.17 six-APK
 upgrade, all extracted payload hashes and the ready launcher. These are
 installation/storage/UI checks; the existing emulator GLES translation failure
 still prevents scene-rendering acceptance. No physical phone is connected.
-
-The following animation and interaction entries record earlier checkpoints.
 
 Animation continuation, 2026-10-03: default TES4 NPC idle now advances and
 skins the attached body/clothing. Both native engines build; transform decoding

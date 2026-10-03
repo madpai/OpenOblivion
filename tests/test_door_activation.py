@@ -36,7 +36,7 @@ class DoorActivationTest(unittest.TestCase):
         self.assertIsNotNone(lua, 'Lua is required for the handler behavior fixture')
         setup = """
 local Door = {}
-local sounds, sequences, teleports = {}, {}, 0
+local sounds, emitters, sequences, teleports = {}, {}, {}, 0
 Door.record = function() return {openSound = 'open', closeSound = 'close'} end
 Door.isTeleport = function(d) return d.teleport end
 Door.destCell = function() return 'OriginalCell' end
@@ -44,7 +44,7 @@ Door.destPosition = function() return {} end
 Door.destRotation = function() return {} end
 package.preload['openmw.types'] = function() return {ESM4Door = Door} end
 package.preload['openmw.core'] = function() return {sound = {
-    playSound3d = function(name) sounds[#sounds + 1] = name end}} end
+    playSound3d = function(name, object) sounds[#sounds + 1] = name; emitters[#emitters + 1] = object end}} end
 package.preload['openmw.world'] = function() return {} end
 package.preload['openmw_aux.util'] = function() return {} end
 """
@@ -58,6 +58,7 @@ local animated = {id = 'original-animated', enabled = true}
 ESM4DoorActivation(animated, actor); ESM4DoorActivation(animated, actor)
 assert(animated.enabled and sequences[1] == 'Open' and sequences[2] == 'Close')
 assert(sounds[#sounds] == 'close')
+assert(emitters[#emitters] == animated)
 local beforeSounds, beforeSequences = #sounds, #sequences
 Door.isSequencePlaying = function(_, name) return name == 'Close' end
 assert(ESM4DoorActivation(animated, actor) == false)

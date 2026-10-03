@@ -143,6 +143,20 @@ class SceneDependencies(unittest.TestCase):
         paths, _ = scene_assets.visual_links(b'ARMO', [(b'MODL', b'Fixture\\Armor.NIF\0')])
         self.assertEqual(paths, ['meshes/Fixture\\Armor.NIF'])
 
+    def test_scene_door_audio_follows_both_sound_records(self):
+        paths, links = scene_assets.visual_links(b'DOOR',
+            [(b'SNAM', struct.pack('<I', 2)), (b'ANAM', struct.pack('<I', 3))])
+        records = {1: (b'DOOR', paths, links)}
+        for fid, filename in ((2, b'FX\\FixtureOpen.wav\0'), (3, b'Sound/FX/FixtureClose.wav\0')):
+            sound_paths, sound_links = scene_assets.visual_links(b'SOUN', [(b'FNAM', filename)])
+            records[fid] = (b'SOUN', sound_paths, sound_links)
+        wanted, seen, missing = scene_assets.visual_closure(records, {1})
+        self.assertEqual(wanted, {'sound/FX/FixtureOpen.wav', 'Sound/FX/FixtureClose.wav'})
+        self.assertEqual(seen, {1, 2, 3})
+        self.assertFalse(missing)
+        with self.assertRaises(ValueError):
+            scene_assets.visual_links(b'DOOR', [(b'SNAM', b'\0')])
+
     def test_leveled_variants_cycles_and_missing_forms(self):
         fields = [(b'LVLO', struct.pack('<hIh', 1, 2, 1)),
                   (b'LVLO', struct.pack('<hHIhH', 2, 0, 3, 1, 0))]

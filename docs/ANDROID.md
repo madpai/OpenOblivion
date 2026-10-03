@@ -7,14 +7,15 @@ private APK bundles a bounded owner-data scene slice and installs it without
 manual file copying. Public APKs must still contain no game data.
 
 Complete installed-data checkpoint, 2026-10-03: the separate private
-`0.17-installed-doors` package carries every supplied Data file in a signed
+`0.19-installed-audio` package carries every supplied Data file in a signed
 APK set. The 5.57 GB download contains six APKs and computer install scripts;
 the complete Data does not fit one signed APK. Android emulator installation,
 all 824 extracted file hashes/sizes, the complete archive/plugin configuration,
 obsolete loose-file removal and launcher controls pass. Native NPC idle and
 embedded gate clips with moving collision are described in
 [TES4_ANIMATION.md](research/TES4_ANIMATION.md) and
-[TES4_DOORS.md](research/TES4_DOORS.md); `0.16-doors` is the smaller single-APK option.
+[TES4_DOORS.md](research/TES4_DOORS.md). Native audio is enabled in
+[TES4_AUDIO.md](research/TES4_AUDIO.md); `0.18-audio` is the smaller single-APK option.
 See [installed assets](research/INSTALLED_ASSETS.md) for exact content, checksum
 and installation instructions. Full content availability does not establish
 phone rendering, original audio/video playback or gameplay parity.
@@ -127,21 +128,24 @@ top button holds Shift for run after always-run is pinned off, and starts on
 run. The 0.7 log stayed at walk speed. Swimming and the meter are observations;
 depletion/recovery and drowning remain untested.
 
-The current package is **0.16-doors** (versionCode 16), QA
-`OO-ANDROID-016`. It adds the original Vilverin gate Open/Close clips and two
+The current package is **0.18-audio** (versionCode 18), QA
+`OO-ANDROID-018`. It retains the original Vilverin gate Open/Close clips and two
 authored moving collision boxes. Desktop full-data and bounded-slice tests
 verify visible leaves, held end poses, closed/open/closed collision and player
 traversal. It retains original TES4 transform KF decoding and NPC idle with live
 shared skinning. Five desktop NPCs advance through two loops and the clothed
-pose is inspected. Phone gate and idle acceptance remain pending.
+pose is inspected. Native audio is now enabled and the bounded slice includes
+22 original door sound files. Full-data and bounded-slice desktop mixes identify
+both gate samples. Phone gate, idle and audio acceptance remain pending; sound
+distance/volume behavior still uses placeholders. See [audio evidence](research/TES4_AUDIO.md).
 The motor, stair filter, strip loader, template collision box, container
 inspection and touch overlay remain. Locomotion, combat and live loot transfer
 are still incomplete. See [door evidence](research/TES4_DOORS.md).
 
-The complete installation option is **0.17-installed-doors**, versionCode 17,
+The complete installation option is **0.19-installed-audio**, versionCode 19,
 with all 73 supplied Data files in six signed APKs. Unzip on a computer and run
 the included adb install script. See [installed assets](research/INSTALLED_ASSETS.md).
-The previous 0.14 single APK and 0.15 full set are retained privately for recovery.
+The previous 0.16 single APK and 0.17 full set are retained privately for recovery.
 Earlier 0.11/0.10/0.9/0.8 checkpoints are archived; 0.6/0.7 are withdrawn,
 0.5 remains the stair comparison and 0.3 remains the phone visibility baseline.
 The rejected 0.4 Lua-filter APK remains withheld.

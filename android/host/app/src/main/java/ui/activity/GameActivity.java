@@ -32,7 +32,7 @@ public final class GameActivity extends SDLActivity {
         String cell = getIntent().getStringExtra("cell");
         if (!"VilverinExterior".equals(cell)) cell = "Vilverin";
         return new String[]{"--resources", new File(getFilesDir(), "payload/resources").getPath(),
-            "--config", new File(getFilesDir(), "preview-user/config").getPath(), "--skip-menu", "--no-sound", "--start", cell};
+            "--config", new File(getFilesDir(), "preview-user/config").getPath(), "--skip-menu", "--start", cell};
     }
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);

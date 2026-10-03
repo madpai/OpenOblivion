@@ -5,6 +5,10 @@ Open and Close clips through USE. Its two authored keyframed boxes follow the
 leaves, and the door remains visible and holds the final pose. This is a
 measured door slice toward the active 1:1 Android goal.
 
+The subsequent [audio continuation](TES4_AUDIO.md) retains these native libraries
+and adds enabled audio plus original scene door samples in 0.18/0.19 packages.
+Package measurements below record the preceding 0.16/0.17 checkpoint.
+
 ## Implementation and reproduction
 
 The original KF adapter now also accepts an explicitly selected

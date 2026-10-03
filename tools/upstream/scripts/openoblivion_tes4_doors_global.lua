@@ -1,15 +1,31 @@
 -- SPDX-License-Identifier: GPL-3.0-only
 -- Exercise the packaged USE handler through ordinary activation events.
 local world = require('openmw.world')
+local core = require('openmw.core')
 local types = require('openmw.types')
 local util = require('openmw.util')
 local config = require('scripts.openoblivion_door_config')
 local openTime, closeTime, finishTime = 3, 7, 10
 if config.traversal then openTime, closeTime, finishTime = 7, 12, 15 end
 local elapsed, target, stage = 0, nil, 0
+local openSoundChecked, closeSoundChecked = false, false
 return {engineHandlers = {onUpdate = function(dt)
     elapsed = elapsed + dt
     local player = world.players[1]
+    if config.audio and target then
+        local record = types.ESM4Door.record(target)
+        if stage >= 2 and not openSoundChecked then
+            assert(core.sound.isEnabled(), 'audio manager is disabled')
+            assert(core.sound.isSoundPlaying(record.openSound, target), 'original opening sound is not playing')
+            print('OPENOBLIVION_DOOR_AUDIO open playing=true')
+            openSoundChecked = true
+        end
+        if stage >= 4 and not closeSoundChecked then
+            assert(core.sound.isSoundPlaying(record.closeSound, target), 'original closing sound is not playing')
+            print('OPENOBLIVION_DOOR_AUDIO close playing=true')
+            closeSoundChecked = true
+        end
+    end
     if elapsed >= 1 and stage == 0 then
         for _, door in ipairs(player.cell:getAll(types.ESM4Door)) do
             if (door.position - util.vector3(-4928, 64, -384)):length() < 1
@@ -40,6 +56,7 @@ return {engineHandlers = {onUpdate = function(dt)
     elseif elapsed >= finishTime and stage == 4 then
         assert(target.enabled, 'closing hid the door')
         assert(not types.ESM4Door.isSequencePlaying(target, 'Close'), 'close sequence did not finish')
+        assert(not config.audio or (openSoundChecked and closeSoundChecked), 'door audio was not observed')
         print('OPENOBLIVION_DOOR_CYCLE_DONE'); stage = 5
     end
 end}}

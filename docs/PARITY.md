@@ -22,7 +22,7 @@ placeholder bodies and template UI are not evidence of TES4 equivalence.
 | UI/inventory | Template HUD and native phone controls | Oblivion menus/HUD, inventory/equipment, journal/map, character creation, lockpicking and dialogue controls |
 | Gameplay | Record research; no demonstrated TES4 combat or progression | Original damage/magic, skills/attributes/leveling, effects, AI/packages, crime, death and difficulty behavior |
 | Scripts/quests/dialogue | No compatibility VM or validated quest progression | Bytecode/conditions, native functions, quest stages, dialogue selection, faction/reputation and representative main/side quest playthroughs |
-| Audio | Phone scene starts without sound | Effects, music, voices and subtitles, including synchronized playback and mobile audio lifecycle |
+| Audio | Native audio enabled; original door sounds packaged and identified in desktop engine output | Phone audio acceptance, original attenuation, effects/footsteps, music selection, voices/subtitles, synchronization and mobile audio lifecycle |
 | Saves/mods | No TES4 save compatibility demonstrated | Durable reference/quest/actor state, original save behavior, load/reload checks and representative mod compatibility |
 
 Work proceeds in testable slices: finish native TES4 interaction plumbing,

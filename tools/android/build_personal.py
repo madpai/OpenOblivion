@@ -107,7 +107,7 @@ local function ESM4DoorActivation(door, actor)
         local closeSound = Door4.record(door).closeSound
         if type(closeSound) == 'string' and closeSound ~= '' then sound = closeSound end
     end
-    core.sound.playSound3d(sound, actor)
+    core.sound.playSound3d(sound, door)
     if Door4.isTeleport(door) then
         actor:teleport(Door4.destCell(door), Door4.destPosition(door), Door4.destRotation(door))
     else

@@ -19,7 +19,13 @@ engineHandlers = {
 onFrame = function()
     if config.traversal and position then
         interfaces.Controls.overrideMovementControls(true)
-        self.controls.movement = elapsed >= 3 and elapsed < 10 and 1 or 0
+        local walking = elapsed >= 3 and elapsed < 10
+        if config.audio then
+            -- Hold still during each sample and stop nearby after crossing;
+            -- otherwise the borrowed sound range mutes the closing sample.
+            walking = (elapsed >= 3 and elapsed < 6.8) or (elapsed >= 8.5 and elapsed < 9.7)
+        end
+        self.controls.movement = walking and 1 or 0
         self.controls.sideMovement = 0
         self.controls.yawChange = 0
         self.controls.run = false
