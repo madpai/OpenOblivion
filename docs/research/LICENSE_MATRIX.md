@@ -10,9 +10,11 @@ the owner's running original executable, and judge that hull's walkable
 support from the surface beneath its centre. Other actors, the motor, gait,
 step sizes and the 0.5 camera filter are unchanged. Only measured numbers are
 published; no Bethesda or Havok executable code, data layout or bytecode is
-copied or linked. The xOBSE headers listed below stay research-only and were
-not used for this implementation; the live structure offsets came from
-inspection of the owner's process.
+copied or linked. The private measurement sampler located the live player,
+process and controller structures with help from xOBSE headers consulted as
+research references (their research-only status below is unchanged), checked
+against the owner's running process. No xOBSE code or text is copied into
+public files; only the measured numbers are published.
 
 The following OpenMW files were inspected at desktop base
 `46bd4599203ee52ffc0f3e8edb3fc159a0303a49`. Their project GPLv3 grant applies;
