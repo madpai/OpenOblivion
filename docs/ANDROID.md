@@ -6,8 +6,17 @@ audited external OpenMW Android 0.51 runtime and OpenGL ES. See
 private APK bundles a bounded owner-data scene slice and installs it without
 manual file copying. Public APKs must still contain no game data.
 
+Gate-fit correction: the owner's 0.18 phone report shows open leaves but failed
+passage. A malformed OSGT player model loaded the oversized error-marker body.
+`0.20-fit` corrects the serialization, and `0.21-installed-fit` carries the same
+fix in the complete set. Actual Android ARM64 OSG loading and native desktop
+before/after traversal pass; physical-phone passage confirmation is pending.
+Use the smaller APK for the gate test. The optional full set supplies artwork
+outside the bounded scene, using the same engine and gameplay implementation.
+See [the collision-model evidence](research/PLAYER_COLLISION_MODEL.md).
+
 Complete installed-data checkpoint, 2026-10-03: the separate private
-`0.19-installed-audio` package carries every supplied Data file in a signed
+`0.21-installed-fit` package carries every supplied Data file in a signed
 APK set. The 5.57 GB download contains six APKs and computer install scripts;
 the complete Data does not fit one signed APK. Android emulator installation,
 all 824 extracted file hashes/sizes, the complete archive/plugin configuration,
@@ -15,7 +24,7 @@ obsolete loose-file removal and launcher controls pass. Native NPC idle and
 embedded gate clips with moving collision are described in
 [TES4_ANIMATION.md](research/TES4_ANIMATION.md) and
 [TES4_DOORS.md](research/TES4_DOORS.md). Native audio is enabled in
-[TES4_AUDIO.md](research/TES4_AUDIO.md); `0.18-audio` is the smaller single-APK option.
+[TES4_AUDIO.md](research/TES4_AUDIO.md); `0.20-fit` is the smaller single-APK option.
 See [installed assets](research/INSTALLED_ASSETS.md) for exact content, checksum
 and installation instructions. Full content availability does not establish
 phone rendering, original audio/video playback or gameplay parity.

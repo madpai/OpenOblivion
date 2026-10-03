@@ -4,16 +4,22 @@ Checkpoint: 2026-10-03. The owner's request covers a complete asset package and
 the 1:1 Android port. Packaging is a separate acceptance gate from gameplay.
 The earlier single APK contains only the Vilverin visual slice.
 
-Current continuation: **0.19-installed-audio**, versionCode 19,
-5,569,251,880 bytes, SHA256
-`d331b4beb93532b90c3c04ed2fb12c2c3c913373088f97cd5207cdfb6805acab`.
+Current continuation: **0.21-installed-fit**, versionCode 21,
+5,569,251,666 bytes, SHA256
+`037ce9eadcae74bd5d2ddf362e1e159c6c7ae4d52b08e0549ce9ac74ad01f985`.
 It uses the same complete Data snapshot and installation structure, with the
 native idle and embedded gate changes described in [TES4_ANIMATION.md](TES4_ANIMATION.md)
 and [TES4_DOORS.md](TES4_DOORS.md). Native audio is enabled as described in
-[TES4_AUDIO.md](TES4_AUDIO.md). Its extracted payload contains **824 files /
-5,955,597,123 bytes**, including all 73 original Data files.
+[TES4_AUDIO.md](TES4_AUDIO.md). The preview player model serialization fix is
+documented in [PLAYER_COLLISION_MODEL.md](PLAYER_COLLISION_MODEL.md).
+Its extracted payload contains **824 files / 5,955,596,757 bytes**, including
+all 73 original Data files.
 The earlier 0.13 measurements below establish the original packaging/storage
-checkpoint. All packages remain private; the smaller single APK is 0.18-audio.
+checkpoint. All packages remain private; the smaller single APK is 0.20-fit.
+Use the smaller APK for the gate test. The full set uses the same engine and
+supplies artwork for broader exploration; it does not add completed quests or
+combat. Broader phone exploration remains unverified. The preceding 0.18/0.19
+audio packages are retained privately for recovery.
 
 ## Measured content and format boundary
 

@@ -1,5 +1,15 @@
 # Vilverin hall gate
 
+Phone correction, 2026-10-03: build 0.18 opens the visible leaves, but the owner's
+report records `basicplayer.osgt` failing to load. The oversized error-marker
+body therefore remains. The 0.11 model's malformed header/comment syntax had
+not been exercised by an actual decoder test, and earlier desktop door probes
+used the healthy DAE model. The old OSGT now reproduces both the phone parser
+error and blockage; the corrected OSGT passes loading and passage. See
+[PLAYER_COLLISION_MODEL.md](PLAYER_COLLISION_MODEL.md). Packages 0.20/0.21 fix
+serialization without changing body geometry or movement constants. The
+physical-phone passage retest remains pending.
+
 Continuation, 2026-10-03: [embedded door playback](TES4_DOORS.md) now loads
 the original Open/Close sequences and two authored keyframed boxes. Desktop
 closed/open/closed captures, collision cross-sections and ordinary player

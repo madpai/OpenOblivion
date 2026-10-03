@@ -32,6 +32,14 @@ engineering milestones. See the [foundation decision](docs/decisions/0001-founda
 
 ## Progress so far
 
+The latest phone report shows the hall gate opening but blocking passage.
+Its player collision model failed to load and was replaced by the oversized
+error marker. **0.20-fit** fixes the model serialization; **0.21-installed-fit**
+carries the same fix with all installed assets. Before/after native traversal
+reproduces the blockage and verifies passage with the corrected file; the actual
+Android ARM64 OSG decoder also accepts it. Phone passage confirmation remains
+pending. See [the collision-model fix](docs/research/PLAYER_COLLISION_MODEL.md).
+
 These are **real physical-phone captures from personal preview 0.3**, using
 owner-supplied Oblivion data and our native touch overlay. This preview runs an
 audited **OpenMW Android 0.51 / OpenGL** baseline. The screenshots show the
@@ -113,7 +121,8 @@ The selected progress screenshots are documentation captures, with separate
 
 Requirements: C++20 compiler, CMake >= 3.24, Ninja, Python >= 3.10, Git,
 zlib development files, Vulkan development files, OpenSceneGraph headers for
-the native reference regression, and LuaJIT for the movement
+the native reference regression, OpenSceneGraph development libraries for the
+collision-model loading regression, and LuaJIT for the movement
 presentation fixtures. No game data is required
 to build or run the public tests. The renderer-independent inspector can be
 built with `-DOO_BUILD_VULKAN_PROBE=OFF`.

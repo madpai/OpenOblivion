@@ -8,6 +8,7 @@ import math
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -39,6 +40,8 @@ parser.add_argument('--grounded-eye', action='store_true', help='Explicitly enab
 parser.add_argument('--native-manifest', type=Path, help='External recorded native camera integration build')
 parser.add_argument('--native-grounded-eye', action='store_true', help='Enable the post-physics native filter in that build')
 parser.add_argument('--missing-player-model', action='store_true', help='Fault injection: deliberately omit the base player model')
+parser.add_argument('--player-collision-model', type=Path, help='Load this exact OSGT player model using the Android preview settings rewrite')
+parser.add_argument('--async-physics-threads', type=int, choices=range(5), help='Explicit physics worker count for a controlled comparison')
 parser.add_argument('--camera-motion', action='store_true', help='Bounded movement/turning probe; changes controls for two seconds')
 parser.add_argument('--player-movement', action='store_true', help='Native player trajectory: walk, stop, jump and landing; no scripted camera motion')
 parser.add_argument('--movement-turn', type=float, default=0, help='Initial turn in degrees through native player controls')
@@ -48,6 +51,8 @@ parser.add_argument('--movement-fixture', action='store_true', help='Use the ori
 parser.add_argument('--movement-surface', choices=('stairs', 'ramp', 'wall', 'ceiling'), default='stairs')
 parser.add_argument('--raw-eye', action='store_true', help='Diagnostic control: disable only the grounded eye filter')
 args = parser.parse_args()
+if args.player_collision_model and args.missing_player_model:
+    parser.error('Choose either a supplied player model or missing-model fault injection')
 if args.audio_capture and not (args.tes4_doors and args.door_traversal):
     parser.error('Audio capture requires --tes4-doors --door-traversal near the sound source')
 if args.door_traversal and not args.tes4_doors:
@@ -149,6 +154,14 @@ if args.tes4_doors:
     cfg += ['data=/door-data']
 if args.phone_qa or args.camera_repair:
     cfg += ['data=/phone-qa-data']
+if args.player_collision_model:
+    sys.path.insert(0, str(ROOT / 'tools/android'))
+    from build_personal import player_collision_settings
+    player_model = args.player_collision_model.expanduser().resolve(strict=True)
+    player_data = output / 'player-data'
+    (player_data / 'meshes').mkdir(parents=True)
+    shutil.copyfile(player_model, player_data / 'meshes/basicplayer.osgt')
+    cfg += ['data=/player-data']
 if args.phone_qa: cfg += ['content=phone_qa.omwscripts']
 if args.tes4_interactions:
     cfg += ['data=/phone-qa-data', 'content=container.omwscripts', 'content=tes4_interactions_probe.omwscripts']
@@ -189,6 +202,10 @@ if args.audio_capture:
     settings += '\n[Sound]\nmusic volume = 0\n'
 if args.missing_player_model:
     settings = settings.replace('meshes/BasicPlayer.dae', 'meshes/openoblivion_missing_player.dae')
+if args.player_collision_model:
+    settings = player_collision_settings(settings)
+if args.async_physics_threads is not None:
+    settings += '\n[Physics]\nasync num threads = ' + str(args.async_physics_threads) + '\n'
 (config / 'settings.cfg').write_text(settings + '\n[Video]\nresolution x = 800\nresolution y = 600\n')
 container_name = 'openoblivion-scene-' + uuid.uuid4().hex[:12]
 command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--network', 'none', '--cpus', '4', '--memory', '12g',
@@ -210,6 +227,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            '--volume', f'{template}:/template:ro',
            '--volume', f'{ROOT / "tools/upstream"}:/probe-data:ro',
            *(['--volume', f'{door_data}:/door-data:ro'] if args.tes4_doors else []),
+           *(['--volume', f'{player_data}:/player-data:ro'] if args.player_collision_model else []),
            *(['--volume', f'{movement_data}:/movement-data:ro'] if args.player_movement else []),
            '--volume', f'{output}:/evidence', '--workdir', '/work/build',
            '--entrypoint', 'xvfb-run', args.image, '-a', '-e', '/evidence/xvfb.log', '-s', '-screen 0 800x600x24',
@@ -386,6 +404,15 @@ if args.player_movement:
             (movement_data / 'scripts/openoblivion_grounded_eye.lua').read_bytes()).hexdigest()
 metrics['probe_tools_sha256'] = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                                  for p in probe_sources}
+if args.player_collision_model:
+    failed = "Failed to load 'meshes/basicplayer.osgt'" in log
+    metrics['player_collision_model'] = {'path': str(player_model),
+        'sha256': hashlib.sha256(player_model.read_bytes()).hexdigest(), 'load_failed': failed,
+        'settings_rewrite_sha256': hashlib.sha256((ROOT / 'tools/android/build_personal.py').read_bytes()).hexdigest()}
+    complete = complete and not failed
+    metrics['probe_complete'] = complete
+if args.async_physics_threads is not None:
+    metrics['async_physics_threads'] = args.async_physics_threads
 if args.movement_fixture:
     metrics['fixture_files_sha256'] = {p.relative_to(fixture_data).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                                        for p in fixture_data.rglob('*') if p.is_file()}

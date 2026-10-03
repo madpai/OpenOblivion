@@ -1,5 +1,13 @@
 # Embedded TES4 doors and moving collision
 
+Phone follow-up: the owner's 0.18 screenshot confirms open leaves but reports
+blocked passage. The log identifies a separate preview player-model load
+failure. Earlier desktop door probes used the working template DAE and did
+not exercise that OSGT. The corrected OSGT now passes before/after traversal
+and actual Android decoder checks; see
+[PLAYER_COLLISION_MODEL.md](PLAYER_COLLISION_MODEL.md). Physical-phone passage
+acceptance remains pending for 0.20/0.21.
+
 Checkpoint: 2026-10-03. The Vilverin hall gate now plays its original embedded
 Open and Close clips through USE. Its two authored keyframed boxes follow the
 leaves, and the door remains visible and holds the final pose. This is a

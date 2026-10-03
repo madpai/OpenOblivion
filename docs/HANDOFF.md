@@ -1,5 +1,21 @@
 # Maintainer handoff
 
+Gate-fit correction, 2026-10-03: the owner's 0.18 screenshot shows open leaves;
+report `bd8b99b04a83457c9a79d1714694c736` records the player OSGT loader failure
+and failed passage. The model's malformed Generator header and unsupported
+comment lines reproduce the exact parser errors. Correct serialization retains
+all template vertices, triangles and dimensions. The real Android ARM64 OSG
+libraries reject the old file and accept the corrected one in an isolated
+emulator harness. Bounded-slice before/after native traversal reproduces the
+blockage and passes after correction; full-data traversal passes too, with one
+async physics worker. All 15 CTest groups pass, including a real OSG reader
+regression. Native binaries, motor and camera constants are unchanged.
+Packages are `0.20-fit` and `0.21-installed-fit`; 0.18/0.19 are retained for
+recovery. Phone passage still requires a retest. See
+[PLAYER_COLLISION_MODEL.md](research/PLAYER_COLLISION_MODEL.md) for hashes,
+reproduction and the remaining original-controller gap. The full 1:1 goal
+remains incomplete.
+
 Audio continuation, 2026-10-03: native audio initialization is enabled and the
 bounded Vilverin scene includes 22 original door sound files. The handler emits
 opening/closing audio at the door. Full-data and bounded-slice desktop wave

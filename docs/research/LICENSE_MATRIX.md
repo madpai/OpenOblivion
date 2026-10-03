@@ -253,6 +253,20 @@ the checkout; no owner geometry is adapted. Native binary/source obligations
 remain unchanged. The static strip loader is the audited insertion described
 above, not a new physics library.
 
+## Preview player-model decoder regression (2026-10-03)
+
+The new Linux fixture links installed OpenSceneGraph development libraries
+through their public API; its test logic is independently authored GPL-3.0-only.
+The private Android JNI comparison links the existing unchanged audited OSG
+build at `69cfecebfb6dc703b42e8de39eed750a84a87489`, locked in
+`android-native.lock.json`. `src/osgDB/InputStream.cpp` and
+`src/osgPlugins/osg/ReaderWriterOSG2.cpp` were inspected to identify header
+decoding. They retain Robert Osfield's OSGPL notices; no implementation text
+is copied or adapted. OSG's LGPL/OSGPL linking exceptions and packaged notices
+remain as recorded in the Android dependency audit. No native runtime or
+dependency source changes. The original OSGT geometry retains the prior
+example-suite collision dimensions; only serialization syntax changes.
+
 ## Door audio connection research (2026-10-03)
 
 The audio continuation uses unchanged native APIs and independently authored

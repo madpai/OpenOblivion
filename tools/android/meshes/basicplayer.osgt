@@ -1,11 +1,6 @@
 #Ascii Scene
 #Version 162
-#Generator OpenOblivion
-# Collision node only. Corners are the eight corners of the Collision mesh in
-# the OpenMW example-suite BasicPlayer.dae (id-mesh-2-positions-array):
-# X/Y -13.3072..13.3072, Z 1.7012..140.0. The phone Collada loader rejects
-# that dae, and the embedded error marker that replaces it is 123.203 units
-# across. This file is the same collision box in a format OSG reads.
+#Generator OpenOblivion 1.0
 
 osg::Group {
   UniqueID 1
