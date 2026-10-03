@@ -25,6 +25,14 @@ application tool, container UI and regression fixtures are original
 OpenOblivion GPL-3.0-only code. Public tests compile the external reference
 loader unchanged; OpenSceneGraph headers remain an external dependency.
 
+The optional TES4 animation and door patches extend audited OpenMW NIF,
+scene-animation, Lua-door and Bullet-shape interfaces under its GPLv3 project
+grant. Existing notices remain in the external source. The transform KF and
+embedded-clip adapters, skin selector, keyframed-box helper and their original
+fixtures are OpenOblivion GPL-3.0-only code. Exact file revisions and changes
+are recorded in docs/research/LICENSE_MATRIX.md. No proprietary game or Havok
+runtime code is copied into these implementations.
+
 No source from TES3MP, vsgopenmw, NifTools, xEdit, xOBSE, SDL, ENet, Bullet,
 MegaMod or Asset Lab is copied into this checkout. Those projects are studied
 as documented in docs/research/LICENSE_MATRIX.md; Asset Lab original fixture

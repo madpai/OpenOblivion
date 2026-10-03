@@ -31,6 +31,8 @@ parser.add_argument('--installed-data', action='store_true', help='Load all inst
 parser.add_argument('--phone-qa', action='store_true', help='Also exercise the original read-only phone camera/player diagnostics')
 parser.add_argument('--tes4-interactions', action='store_true', help='Exercise native TES4 names, container snapshots and preview UI')
 parser.add_argument('--tes4-animation', action='store_true', help='Observe default TES4 NPC idle over two loops and capture its body pose')
+parser.add_argument('--tes4-doors', action='store_true', help='Activate the Vilverin gate and compare closed/open/closed collision')
+parser.add_argument('--door-traversal', action='store_true', help='Also walk the current native player body into and through the Vilverin gate')
 parser.add_argument('--camera-repair', action='store_true', help='Exercise the original preview camera fallback')
 parser.add_argument('--grounded-eye', action='store_true', help='Explicitly enable the unshipped stair eye-height experiment')
 parser.add_argument('--native-manifest', type=Path, help='External recorded native camera integration build')
@@ -45,6 +47,11 @@ parser.add_argument('--movement-fixture', action='store_true', help='Use the ori
 parser.add_argument('--movement-surface', choices=('stairs', 'ramp', 'wall', 'ceiling'), default='stairs')
 parser.add_argument('--raw-eye', action='store_true', help='Diagnostic control: disable only the grounded eye filter')
 args = parser.parse_args()
+if args.door_traversal and not args.tes4_doors:
+    parser.error('Gate traversal requires --tes4-doors')
+if args.tes4_doors and (args.start != 'Vilverin' or args.player_movement or args.tes4_interactions
+                      or args.tes4_animation or not args.native_manifest):
+    parser.error('Door observations require native Vilverin without another automation driver')
 if args.tes4_animation and (args.player_movement or args.tes4_interactions or not args.native_manifest):
     parser.error('Animation observation requires a native build without the movement/container driver')
 if args.movement_surface != 'stairs' and not args.movement_fixture:
@@ -116,8 +123,22 @@ cfg = ['replace=content', 'replace=fallback-archive',
        'data=/probe-data', 'content=template.omwgame',
        'content=' + ('original_movement.esp' if args.movement_fixture else 'Oblivion.esm'),
        'content=' + ('player_movement_probe.omwscripts' if args.player_movement else
+                    'tes4_doors_probe.omwscripts' if args.tes4_doors else
                     'tes4_animation_probe.omwscripts' if args.tes4_animation else 'scene_probe.omwscripts'),
        'encoding=win1252']
+if args.tes4_doors:
+    if not native_manifest.get('tes4_doors'):
+        parser.error('Door observations require a recorded door integration')
+    sys.path.insert(0, str(ROOT / 'tools/android'))
+    from build_personal import same_cell_doors_stay_open
+    door_data = output / 'door-data'
+    door_script = door_data / 'scripts/omw/activationhandlers.lua'
+    door_script.parent.mkdir(parents=True)
+    original = work / 'build/resources/vfs/scripts/omw/activationhandlers.lua'
+    door_script.write_text(same_cell_doors_stay_open(original.read_text()))
+    (door_data / 'scripts/openoblivion_door_config.lua').write_text(
+        'return {traversal=' + ('true' if args.door_traversal else 'false') + '}\n')
+    cfg += ['data=/door-data']
 if args.phone_qa or args.camera_repair:
     cfg += ['data=/phone-qa-data']
 if args.phone_qa: cfg += ['content=phone_qa.omwscripts']
@@ -167,6 +188,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            '--env', 'XDG_CACHE_HOME=/evidence/xdg-cache',
            '--env', 'XDG_RUNTIME_DIR=/evidence/runtime',
            '--env', 'LIBGL_ALWAYS_SOFTWARE=1', '--env', 'ALSOFT_DRIVERS=null',
+           *(['--env', 'OPENOBLIVION_AUTHORED_COLLISION=1'] if args.tes4_doors else []),
            *(['--env', 'OPENOBLIVION_GROUNDED_EYE=1'] if args.native_grounded_eye else []),
            '--volume', f'{work}:/work:ro',
            *(['--volume', f'{fixture_data}:/fixture-data:ro'] if args.movement_fixture else
@@ -175,6 +197,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            *(['--volume', f'{ROOT / "tools/android"}:/phone-qa-data:ro'] if args.phone_qa or args.camera_repair or args.tes4_interactions else []),
            '--volume', f'{template}:/template:ro',
            '--volume', f'{ROOT / "tools/upstream"}:/probe-data:ro',
+           *(['--volume', f'{door_data}:/door-data:ro'] if args.tes4_doors else []),
            *(['--volume', f'{movement_data}:/movement-data:ro'] if args.player_movement else []),
            '--volume', f'{output}:/evidence', '--workdir', '/work/build',
            '--entrypoint', 'xvfb-run', args.image, '-a', '-e', '/evidence/xvfb.log', '-s', '-screen 0 800x600x24',
@@ -224,6 +247,37 @@ animation_verified = (bool(animation_observations) and 'Lua error:' not in log
                       and all(row['samples'] >= 10 and row['loop_wraps'] >= 2
                               for row in animation_observations.values()))
 if args.tes4_animation and not animation_verified: complete = False
+door_collision = {float(m[1]): int(m[2]) for m in re.finditer(
+    r'OPENOBLIVION_DOOR_COLLISION elapsed=([\d.]+) hits=(\d+)', log)}
+windows = [('closed', 1.6, 2.9), ('open', 5, 6.8), ('closed_again', 9, 10.9)]
+if args.door_traversal:
+    windows = [('closed', 1.6, 6.8), ('open', 9, 11.8), ('closed_again', 14, 15.9)]
+door_windows = {name: [hits for when, hits in sorted(door_collision.items()) if low <= when < high]
+                for name, low, high in windows}
+door_clocks = {group: [(float(m[1]), m[2] == 'true') for m in re.finditer(
+    r'OPENOBLIVION_DOOR_CLOCK group=' + group + r' elapsed=[\d.]+ time=([\d.]+) playing=(true|false)', log)]
+    for group in ('open', 'close')}
+doors_verified = (all(door_windows.values()) and 'Lua error:' not in log
+    and 'OPENOBLIVION_DOOR_CYCLE_DONE' in log and 'OPENOBLIVION_DOOR busy sequence=' in log
+    and 'OPENOBLIVION_DOOR swing sequence=Open' in log and 'OPENOBLIVION_DOOR swing sequence=Close' in log
+    and 'OPENOBLIVION_DOOR toggle enabled=' not in log
+    and min(door_windows['closed']) > 0
+    and max(door_windows['open']) * 2 < min(door_windows['closed'])
+    and abs(min(door_windows['closed_again']) - min(door_windows['closed'])) <= 2
+    and all(any(playing for _, playing in samples)
+            and any(not playing and abs(time - 1.3666667) < 0.03 for time, playing in samples)
+            for samples in door_clocks.values()))
+if args.tes4_doors and not doors_verified: complete = False
+door_body_by_time = {float(m[1]): (float(m[1]), float(m[2]), float(m[3]), float(m[4]), m[5] == 'true')
+            for m in re.finditer(r'OPENOBLIVION_DOOR_BODY elapsed=([\d.]+) x=([\d.eE+-]+) y=([\d.eE+-]+) z=([\d.eE+-]+) grounded=(true|false)', log)}
+door_body = [row for _, row in sorted(door_body_by_time.items())]
+door_blocked = [row for row in door_body if 5.5 <= row[0] < 6.8]
+door_crossed = [row for row in door_body if 10 <= row[0] < 11.8]
+door_traversal_verified = (bool(door_blocked) and bool(door_crossed)
+    and all(row[2] < 0 and row[4] for row in door_blocked)
+    and max(row[2] for row in door_blocked) - min(row[2] for row in door_blocked) < 1
+    and all(row[2] > 50 for row in door_crossed))
+if args.door_traversal and not door_traversal_verified: complete = False
 repair_activated = 'OPENOBLIVION_CAMERA_REPAIR activated:' in log
 motion = re.search(r'OPENOBLIVION_CAMERA_MOTION distance=([\d.eE+-]+) camera_player_distance=([\d.eE+-]+) yaw=([\d.eE+-]+)', log)
 motion_verified = bool(motion and float(motion[1]) > 1 and float(motion[2]) < 256 and abs(float(motion[3])) > 0.1)
@@ -232,6 +286,11 @@ if args.camera_repair and args.missing_player_model and not repair_activated: co
 movement = analyze_movement(log) if args.player_movement else None
 if movement is not None and not movement['trajectory_complete']: complete = False
 metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_complete': complete,
+           'tes4_doors_enabled': args.tes4_doors, 'tes4_doors_verified': doors_verified,
+           'door_traversal_enabled': args.door_traversal, 'door_traversal_verified': door_traversal_verified,
+           'door_body_samples': len(door_body), 'door_body_blocked_samples': door_blocked,
+           'door_body_crossed_samples': door_crossed,
+           'tes4_door_collision_windows': door_windows,
            'tes4_animation_enabled': args.tes4_animation,
            'tes4_animation_verified': animation_verified,
            'tes4_animation_observations': animation_observations,
@@ -265,6 +324,12 @@ metrics = {'schema': 1, 'stock_engine_returncode': result.returncode, 'probe_com
            'player_movement': movement,
            'screenshots': screens, 'scope': 'Private scene load/screenshot; software OpenGL, not Vulkan or gameplay'}
 probe_sources = [Path(__file__).resolve()]
+if args.tes4_doors:
+    probe_sources += [ROOT / 'tools/upstream/tes4_doors_probe.omwscripts',
+                      ROOT / 'tools/upstream/scripts/openoblivion_tes4_doors_global.lua',
+                      ROOT / 'tools/upstream/scripts/openoblivion_tes4_doors_local.lua',
+                      ROOT / 'tools/upstream/scripts/openoblivion_tes4_doors_player.lua',
+                      ROOT / 'tools/android/build_personal.py']
 if args.tes4_animation:
     probe_sources += [ROOT / 'tools/upstream/tes4_animation_probe.omwscripts',
                       ROOT / 'tools/upstream/scripts/openoblivion_tes4_animation_global.lua',

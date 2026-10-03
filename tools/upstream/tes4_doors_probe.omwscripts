@@ -1,0 +1,3 @@
+GLOBAL: scripts/openoblivion_tes4_doors_global.lua
+CUSTOM: scripts/openoblivion_tes4_doors_local.lua
+PLAYER: scripts/openoblivion_tes4_doors_player.lua

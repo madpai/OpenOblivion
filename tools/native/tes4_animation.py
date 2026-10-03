@@ -23,6 +23,7 @@ HEADERS = {
     'tes4_kf.hpp': 'components/nifosg/openoblivion_tes4_kf.hpp',
     'tes4_skin.hpp': 'apps/openmw/mwrender/openoblivion_tes4_skin.hpp',
 }
+PREVIOUS_TOOL = '4e78841c0d0514961c7189491f3580209e64fbaade9721be6e0009aa456b5e59'
 
 
 def digest(path):
@@ -41,6 +42,13 @@ def tools_identity(revision):
             (Path(__file__), HERE / 'tes4_animation.lock.json',
              HERE / ('tes4_animation_' + REVISIONS[revision] + '.patch'),
              *(HERE / name for name in HEADERS))}
+
+
+def validate_tools(record):
+    expected = tools_identity(record['base_revision'])
+    previous = dict(expected, **{'tools/native/tes4_animation.py': PREVIOUS_TOOL})
+    if record['tools_sha256'] not in (expected, previous):
+        raise ValueError('Animation tools have changed')
 
 
 def apply(source, revision):
@@ -83,20 +91,25 @@ def apply(source, revision):
 def verify(source):
     record = json.loads((source / STAMP).read_text())
     revision = record['base_revision']
-    if record['tools_sha256'] != tools_identity(revision):
-        raise ValueError('Animation tools have changed')
+    validate_tools(record)
     inputs = json.loads((HERE / 'tes4_animation.lock.json').read_text())[REVISIONS[revision]]
     if record['input_sha256'] != inputs or record['predecessor_sha256'] != digest(source / PREDECESSOR):
         raise ValueError('Animation predecessor has changed')
     predecessor = json.loads((source / PREDECESSOR).read_text())
-    from tes4_interactions import validate_tools
-    validate_tools(predecessor)
+    from tes4_interactions import validate_tools as validate_interaction_tools
+    validate_interaction_tools(predecessor)
     if predecessor['base_revision'] != revision or predecessor['source_sha256'][ACTOR] != inputs[ACTOR]:
         raise ValueError('Animation does not extend the recorded actor source')
     if set(record['source_sha256']) != {*inputs, *HEADERS.values()}:
         raise ValueError('Animation receipt has an incomplete source set')
     for name, expected in record['source_sha256'].items():
         if digest(source / name) != expected:
+            if name in ('components/nifosg/nifloader.cpp', 'components/nifosg/openoblivion_tes4_kf.hpp'):
+                if (source / '.openoblivion-tes4-doors.json').exists():
+                    from tes4_doors import verify as verify_doors
+                    successor = verify_doors(source)
+                    if successor['input_sha256'].get(name) == expected:
+                        continue
             raise ValueError('Animation source has changed: ' + name)
     return record
 

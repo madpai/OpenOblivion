@@ -4,13 +4,15 @@ Checkpoint: 2026-10-03. The owner's request covers a complete asset package and
 the 1:1 Android port. Packaging is a separate acceptance gate from gameplay.
 The earlier single APK contains only the Vilverin visual slice.
 
-Current native continuation: **0.15-installed-idle**, versionCode 15,
-5,569,234,535 bytes, SHA256
-`c56f5b551f4f99a05137daa22c63e7013562957fc5ecb940337793cddddbaf0c`.
+Current native continuation: **0.17-installed-doors**, versionCode 17,
+5,569,251,696 bytes, SHA256
+`1a10afc36929493cead6bc4f2257b26fdae8d87b3c720e847c644cfa9cb79054`.
 It uses the same complete Data snapshot and installation structure, with the
-native NPC idle change described in [TES4_ANIMATION.md](TES4_ANIMATION.md).
+native idle and embedded gate changes described in [TES4_ANIMATION.md](TES4_ANIMATION.md)
+and [TES4_DOORS.md](TES4_DOORS.md). Its extracted payload contains **824 files /
+5,955,597,124 bytes**, including all 73 original Data files.
 The earlier 0.13 measurements below establish the original packaging/storage
-checkpoint. Both downloads remain private; the smaller single APK is 0.14-idle.
+checkpoint. All packages remain private; the smaller single APK is 0.16-doors.
 
 ## Measured content and format boundary
 

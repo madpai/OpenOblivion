@@ -103,12 +103,14 @@ packager. Controlled original stairs improve, but real Vilverin ascent exposes
 a frame-timing regression. The private experimental 0.4 APK is withheld, and the
 working phone baseline 0.3 is archived. See [movement research](../../docs/PLAYER_MOVEMENT.md).
 
-Personal preview **0.12-containers** (versionCode 12) is the served package.
-It adds native TES4 names, read-only base-container inspection, shared NPC
-skeleton attachment, reference lock reset and GUI taps. It keeps the previous
-movement, stair filter and strip collision. See
-[TES4_INTERACTIONS.md](../../docs/research/TES4_INTERACTIONS.md) for measured
-scope and phone QA limitations. `0.11-fit` is archived alongside older builds.
+Personal preview **0.16-doors** (versionCode 16) plays the original embedded
+Vilverin gate clips with authored moving collision boxes. Its desktop clock,
+visible pose, collision and ordinary player traversal checks pass. It retains
+the NPC idle, native names, read-only container inspection and GUI taps.
+Movement, the stair filter and fixed strip collision remain unchanged. See
+[TES4_DOORS.md](../../docs/research/TES4_DOORS.md) for measured scope and pending
+phone acceptance. The complete installation is **0.17-installed-doors**,
+versionCode 17; the previous 0.14/0.15 packages are recovery checkpoints.
 
 Personal preview **0.9-authored-collision** uses the native engine with fixed
 `OL_STATIC` strip collision enabled. USE is the
@@ -123,7 +125,7 @@ to the packager command to use its verified six-library set and exact build
 resources/defaults/notices. The host enables the native post-physics filter and
 bounded read-only stair sampling; the rejected Lua filter remains excluded.
 Without that option the released 0.3 path remains available. The current
-private download offers 0.12-containers for owner QA. It uses the
+private download offers 0.16-doors and the complete 0.17 set for owner QA. They use the
 native engine with the static-collision switch on, the collapsed touch overlay,
 the template collision box, and the name bar. 0.11, 0.10, 0.9, 0.8-run, and 0.5 remain archived, and 0.3 is preserved separately.
 

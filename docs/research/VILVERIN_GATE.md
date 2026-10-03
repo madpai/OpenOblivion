@@ -1,5 +1,12 @@
 # Vilverin hall gate
 
+Continuation, 2026-10-03: [embedded door playback](TES4_DOORS.md) now loads
+the original Open/Close sequences and two authored keyframed boxes. Desktop
+closed/open/closed captures, collision cross-sections and ordinary player
+traversal pass. Private packages 0.16/0.17 include this implementation; phone
+acceptance and original reversal/obstruction/persistence remain. The note
+below records the earlier static-renderer diagnosis.
+
 Date: 2026-10-01. Phone report `0bfee3b28dba483f988193d20f6acac5` is build
 `0.10-touch-name`. The player came down the Vilverin hall stairs and stopped
 at `(-4936.99, 144.41, -447)` while the center ray read `Gate`,

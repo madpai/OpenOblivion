@@ -16,6 +16,7 @@ def main():
     parser.add_argument('--build', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--image', default='openoblivion-research-build:founding')
+    parser.add_argument('--fixture', choices=('kf', 'doors'), default='kf')
     parser.add_argument('--inside', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.inside:
@@ -25,7 +26,8 @@ def main():
                     if line.startswith('  LINK_LIBRARIES ='))
         # RecordPtrT has a different Debug layout. Match the Release library;
         # fixture require() checks remain active even with NDEBUG.
-        subprocess.run(['/usr/bin/c++', '-std=c++20', '-DNDEBUG', '-I/source', '-I/work/build',
+        subprocess.run(['/usr/bin/c++', '-std=c++20', '-DNDEBUG', '-DBT_USE_DOUBLE_PRECISION',
+                        '-I/usr/include/bullet', '-I/source', '-I/work/build',
                         '-I/source/components/nifosg', '-I/source/apps/openmw/mwrender',
                         '/evidence/fixture.cpp', '-o', '/evidence/fixture', *shlex.split(link)],
                        check=True, cwd='/work/build')
@@ -38,11 +40,14 @@ def main():
     source, build, output = map(external, (args.source, args.build, args.output))
     receipt = verify(source)
     verify_interactions(source)
+    if args.fixture == 'doors':
+        from tes4_doors import verify as verify_doors
+        receipt = verify_doors(source)
     if receipt['base_revision'] != '46bd4599203ee52ffc0f3e8edb3fc159a0303a49':
         raise ValueError('These linker fixtures require the audited desktop build')
     output.mkdir(mode=0o700)
     here = Path(__file__).resolve().parent
-    shutil.copyfile(here / 'tes4_kf_fixtures.cpp', output / 'fixture.cpp')
+    shutil.copyfile(here / ('tes4_' + args.fixture + '_fixtures.cpp'), output / 'fixture.cpp')
     command = ['docker', 'run', '--rm', '--network', 'none', '--user', f'{os.getuid()}:{os.getgid()}',
                '-v', f'{source}:/source:ro', '-v', f'{build}:/work/build:ro',
                '-v', f'{here}:/tools:ro', '-v', f'{output}:/evidence',

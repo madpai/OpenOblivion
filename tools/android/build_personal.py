@@ -93,6 +93,14 @@ local function ESM4DoorActivation(door, actor)
     -- TODO: Implement lockpicking minigame
     -- Play the mesh sequence when the engine has one. Otherwise hide the mesh.
     local Door4 = types.ESM4Door
+    if not Door4.isTeleport(door) and type(Door4.isSequencePlaying) == 'function' then
+        for _, name in ipairs({'Open', 'Close', 'Forward', 'Backward'}) do
+            if Door4.isSequencePlaying(door, name) then
+                print('OPENOBLIVION_DOOR busy sequence=' .. name)
+                return false
+            end
+        end
+    end
     local closing = swung[door.id] == true
     local sound = Door4.record(door).openSound
     if closing then
@@ -191,11 +199,17 @@ def main():
                 raise ValueError('TES4 interaction integration tools differ from the native build')
         if native_build.get('tes4_animation'):
             sys.path.insert(0, str(ROOT / 'tools/native'))
-            from tes4_animation import tools_identity as animation_tools_identity
+            from tes4_animation import validate_tools as validate_animation_tools
             receipt = native_build['tes4_animation']
-            if (receipt.get('base_revision') != lock['engine_base_revision']
-                    or receipt.get('tools_sha256') != animation_tools_identity(lock['engine_base_revision'])):
+            validate_animation_tools(receipt)
+            if receipt.get('base_revision') != lock['engine_base_revision']:
                 raise ValueError('TES4 animation tools differ from the native build')
+        if native_build.get('tes4_doors'):
+            from tes4_doors import validate_tools as validate_door_tools
+            receipt = native_build['tes4_doors']
+            validate_door_tools(receipt)
+            if receipt.get('base_revision') != lock['engine_base_revision']:
+                raise ValueError('TES4 door tools differ from the native build')
         native_lock = ROOT / 'docs/research/android-native.lock.json'
         if (native_build.get('schema') != 1 or native_build.get('engine_kind') != 'openoblivion-native-integration'
                 or native_build.get('base_revision') != lock['engine_base_revision']

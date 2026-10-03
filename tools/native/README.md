@@ -1,5 +1,12 @@
 # Native stair camera integration
 
+The door continuation follows the recorded animation integration:
+`tes4_doors.py apply`, rebuild, then `tes4_doors.py record`. It adds embedded
+classic transform clips, TES4 door clocks/queued requests and authored
+keyframed box collision. `run_kf_fixtures.py --fixture doors` runs original
+native fixtures; its default still runs the KF regression suite. See
+[door reproduction and limits](../../docs/research/TES4_DOORS.md).
+
 The current native animation continuation follows the interaction patch:
 `tes4_animation.py apply`, rebuild, then `tes4_animation.py record`.
 It adds TES4 transform KF decoding and default NPC idle with live skinning.

@@ -1,5 +1,23 @@
 # Maintainer handoff
 
+Door continuation, 2026-10-03: the Vilverin gate now plays original embedded
+Open/Close clips through USE, with two authored keyframed boxes following its
+leaves. Desktop full-data and bounded-slice tests verify closed/open/closed
+collision and ordinary player traversal. Native fixtures, the prior KF suite,
+all 14 CTest groups and both native builds pass. Current packages are
+`0.16-doors` and `0.17-installed-doors`; see [TES4_DOORS.md](research/TES4_DOORS.md)
+for receipts, reproduction, hashes and remaining parity work. The earlier
+0.14/0.15 idle packages are recovery checkpoints. Phone gate/idle acceptance
+remains pending. The complete 1:1 port goal remains active.
+
+Final door binaries also pass desktop NPC-idle and container-window regressions.
+An isolated Android 14 emulator verifies the 0.16 single APK and 0.17 six-APK
+upgrade, all extracted payload hashes and the ready launcher. These are
+installation/storage/UI checks; the existing emulator GLES translation failure
+still prevents scene-rendering acceptance. No physical phone is connected.
+
+The following animation and interaction entries record earlier checkpoints.
+
 Animation continuation, 2026-10-03: default TES4 NPC idle now advances and
 skins the attached body/clothing. Both native engines build; transform decoding
 is cross-checked independently; full-data and bounded-slice desktop probes
@@ -16,8 +34,8 @@ Oblivion Android port and explicitly authorizes source/docs publishing and
 private sideload APK updates. [PARITY.md](PARITY.md) supersedes the older
 statement below that one-to-one gameplay was not the current target.
 The interrupted native binding declarations and container UI are completed
-as a measured inspection checkpoint. The inherited door sequence hook still
-uses the fallback because embedded sequence playback is unimplemented.
+as a measured inspection checkpoint. At that point the inherited door sequence
+hook used the fallback; the continuation above implements the embedded gate path.
 See [TES4_INTERACTIONS.md](research/TES4_INTERACTIONS.md) for native names,
 container/window verification, reference lock reset, shared-skeleton scope,
 build receipts and remaining work. Movement constants remain unchanged.
@@ -45,7 +63,7 @@ slice, not our new Vulkan/multiplayer runtime. The owner's APK/download root is
 `/home/commander/openoblivion-private/sideload`, served only on Tailscale port
 8735 by the user unit `openoblivion-sideload.service`. It is never a public
 release. See [Android checkpoint](ANDROID.md) for the emulator graphics failure
-and the owner's earlier failed physical-phone views. The served download is
+and the owner's earlier failed physical-phone views. At that checkpoint the served download was
 `0.12-containers` (versionCode 12), QA objective `OO-ANDROID-012`. Its APK
 SHA256 is `f588257abe91344ce187cb34ed81f40a9c6dd7278242c717b89f6991a7bfac00`
 (661,254,187 bytes). It adds TES4 names, base-container inspection, shared

@@ -58,6 +58,11 @@ local animated = {id = 'original-animated', enabled = true}
 ESM4DoorActivation(animated, actor); ESM4DoorActivation(animated, actor)
 assert(animated.enabled and sequences[1] == 'Open' and sequences[2] == 'Close')
 assert(sounds[#sounds] == 'close')
+local beforeSounds, beforeSequences = #sounds, #sequences
+Door.isSequencePlaying = function(_, name) return name == 'Close' end
+assert(ESM4DoorActivation(animated, actor) == false)
+assert(animated.enabled and #sounds == beforeSounds and #sequences == beforeSequences)
+Door.isSequencePlaying = nil
 Door.playSequence = function() error('unsupported sequence') end
 local broken = {id = 'original-broken', enabled = true}
 ESM4DoorActivation(broken, actor); assert(not broken.enabled)

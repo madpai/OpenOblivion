@@ -1,0 +1,285 @@
+--- a/apps/openmw/mwclass/esm4base.hpp
++++ b/apps/openmw/mwclass/esm4base.hpp
+@@ -2,6 +2,8 @@
+ #define GAME_MWCLASS_ESM4BASE_H
+ 
+ #include <components/esm4/inventory.hpp>
++#include <components/esm4/loaddoor.hpp>
++#include <type_traits>
+ #include <components/esm4/loadstat.hpp>
+ #include <components/esm4/loadtree.hpp>
+ #include <components/misc/strings/algorithm.hpp>
+@@ -158,6 +160,9 @@
+         }
+ 
+         bool hasToolTip(const MWWorld::ConstPtr& ptr) const override { return !getName(ptr).empty(); }
++
++        // Register the non-actor clock for embedded TES4 door sequences.
++        bool useAnim() const override { return std::is_same_v<Record, ESM4::Door>; }
+     };
+ }
+ 
+--- a/apps/openmw/mwlua/types/door.cpp
++++ b/apps/openmw/mwlua/types/door.cpp
+@@ -2,6 +2,9 @@
+ #include "usertypeutil.hpp"
+ 
+ #include "../localscripts.hpp"
++#include "../luamanagerimp.hpp"
++#include "apps/openmw/mwrender/animation.hpp"
++#include "apps/openmw/mwbase/mechanicsmanager.hpp"
+ 
+ #include <components/esm3/loaddoor.hpp>
+ #include <components/esm4/loaddoor.hpp>
+@@ -156,6 +159,33 @@
+ 
+     void addESM4DoorBindings(sol::table door, const Context& context)
+     {
++        door["hasSequence"] = [](const Object& object, std::string name) {
++            const auto* animation = MWBase::Environment::get().getWorld()->getAnimation(door4Ptr(object));
++            return animation && animation->hasAnimation(Misc::StringUtils::lowerCase(name));
++        };
++        door["isSequencePlaying"] = [](const Object& object, std::string name) {
++            const auto* animation = MWBase::Environment::get().getWorld()->getAnimation(door4Ptr(object));
++            return animation && animation->isPlaying(Misc::StringUtils::lowerCase(name));
++        };
++        door["playSequence"] = [context](const Object& object, std::string name) {
++            if (!object.isGObject()) throw std::runtime_error("Door sequences require a global script");
++            const auto& ptr = door4Ptr(object);
++            if (ptr.getCellRef().getTeleport() || !ptr.getRefData().isEnabled() || name.empty() || name.size() > 128)
++                return false;
++            name = Misc::StringUtils::lowerCase(name);
++            const auto* animation = MWBase::Environment::get().getWorld()->getAnimation(ptr);
++            if (!animation || !animation->hasAnimation(name)) return false;
++            context.mLuaManager->addAction([object = Object(object), name = std::move(name)] {
++                const auto& current = door4Ptr(object);
++                if (current.getRefData().isEnabled())
++                {
++                    const bool started = MWBase::Environment::get().getMechanicsManager()->playAnimationGroupLua(
++                        current, name, 0, 1.f, "start", "stop", false);
++                    Log(Debug::Info) << "OPENOBLIVION_DOOR_SEQUENCE name=" << name << " started=" << started;
++                }
++            }, "TES4DoorSequence");
++            return true;
++        };
+         door["isTeleport"] = [](const Object& o) { return door4Ptr(o).getCellRef().getTeleport(); };
+         door["destPosition"]
+             = [](const Object& o) -> osg::Vec3f { return door4Ptr(o).getCellRef().getDoorDest().asVec3(); };
+--- a/apps/openmw/mwrender/animation.cpp
++++ b/apps/openmw/mwrender/animation.cpp
+@@ -1,4 +1,6 @@
+ #include "animation.hpp"
++#include <components/nifosg/openoblivion_tes4_sequences.hpp>
++#include <components/esm4/loaddoor.hpp>
+ 
+ #include <algorithm>
+ #include <limits>
+@@ -664,14 +666,17 @@
+     {
+         if (!mResourceSystem->getVFS()->exists(kfname))
+             return nullptr;
+-
+-        osg::ref_ptr<const SceneUtil::KeyframeHolder> keyframes = mResourceSystem->getKeyframeManager()->get(kfname);
+-
+-        if (keyframes == nullptr || keyframes->mTextKeys.empty() || keyframes->mKeyframeControllers.empty())
++        return addKeyframeSource(mResourceSystem->getKeyframeManager()->get(kfname),
++            kfname, baseModel);
++    }
++
++    std::shared_ptr<Animation::AnimSource> Animation::addKeyframeSource(
++        osg::ref_ptr<const SceneUtil::KeyframeHolder> keyframes, VFS::Path::NormalizedView kfname,
++        const std::string& baseModel)
++    {
++        if (!keyframes || keyframes->mTextKeys.empty() || keyframes->mKeyframeControllers.empty())
+             return nullptr;
+-
+-        std::shared_ptr<AnimSource> animsrc = std::make_shared<AnimSource>();
+-
++        auto animsrc = std::make_shared<AnimSource>();
+         animsrc->mKeyframes = std::move(keyframes);
+ 
+         const NodeMap& nodeMap = getNodeMap();
+@@ -2087,6 +2092,10 @@
+         if (!model.empty())
+         {
+             setObjectRoot(model, false, false, false);
++            if (ptr.getType() == ESM4::Door::sRecordId && mObjectRoot)
++                if (const auto* embedded = OpenOblivion::Animation::embeddedClips(*mObjectRoot))
++                    for (const auto& clip : embedded->clips)
++                        addKeyframeSource(clip, VFS::Path::toNormalized(model), model);
+             if (animated)
+                 addAnimSource(model, model);
+ 
+--- a/apps/openmw/mwrender/animation.hpp
++++ b/apps/openmw/mwrender/animation.hpp
+@@ -297,6 +297,8 @@
+          */
+         void addAnimSource(std::string_view model, const std::string& baseModel);
+         std::shared_ptr<AnimSource> addSingleAnimSource(VFS::Path::NormalizedView kfname, const std::string& baseModel);
++        std::shared_ptr<AnimSource> addKeyframeSource(osg::ref_ptr<const SceneUtil::KeyframeHolder> keyframes,
++            VFS::Path::NormalizedView name, const std::string& baseModel);
+ 
+         /** Adds an additional light to the given node using the specified ESM record. */
+         void addExtraLight(osg::ref_ptr<osg::Group> parent, const SceneUtil::LightCommon& light);
+--- a/components/nifbullet/bulletnifloader.cpp
++++ b/components/nifbullet/bulletnifloader.cpp
+@@ -1,5 +1,6 @@
+ #include "bulletnifloader.hpp"
+ #include "openoblivion_authored_strips.hpp"
++#include "openoblivion_animated_boxes.hpp"
+ 
+ #include <memory>
+ 
+@@ -244,6 +245,16 @@
+                 && addOpenOblivionAuthoredStaticStrips(node, mCompoundShape, mShape->mFileName.value()))
+                 return;
+ 
++            // Original keyframed primitive path, separate from fixed strips.
++            if (nif.getVersion() >= 0x0a000102u && nif.getVersion() <= 0x14000005u
++                && openoblivionAuthoredCollisionRequested()
++                && OpenOblivion::Collision::addAnimatedBoxes(node, mCompoundShape, mShape->mAnimatedShapes))
++            {
++                Log(Debug::Info) << "OPENOBLIVION_ANIMATED_BOXES count=" << mShape->mAnimatedShapes.size()
++                                 << " file=" << mShape->mFileName;
++                return;
++            }
++
+             // FIXME: hack, using rendered geometry instead of Bethesda Havok data
+             args.mGenerateCollision = true;
+         }
+@@ -312,6 +323,8 @@
+                 case Nif::RC_NiKeyframeController:
+                 case Nif::RC_NiPathController:
+                 case Nif::RC_NiRollController:
++                case Nif::RC_NiControllerManager:
++                case Nif::RC_NiMultiTargetTransformController:
+                     args.mAnimated = true;
+                     break;
+                 default:
+--- a/components/nifosg/nifloader.cpp
++++ b/components/nifosg/nifloader.cpp
+@@ -1,5 +1,5 @@
+ #include "nifloader.hpp"
+-#include "openoblivion_tes4_kf.hpp"
++#include "openoblivion_tes4_sequences.hpp"
+ 
+ #include <mutex>
+ #include <string_view>
+@@ -426,6 +426,7 @@
+             bool mSkipMeshes = false;
+             bool mHasMarkers = false;
+             bool mHasAnimatedParents = false;
++            bool mHasManagedParents = false;
+             osg::Node* mRootNode = nullptr;
+             const Nif::NiNode* mCollisionNode = nullptr;
+         };
+@@ -895,11 +896,14 @@
+                         cb); // have to remain as UpdateCallback so AssignControllerSourcesVisitor can find it.
+             }
+ 
++            // Managed TES4 targets must survive scene-template optimization.
++            if (mVersion >= 0x0a000102u && mVersion <= 0x14000005u)
++                args.mHasManagedParents |= OpenOblivion::Animation::hasManagedController(*nifNode);
+             bool isAnimated = false;
+             handleNodeControllers(nifNode, node, args.mAnimFlags, isAnimated);
+             args.mHasAnimatedParents |= isAnimated;
+             // Make sure empty nodes and animated shapes are not optimized away so the physics system can find them.
+-            if (isAnimated || (args.mHasAnimatedParents && ((args.mSkipMeshes || args.mHasMarkers) || isGeometry)))
++            if (args.mHasManagedParents || isAnimated || (args.mHasAnimatedParents && ((args.mSkipMeshes || args.mHasMarkers) || isGeometry)))
+                 node->setDataVariance(osg::Object::DYNAMIC);
+ 
+             // LOD and Switch nodes must be wrapped by a transform (the current node) to support transformations
+@@ -1070,6 +1074,13 @@
+                     isAnimated = true;
+ 
+                     mLookAtQueue.emplace_back(lookatctrl->mLookAt->mRecordIndex, callback);
++                }
++                else if (mVersion >= 0x0a000102u && mVersion <= 0x14000005u
++                    && (ctrl->mRecordType == Nif::RC_NiControllerManager
++                        || ctrl->mRecordType == Nif::RC_NiMultiTargetTransformController))
++                {
++                    // Named transform clips are attached to the completed root.
++                    isAnimated = true;
+                 }
+                 else if (ctrl->mRecordType == Nif::RC_NiGeomMorpherController
+                     || ctrl->mRecordType == Nif::RC_NiParticleSystemController
+@@ -2995,7 +3006,9 @@
+         LoaderImpl impl(file.getFilename(), file.getVersion(), file.getUserVersion(), file.getBethVersion());
+         impl.mMaterialManager = materialManager;
+         impl.mImageManager = imageManager;
+-        return impl.load(file);
++        auto root = impl.load(file);
++        if (root) OpenOblivion::Animation::attachEmbeddedClips(file, *root);
++        return root;
+     }
+ 
+     void Loader::loadKf(Nif::FileView kf, SceneUtil::KeyframeHolder& target)
+--- a/components/nifosg/openoblivion_tes4_kf.hpp
++++ b/components/nifosg/openoblivion_tes4_kf.hpp
+@@ -163,18 +163,11 @@
+         return std::string(*value);
+     }
+ 
+-    // Returns false only for the legacy root path, which the existing loader
+-    // still handles. Later-game roots are never mislabeled as legacy failures.
+-    inline bool loadSequence(Nif::FileView file, SceneUtil::KeyframeHolder& destination)
+-    {
+-        const Nif::NiControllerSequence* sequence = nullptr;
+-        for (std::size_t i = 0; i < file.numRoots(); ++i)
+-            if (const auto* candidate = dynamic_cast<const Nif::NiControllerSequence*>(file.getRoot(i)))
+-            {
+-                if (sequence) throw std::runtime_error("Multiple KF sequences require separate clip selection");
+-                sequence = candidate;
+-            }
+-        if (!sequence) return false;
++    // Decode one explicitly selected sequence; embedded managers may own many.
++    inline void loadControllerSequence(const Nif::NiControllerSequence& selected,
++        std::uint32_t version, SceneUtil::KeyframeHolder& destination)
++    {
++        const auto* sequence = &selected;
+         if (!std::isfinite(sequence->mStartTime) || !std::isfinite(sequence->mStopTime)
+             || sequence->mStopTime < sequence->mStartTime || !std::isfinite(sequence->mFrequency))
+             throw std::runtime_error("Invalid sequence timeline");
+@@ -193,7 +186,7 @@
+             clock.mInterpolator = block.mInterpolator;
+             clock.mFlags = 8 | (static_cast<unsigned>(Nif::NiTimeController::ExtrapolationMode::Constant) << 1);
+             clock.mFrequency = sequence->mFrequency;
+-            clock.mPhase = file.getVersion() <= 0x0a040001u ? sequence->mPhase : 0.f;
++            clock.mPhase = version <= 0x0a040001u ? sequence->mPhase : 0.f;
+             clock.mTimeStart = sequence->mStartTime;
+             clock.mTimeStop = sequence->mStopTime;
+             if (auto* ordinary = dynamic_cast<const Nif::NiTransformInterpolator*>(block.mInterpolator.getPtr()))
+@@ -227,6 +220,20 @@
+         destination.mTextKeys = std::move(loaded.mTextKeys);
+         Log(Debug::Info) << "OPENOBLIVION_KF sequence=" << sequence->mName << " tracks="
+                         << destination.mKeyframeControllers.size() << " ignored_nontransform=" << ignored;
++    }
++
++    // Preserve the legacy root fallback and reject ambiguous KF roots.
++    inline bool loadSequence(Nif::FileView file, SceneUtil::KeyframeHolder& destination)
++    {
++        const Nif::NiControllerSequence* sequence = nullptr;
++        for (std::size_t i = 0; i < file.numRoots(); ++i)
++            if (const auto* candidate = dynamic_cast<const Nif::NiControllerSequence*>(file.getRoot(i)))
++            {
++                if (sequence) throw std::runtime_error("Multiple KF sequences require separate clip selection");
++                sequence = candidate;
++            }
++        if (!sequence) return false;
++        loadControllerSequence(*sequence, file.getVersion(), destination);
+         return true;
+     }
+ }
+--- a/components/resource/bulletshape.cpp
++++ b/components/resource/bulletshape.cpp
+@@ -22,6 +22,10 @@
+                 const btCompoundShape* comp = static_cast<const btCompoundShape*>(shape);
+                 std::unique_ptr<btCompoundShape, DeleteCollisionShape> newShape(new btCompoundShape);
+ 
++                // Preserve the scale bookkeeping before adding already-scaled
++                // child shapes/transforms. Otherwise the first animated update
++                // applies this scale a second time to the cloned local body.
++                newShape->setLocalScaling(comp->getLocalScaling());
+                 for (int i = 0, n = comp->getNumChildShapes(); i < n; ++i)
+                 {
+                     auto child = duplicateCollisionShape(comp->getChildShape(i));

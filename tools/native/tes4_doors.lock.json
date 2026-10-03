@@ -1,0 +1,22 @@
+{
+  "desktop": {
+    "components/nifosg/nifloader.cpp": "f2a444ebbbbbe6816f8c6a60f7603a6da8a74cecfc7bb783892b173aa696f59d",
+    "components/nifosg/openoblivion_tes4_kf.hpp": "ebf07e280eb1b300cb1e6e66b77fd2e66d1a4e55a62870bbbc919dbc2c8fbea8",
+    "components/nifbullet/bulletnifloader.cpp": "ff8fc01a59f309058304549dee6770b6a7d68b459b9ceedc6952d972db756d63",
+    "apps/openmw/mwrender/animation.cpp": "e872df74c2960958ef674042cfdcfba57ee646f643c1b9283f9f19974acc46d7",
+    "apps/openmw/mwrender/animation.hpp": "8247bb1c20fed67594ad7c592fd2c4fff1e20b4cba2a0a3e294361f9930f886a",
+    "apps/openmw/mwclass/esm4base.hpp": "7979803c22bcc632e91f8b1f67f7642d5ee7bcaca9eb7dd351502e3c44570ea0",
+    "apps/openmw/mwlua/types/door.cpp": "96c3334c426ac88e4e7a13268a712d49137d35511a5829c776e42586b2572de5",
+    "components/resource/bulletshape.cpp": "10618ee6cf98b63d367e3adb1fbdb46380b753efcb1e5c51bf3d92c4bc8560de"
+  },
+  "android": {
+    "components/nifosg/nifloader.cpp": "f6c42d0b3be72c5d0c80e37f8a5cfdcb6baf6cbc9858b9ad67e566e1ab460d36",
+    "components/nifosg/openoblivion_tes4_kf.hpp": "ebf07e280eb1b300cb1e6e66b77fd2e66d1a4e55a62870bbbc919dbc2c8fbea8",
+    "components/nifbullet/bulletnifloader.cpp": "e7fe2c0d23ae1a283c93da95861ac5c087d0c67e493acdfb256acc13414ebe72",
+    "apps/openmw/mwrender/animation.cpp": "68fdd19429f94078e4f7795f7536b9df20cd5e1eb588cb326017875e914154d8",
+    "apps/openmw/mwrender/animation.hpp": "dc45c642346112d8091ab1affadf5bc110ce04d87597a609f39e8c5fcde86066",
+    "apps/openmw/mwclass/esm4base.hpp": "0def83eff0cc581a91b09433d9b1f1546cd9ef86bd3b4eeff91059f2a7fc865d",
+    "apps/openmw/mwlua/types/door.cpp": "81ca11c9eb16d2047ebe8764ca787b477badd7c224aedb794dafd4e99f8abe44",
+    "components/resource/bulletshape.cpp": "6ad92de76d9bbdb938a327e59c0d98a90f33f76a0b1c95d4d31c815a8475cedf"
+  }
+}

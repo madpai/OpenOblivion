@@ -74,6 +74,7 @@ phone baseline is archived and the earlier Lua experiment is withheld.
 | Movement diagnostics | Native walk/stop/jump trajectories, original stair fixtures and separate player/view measurements. Discontinuities cannot count as successful movement. |
 | TES4 interaction inspection | Native actor/container names, base inventory snapshots and correct optional lock reset. Desktop Vilverin window capture/close passes; loot transfer remains. See [the interaction checkpoint](docs/research/TES4_INTERACTIONS.md). |
 | TES4 NPC idle | Original transform KF loading, constant/spline channels and live shared skinning. Five desktop NPCs advance through two idle loops; clothed pose inspected. Android builds and private packages include the change; phone idle acceptance is pending. See [animation evidence](docs/research/TES4_ANIMATION.md). |
+| TES4 gate | Embedded original Open/Close clips and authored moving box collision. Desktop Vilverin closed/open/closed captures, collision and player traversal pass. Phone acceptance and original reversal/persistence remain. See [door evidence](docs/research/TES4_DOORS.md). |
 | Android toolchain | Inspector and Vulkan capability probe cross-compile for ARM64/API 29. |
 | Vulkan | Device/graphics-queue enumeration only; no OpenOblivion Vulkan scene renderer yet. |
 | Publication checks | Source, staged files and Git history checked for game data. Only three approved documentation screenshots have exact hash/size exceptions. |

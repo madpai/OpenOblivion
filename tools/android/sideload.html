@@ -22,11 +22,11 @@ input[type=file]{border:2px dashed #61727d;padding:20px}textarea{min-height:95px
 <section class="panel">
 <h2>Current QA objective — @@QA_ID@@</h2>
 <p>@@QA_OBJECTIVE@@</p>
-<p><b>Pass:</b> A bandit stands in an idle pose, with its clothing following the body and subtle idle motion. USE on an unlocked sack, barrel or chest opens a base-contents window. Close returns control to the scene. Walking, stairs, looking and jumping still work.</p>
+<p><b>Pass:</b> USE opens the Vilverin hall gate by swinging its leaves. Walk through, then aim at a leaf and USE again to close. A bandit has an idle pose with its clothing following the body. Container Close, walking, stairs, looking and jumping still work.</p>
 <p><b>Fail:</b> repeated stair bounce, delayed or floaty jumping, movement continuing after release, passing through solid walls/floors, falling below the scene, or returning to the launcher. Describe where it happens.</p>
 <ol>
 <li>Install the build shown above. Choose <b>Vilverin interior</b> and take a screenshot when the scene is visible.</li>
-<li>Look at a nearby bandit for at least 15 seconds. Check its pose, subtle idle motion, clothing and name. Capture any body distortion or frozen T-pose. USE an unlocked sack, barrel or chest, capture the contents window, tap Close and confirm movement resumes. Item transfer is not implemented.</li>
+<li>At the bottom of the Vilverin hall stairs, USE the gate. Check that both leaves swing open and stay visible, walk through, then USE again to close it. Capture any frozen leaf, invisible wall or unexpected obstruction. Check a bandit for 15 seconds, then a container window and Close. Item transfer is not implemented.</li>
 <li>Walk down the entrance stairs, turn and walk back up. Describe the bounce in both directions. Release the pad on a landing, look around and try one jump. Take a second screenshot.</li>
 <li>Exit to the launcher and copy <b>View scene log</b>. Send an <b>interior</b> report below with both screenshots, your phone model, Android version and what worked or failed.</li>
 <li>Repeat with <b>Vilverin exterior</b>, staying near the ruins. Send a separate <b>exterior</b> report. Copy each log before starting another scene.</li>

@@ -2,6 +2,51 @@
 
 Research snapshot: 2026-09-30. Original OpenOblivion code is **GPL-3.0-only**.
 
+## Embedded TES4 door integration audit (2026-10-03)
+
+Intended changes: load each embedded NiControllerManager sequence into an
+independent immutable clip, retain its animated scene nodes, register TES4 door
+clocks, expose a queued global-script sequence request, and move authored
+keyframed OL_ANIM_STATIC box collision with its owning scene node. The original
+fixed-strip helper, character body and movement settings are preserved. No
+Bethesda/Havok executable code or bytecode is copied or linked.
+
+The following OpenMW files were inspected at desktop base
+`46bd4599203ee52ffc0f3e8edb3fc159a0303a49`. Their project GPLv3 grant applies;
+none has a narrower file grant. Existing upstream notices remain in the
+external trees and patch context. Public output is original integration headers,
+small source patches and synthetic fixtures; owner meshes and reports remain
+private.
+
+| Interface / proposed patch target | Inspected Git blob |
+|---|---|
+| `components/nif/controller.hpp` | `4f0a2d6a53046addaf88bced58e29743435f22f6` |
+| `components/nif/physics.hpp` | `490eff5c279416090a1c11a9255c94f8a1ae1860` |
+| `components/nifosg/nifloader.cpp` | `8bfa8de264049a9bb2d3ced5ce81831e3a607aab` |
+| `components/resource/keyframemanager.cpp` | `48c9670bca2adde14746c0fbd15f5afad1fd0556` |
+| `components/nifbullet/bulletnifloader.cpp` | `0194105efaeed61610edbee0d9400e6059d2b426` |
+| `apps/openmw/mwrender/animation.cpp` | `9eec29314239e62de3d700c2a69912573b0fa5c6` |
+| `apps/openmw/mwrender/animation.hpp` | `a6406c604ee527d9bde55332db2ca8421a18d84b` |
+| `apps/openmw/mwclass/esm4base.hpp` | `e8430639652697a7391c59d8add17338db644c46` |
+| `apps/openmw/mwlua/types/door.cpp` | `c7ed9eab0389d4e8075939d6853a7184254f8533` |
+| `apps/openmw/mwphysics/object.cpp` | `594c0f4f01c0194317a7899ce18e9f64ac2f137e` |
+| `apps/openmw/mwphysics/object.hpp` | `5ef5239fc9719790e2382784b4abdf76ae64734f` |
+| `components/resource/bulletshape.cpp` | `8c4f2b7415f7953af7962aef642490733f503c10` |
+
+The Android counterpart uses engine base
+`f4bec41444214a7903bebd178389ca22ca13f646` inside the separately audited donor
+worktree. Actual pre-change SHA256s, including earlier original integrations,
+are locked in `tools/native/tes4_doors.lock.json`; its outer Git HEAD must not be
+mistaken for the engine revision. Successor receipts must preserve and validate
+the previous animation and fixed-collision receipts. The existing original KF
+adapter is factored to accept a selected embedded sequence without changing
+the root-KF behavior. This audit covers interfaces and intended implementation,
+not a claim of verified door parity or completed collision-shape support.
+The small `bulletshape.cpp` patch preserves compound scale bookkeeping before
+adding already-scaled cloned children. Its original duplication behavior could
+apply a node's scale twice on the first animated collision update; an original
+fixture covers the scaled offset and reference isolation.
+
 ## TES4 animation integration audit (2026-10-03)
 
 Before modifying renderer sources, inspected OpenMW's GPLv3 grant and the exact
