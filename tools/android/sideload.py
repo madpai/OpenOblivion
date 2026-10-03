@@ -119,6 +119,9 @@ def main():
         'BUILD': manifest['build'], 'VALIDATION': manifest['validation'],
         'HASH': apk['sha256'], 'QA_ID': manifest.get('qa_id', 'OO-ANDROID-002'),
         'QA_OBJECTIVE': manifest.get('qa_objective', 'Verify visible dungeon geometry and exterior ground, then check look and movement.'),
+        'INTRO': manifest.get('intro', 'Personal ARM64 scene test with your Oblivion assets included. This single APK is the recommended download for testing Vilverin and the gate fix.'),
+        'STORAGE': manifest.get('storage', 'Android 10 or newer, ARM64. Allow about 4 GB free for download, installation and unpacking.'),
+        'PASS': manifest.get('pass', 'USE opens the Vilverin hall gate by swinging its leaves, with opening and closing sounds audible nearby. Walk through, then aim at a leaf and USE again to close. A bandit has an idle pose with its clothing following the body. Container Close, walking, stairs, looking and jumping still work.'),
     }
     page_text = Path(__file__).with_name('sideload.html').read_text()
     for key, value in replacements.items():

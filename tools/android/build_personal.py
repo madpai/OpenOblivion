@@ -3,6 +3,7 @@
 """Stage a private, self-contained ARM64 scene APK from audited external inputs."""
 import argparse
 import hashlib
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import zipfile
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -150,9 +152,17 @@ def main():
     parser.add_argument('--gradle', required=True, type=Path)
     parser.add_argument('--native-runtime', type=Path, help='External audited native source-build runtime directory')
     parser.add_argument('--all-assets', action='store_true', help='Package every installed Data file as a signed APK set')
+    parser.add_argument('--download-assets', metavar='URL',
+                        help='With --all-assets: bundle only the base part; the phone downloads the rest from this private URL')
     args = parser.parse_args()
     if args.all_assets and not args.native_runtime:
         parser.error('--all-assets requires the source-built native runtime')
+    if args.download_assets:
+        parsed = urlsplit(args.download_assets)
+        if (not args.all_assets or parsed.scheme != 'http' or not parsed.hostname or parsed.path != '/'
+                or parsed.query or parsed.fragment
+                or ipaddress.ip_address(parsed.hostname) not in ipaddress.ip_network('100.64.0.0/10')):
+            parser.error('--download-assets requires --all-assets and http://<Tailscale IPv4>:<port>/')
     work, data, template, donor, apk = map(outside, (args.work, args.data, args.template, args.donor, args.upstream_apk))
     lock = json.loads((ROOT / 'docs/research/upstreams.lock.json').read_text())['Andiweli/OpenMW-Android']
     check(donor, 'Andiweli/OpenMW-Android')
@@ -326,6 +336,10 @@ def main():
                 part = prior
             parts.append(part)
         manifest.update({'parts': parts, 'content_scope': 'installed-data', 'archives': archives, 'plugins': plugins})
+        if args.download_assets:
+            # Only the first part is bundled; the launcher fetches, verifies and
+            # unpacks the rest from the owner's private sideload server.
+            manifest['download_base'] = args.download_assets
         print('Verifying every installed-data payload entry', flush=True)
         verify_parts(parts_dir, manifest)
         cache.write_text(json.dumps({'id': identity, 'parts': parts}) + '\n')
@@ -368,6 +382,13 @@ def main():
     for file in (ROOT / 'tools/android/camera_repair.omwscripts', ROOT / 'tools/android/scripts/openoblivion_preview_camera.lua'):
         provenance['preview_tools_sha256'][file.relative_to(ROOT).as_posix()] = digest(file)
     (assets / 'provenance.json').write_text(json.dumps(provenance, indent=2) + '\n')
+    security = host / 'app/src/main/res/xml/network_security_config.xml'
+    if args.download_assets:
+        # The private server address stays out of the public source tree.
+        security.write_text('<?xml version="1.0" encoding="utf-8"?>\n<network-security-config>\n'
+            '    <domain-config cleartextTrafficPermitted="true">\n'
+            f'        <domain includeSubdomains="false">{urlsplit(args.download_assets).hostname}</domain>\n'
+            '    </domain-config>\n</network-security-config>\n')
     (host / 'local.properties').write_text('sdk.dir=' + str(args.sdk.resolve()) + '\n')
     result = host / 'app/build/outputs/apk/debug/app-debug.apk'
     # AGP's incremental ZIP writer can leave the old large payload as dead
@@ -376,7 +397,8 @@ def main():
     result.unlink(missing_ok=True)
     subprocess.run([str(args.gradle.resolve()), '--no-daemon', '--console=plain',
                     '-PooNativeGroundedEye=' + ('true' if native_build else 'false'),
-                    '-PooInstalledAssets=' + ('true' if args.all_assets else 'false'), 'assembleDebug'], cwd=host, check=True)
+                    '-PooInstalledAssets=' + ('true' if args.all_assets else 'false'),
+                    '-PooDownloadAssets=' + ('true' if args.download_assets else 'false'), 'assembleDebug'], cwd=host, check=True)
     with zipfile.ZipFile(result) as built:
         if result.stat().st_size > sum(entry.compress_size for entry in built.infolist()) + 16*1024*1024:
             raise ValueError('APK contains excessive unused ZIP space; regenerate the APK')
@@ -393,7 +415,10 @@ def main():
         raise ValueError('APK changed while copying')
     provenance['apk_sha256'] = digest(output)
     provenance['apk_bytes'] = output.stat().st_size
-    if args.all_assets:
+    if args.download_assets:
+        provenance['download_parts'] = parts[1:]
+        provenance['download_base'] = args.download_assets
+    elif args.all_assets:
         from split_assets import build as build_split_assets
         provenance['apk_set'] = build_split_assets(output, parts_dir, args.sdk, work / 'apk-set', Path.home() / '.android/debug.keystore')
     (work / 'build-manifest.json').write_text(json.dumps(provenance, indent=2) + '\n')

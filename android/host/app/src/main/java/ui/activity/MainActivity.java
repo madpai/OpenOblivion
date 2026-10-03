@@ -9,6 +9,8 @@ import android.os.StatFs;
 import android.widget.*;
 import android.util.Log;
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -61,16 +63,19 @@ public final class MainActivity extends Activity {
         ScrollView page = new ScrollView(this); page.setFillViewport(true); page.addView(layout);
         setContentView(page);
         preparing = true;
+        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         new Thread(() -> {
             try {
                 prepare();
                 runOnUiThread(() -> { preparing = false; status.setText(installedData
                         ? "Complete installed assets ready. Choose a location to start. Gameplay parity remains in development."
                         : "Bundled scene assets ready. Choose a location to start.");
-                    progress.setProgress(100); for (Button b : launches) b.setEnabled(true); });
+                    progress.setProgress(100); for (Button b : launches) b.setEnabled(true);
+                    getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); });
             } catch (Exception e) {
                 Log.e("OpenOblivion", "Asset preparation failed", e);
-                runOnUiThread(() -> { preparing = false; status.setText("Preparation failed: " + e.getMessage() + "\nClose and reopen to retry."); });
+                runOnUiThread(() -> { preparing = false; status.setText("Preparation failed: " + e.getMessage() + "\nClose and reopen to retry; finished downloads are kept.");
+                    getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); });
             }
         }, "OpenOblivion-assets").start();
     }
@@ -93,24 +98,45 @@ public final class MainActivity extends Activity {
         File ready = new File(root, ".ready");
         if (ready.isFile() && read(ready).equals(id)) { configure(root); return; }
         List<String> parts = new ArrayList<>();
+        Map<String, JSONObject> partInfo = new HashMap<>();
         if (manifest.getInt("schema") == 2) {
             JSONArray packaged = manifest.getJSONArray("parts");
             for (int i = 0; i < packaged.length(); ++i) {
                 String name = packaged.getJSONObject(i).getString("asset");
                 if (!name.matches("payload-[0-9]{3}\\.zip") || parts.contains(name))
                     throw new IOException("Invalid payload part name");
-                parts.add(name);
+                parts.add(name); partInfo.put(name, packaged.getJSONObject(i));
             }
         } else if (manifest.getInt("schema") == 1) parts.add("payload.zip");
         else throw new IOException("Unsupported payload manifest");
         if (parts.isEmpty()) throw new IOException("No payload parts");
+        String downloadBase = manifest.optString("download_base", "");
+        if (!downloadBase.isEmpty() && !downloadBase.matches("http://100\\.[0-9.]+:[0-9]+/"))
+            throw new IOException("Invalid private download address");
+        File downloads = new File(getFilesDir(), "downloads"); downloads.mkdirs();
         // Check every installed split before writing any new payload files.
+        // Parts missing from the APK are fetched when this build names a server.
+        Set<String> remote = new HashSet<>();
+        long largestRemote = 0;
         for (String part : parts) {
             try (InputStream in = getAssets().open(part)) { if (in.read() == -1) throw new IOException("Empty payload part"); }
-            catch (IOException error) { throw new IOException("Missing bundled assets. Install every APK in the complete package together.", error); }
+            catch (IOException error) {
+                if (downloadBase.isEmpty() || !partInfo.containsKey(part))
+                    throw new IOException("Missing bundled assets. Install every APK in the complete package together.", error);
+                remote.add(part); largestRemote = Math.max(largestRemote, partInfo.get(part).getLong("size"));
+            }
         }
-        if (new StatFs(root.getPath()).getAvailableBytes() < manifest.getLong("unpacked_bytes") + 256L * 1024 * 1024)
-            throw new IOException("Not enough free storage to unpack the bundled assets; free space, then reopen");
+        // Files already unpacked by an interrupted run do not need space again.
+        long present = 0;
+        JSONArray listed = manifest.getJSONArray("files");
+        for (int i = 0; i < listed.length(); ++i) {
+            File file = new File(root, listed.getJSONObject(i).getString("path"));
+            if (file.isFile() && file.length() == listed.getJSONObject(i).getLong("size")) present += file.length();
+        }
+        long needed = manifest.getLong("unpacked_bytes") - present + largestRemote + 256L * 1024 * 1024;
+        if (new StatFs(root.getPath()).getAvailableBytes() < needed)
+            throw new IOException("Not enough free storage: about " + (needed / 1000000000 + 1)
+                + " GB more is needed. Free space, then reopen");
         Map<String, JSONObject> expected = new HashMap<>();
         JSONArray entries = manifest.getJSONArray("files");
         for (int i = 0; i < entries.length(); ++i) {
@@ -120,8 +146,20 @@ public final class MainActivity extends Activity {
         Set<String> retained = new HashSet<>(expected.keySet());
         long done = 0, total = manifest.getLong("unpacked_bytes"), lastUpdate = 0;
         byte[] buffer = new byte[1024 * 1024];
+        int partNumber = 0;
         for (String part : parts) {
-        try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(getAssets().open(part), buffer.length))) {
+        ++partNumber;
+        File marker = new File(downloads, part + ".installed");
+        File local = new File(downloads, part);
+        if (remote.contains(part)) {
+            String sha = partInfo.get(part).getString("sha256");
+            // A part unpacked and verified by an interrupted earlier run is not fetched again.
+            if (marker.isFile() && read(marker).equals(id + " " + sha)) continue;
+            download(downloadBase + part, local, partInfo.get(part).getLong("size"), sha, partNumber, parts.size());
+        }
+        final int shown = partNumber;
+        try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(remote.contains(part)
+                ? new FileInputStream(local) : getAssets().open(part), buffer.length))) {
             for (ZipEntry entry; (entry = zip.getNextEntry()) != null;) {
                 JSONObject e = expected.remove(entry.getName());
                 if (e == null || entry.isDirectory()) throw new IOException("Unexpected payload entry");
@@ -136,7 +174,8 @@ public final class MainActivity extends Activity {
                         out.write(buffer, 0, n); hash.update(buffer, 0, n); done += n;
                         if (System.currentTimeMillis() - lastUpdate > 350) {
                             lastUpdate = System.currentTimeMillis(); final int percent = (int)(done * 100 / total);
-                            runOnUiThread(() -> { progress.setProgress(percent); status.setText("Installing bundled assets: " + percent + "%\nKeep this app open for the first installation."); });
+                            runOnUiThread(() -> { progress.setProgress(percent); status.setText("Installing assets (part " + shown + " of " + parts.size()
+                                + "): " + percent + "% overall\nKeep this app open for the first installation."); });
                         }
                     }
                 }
@@ -144,8 +183,13 @@ public final class MainActivity extends Activity {
                 Files.move(temp.toPath(), dest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
         }
+        if (remote.contains(part)) { write(marker, id + " " + partInfo.get(part).getString("sha256")); local.delete(); }
         }
-        if (!expected.isEmpty()) throw new IOException("Incomplete payload");
+        // Files from parts verified by an earlier interrupted run must still be present.
+        for (Map.Entry<String, JSONObject> left : expected.entrySet()) {
+            File file = new File(root, left.getKey());
+            if (!file.isFile() || file.length() != left.getValue().getLong("size")) throw new IOException("Incomplete payload");
+        }
         // Old loose scene extracts would override the complete BSA archives.
         // Remove obsolete files only after every replacement has verified.
         try (java.util.stream.Stream<java.nio.file.Path> old = Files.walk(root.toPath())) {
@@ -162,6 +206,60 @@ public final class MainActivity extends Activity {
         }
         configure(root);
         write(ready, id);
+        File[] leftovers = downloads.listFiles();
+        if (leftovers != null) for (File f : leftovers) f.delete();
+    }
+    /** Resumable download of one private payload part, verified before use. */
+    private void download(String url, File dest, long size, String sha, int number, int count) throws Exception {
+        byte[] buffer = new byte[1024 * 1024];
+        int failures = 0;
+        while (true) {
+            long have = dest.isFile() ? dest.length() : 0;
+            if (have > size) { dest.delete(); have = 0; }
+            if (have < size) {
+                HttpURLConnection connection = null;
+                try {
+                    connection = (HttpURLConnection) new URL(url).openConnection();
+                    connection.setConnectTimeout(15000); connection.setReadTimeout(60000);
+                    if (have > 0) { connection.setRequestProperty("Range", "bytes=" + have + "-"); connection.setRequestProperty("If-Range", "\"" + sha + "\""); }
+                    int code = connection.getResponseCode();
+                    if (code != 200 && code != 206) throw new IOException("server answered HTTP " + code);
+                    boolean append = have > 0 && code == 206;
+                    if (!append) have = 0;
+                    long lastUpdate = 0, startBytes = have, startTime = System.currentTimeMillis();
+                    try (InputStream in = connection.getInputStream(); OutputStream out = new FileOutputStream(dest, append)) {
+                        for (int n; (n = in.read(buffer)) != -1;) {
+                            if (have + n > size) throw new IOException("download larger than expected");
+                            out.write(buffer, 0, n); have += n; failures = 0;
+                            if (System.currentTimeMillis() - lastUpdate > 500) {
+                                lastUpdate = System.currentTimeMillis();
+                                final long got = have; final double seconds = Math.max(1, lastUpdate - startTime) / 1000.0;
+                                final double rate = (got - startBytes) / seconds / 1e6;
+                                runOnUiThread(() -> { progress.setProgress((int) (got * 100 / size));
+                                    status.setText(String.format(Locale.ROOT, "Downloading game data part %d of %d: %d of %d MB (%.1f MB/s)\n"
+                                        + "Keep this app open and the phone connected to Tailscale. Interrupted downloads resume.",
+                                        number, count, got / 1000000, size / 1000000, rate)); });
+                            }
+                        }
+                    }
+                } catch (IOException error) {
+                    if (++failures > 40) throw new IOException("Download failed (" + error.getMessage() + "). Check Tailscale, then reopen", error);
+                    final int attempt = failures;
+                    runOnUiThread(() -> status.setText("Connection problem: " + error.getMessage() + "\nRetrying (" + attempt + ")…"));
+                    Thread.sleep(Math.min(30000, 2000L * failures));
+                    continue;
+                } finally {
+                    if (connection != null) connection.disconnect();
+                }
+            }
+            if (dest.length() != size) continue;
+            runOnUiThread(() -> status.setText("Verifying downloaded part " + number + " of " + count + "…"));
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            try (InputStream in = new FileInputStream(dest)) { for (int n; (n = in.read(buffer)) != -1;) hash.update(buffer, 0, n); }
+            if (hex(hash.digest()).equals(sha)) return;
+            dest.delete();
+            if (++failures > 3) throw new IOException("Downloaded part " + number + " failed verification repeatedly");
+        }
     }
     private static String read(File f) throws IOException { return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8); }
     private static void write(File f, String text) throws IOException { Files.write(f.toPath(), text.getBytes(StandardCharsets.UTF_8)); }

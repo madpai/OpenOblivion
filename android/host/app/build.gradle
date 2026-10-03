@@ -2,6 +2,7 @@
 plugins { id 'com.android.application' }
 def nativeStairs = providers.gradleProperty('ooNativeGroundedEye').orElse('false').get() == 'true'
 def installedAssets = providers.gradleProperty('ooInstalledAssets').orElse('false').get() == 'true'
+def downloadAssets = providers.gradleProperty('ooDownloadAssets').orElse('false').get() == 'true'
 android {
     // The unchanged donor SDL Java bridge imports this resource namespace.
     namespace 'com.libopenmw.openmw'
@@ -10,8 +11,8 @@ android {
         applicationId 'org.openoblivion.preview'
         minSdk 29
         targetSdk 32
-        versionCode installedAssets ? 23 : (nativeStairs ? 22 : 3)
-        versionName installedAssets ? '0.23-installed-body' : (nativeStairs ? '0.22-body' : '0.3-camera-repair')
+        versionCode downloadAssets ? 24 : (installedAssets ? 23 : (nativeStairs ? 22 : 3))
+        versionName downloadAssets ? '0.24-download-assets' : installedAssets ? '0.23-installed-body' : (nativeStairs ? '0.22-body' : '0.3-camera-repair')
         buildConfigField 'boolean', 'NATIVE_GROUNDED_EYE', nativeStairs.toString()
         ndk { abiFilters 'arm64-v8a' }
     }
