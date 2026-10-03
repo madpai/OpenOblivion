@@ -21,6 +21,14 @@ supplies artwork for broader exploration; it does not add completed quests or
 combat. Broader phone exploration remains unverified. The preceding 0.18/0.19
 audio packages are retained privately for recovery.
 
+Both downloads use the same Vilverin interior/exterior starting buttons and
+include the gate fix, NPC idle and nearby door sounds. The full set is useful
+for exploratory rendering and collision tests while walking farther from
+Vilverin: check whether surrounding terrain, architecture, textures and models
+load, and report missing artwork or crashes. These are proposed phone tests,
+not verified additional playable regions. For the current gate-passage retest,
+the smaller single APK is sufficient.
+
 ## Measured content and format boundary
 
 The supplied classic Data directory contains **73 files / 5,820,258,458 bytes**:
