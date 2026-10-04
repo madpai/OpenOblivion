@@ -83,3 +83,26 @@ starting items with original icons and an outfit preview; five Vilverin
 bandits roll and equip 3–5 apparel items each; a bandit killed in 13 punches
 holds its rolled armor and mace in the loot window. Phone build
 `0.32-loot-readied`.
+
+## Crash log and the inventory preview (build `0.38-crashlog`)
+
+The owner's phone crashed to the launcher when looting a bandit (0.37), with
+the scene log ending right after the player body was rebuilt twice within
+40 ms. The inventory and container windows draw a character preview with its
+own NpcAnimation for the player. The TES4 branch of `updateParts` handed
+`this` to the camera after a rebuild whenever the actor was the player, so the
+preview could become the camera's animation and leave it dangling when the
+menu closed. It now does that only for the world's own animation
+(`World::getAnimation(ptr) == this`), and `updateParts` cannot re-enter a
+rebuild. This is the likely cause, not a confirmed one: it did not reproduce on
+desktop.
+
+`tools/native/tes4_crash.hpp` (installed as a second header of the player
+receipt) makes the next native crash diagnosable: with `OPENOBLIVION_CRASH_LOG`
+set (the phone app sets it to `preview-user/config/openoblivion-crash.txt`) it
+installs handlers for SIGSEGV, SIGBUS, SIGABRT, SIGILL and SIGFPE on the game
+thread, with an alternate stack, that append the signal, fault address and a
+backtrace (module, offset, symbol) and then chain to the previous handler.
+"View Scene Log" shows that file first. Resolve offsets against the unstripped
+library kept in `~/openoblivion-private/symbols/`.
+

@@ -38,6 +38,7 @@
 #include <osg/Texture2D>
 
 #include "../mwclass/esm4base.hpp"
+#include "openoblivion_tes4_crash.hpp"
 #include "../mwworld/cellref.hpp"
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
@@ -86,6 +87,7 @@ namespace OpenOblivion
     {
         if (!tes4PlayerEnabled() || ptr.isEmpty())
             return nullptr;
+        tes4InstallCrashLog(); // first reached on the game thread
         if (ptr.getCellRef().getRefId() == ESM::RefId::stringRefId("Player"))
             return tes4PlayerRecord(store);
         if (!head.is<ESM::FormId>())
@@ -378,16 +380,16 @@ namespace OpenOblivion
         }
     }
 
-    // Decoded 8-bit RGB of an image, or false: S3TC (DXT1/3/5) blocks and plain
+    // Decoded 8-bit RGBA of an image, or false: S3TC (DXT1/3/5) blocks and plain
     // 8-bit RGB/RGBA/BGR/BGRA. Level 0 only.
-    inline bool tes4DecodeRgb(const osg::Image& image, std::vector<unsigned char>& rgb, int& width, int& height)
+    inline bool tes4DecodeRgba(const osg::Image& image, std::vector<unsigned char>& rgba, int& width, int& height)
     {
         width = image.s();
         height = image.t();
         const unsigned char* data = image.data();
         if (data == nullptr || width <= 0 || height <= 0)
             return false;
-        rgb.assign(static_cast<std::size_t>(width) * height * 3, 0);
+        rgba.assign(static_cast<std::size_t>(width) * height * 4, 255);
         const GLenum format = image.getPixelFormat();
         auto expand = [](unsigned c, unsigned char* out) {
             out[0] = static_cast<unsigned char>(((c >> 11) & 31) * 255 / 31);
@@ -398,6 +400,7 @@ namespace OpenOblivion
             || format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT || format == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)
         {
             const bool dxt1 = format == GL_COMPRESSED_RGB_S3TC_DXT1_EXT || format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            const bool dxt3 = format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
             const std::size_t blockSize = dxt1 ? 8 : 16;
             for (int by = 0; by < (height + 3) / 4; ++by)
                 for (int bx = 0; bx < (width + 3) / 4; ++bx)
@@ -405,9 +408,10 @@ namespace OpenOblivion
                     const unsigned char* block = data + (static_cast<std::size_t>(by) * ((width + 3) / 4) + bx) * blockSize;
                     const unsigned char* color = block + (dxt1 ? 0 : 8);
                     const unsigned c0 = color[0] | (color[1] << 8), c1 = color[2] | (color[3] << 8);
-                    unsigned char palette[4][3];
+                    unsigned char palette[4][4];
                     expand(c0, palette[0]);
                     expand(c1, palette[1]);
+                    palette[0][3] = palette[1][3] = palette[2][3] = palette[3][3] = 255;
                     for (int k = 0; k < 3; ++k)
                     {
                         if (c0 > c1 || !dxt1)
@@ -421,6 +425,37 @@ namespace OpenOblivion
                             palette[3][k] = 0;
                         }
                     }
+                    if (dxt1 && c0 <= c1)
+                        palette[3][3] = 0;
+                    // Alpha: DXT5 interpolated, DXT3 explicit 4-bit.
+                    unsigned char alpha[16];
+                    std::fill(alpha, alpha + 16, static_cast<unsigned char>(255));
+                    if (dxt3)
+                    {
+                        for (int i = 0; i < 16; ++i)
+                            alpha[i] = static_cast<unsigned char>(((block[i / 2] >> ((i & 1) * 4)) & 15) * 17);
+                    }
+                    else if (!dxt1)
+                    {
+                        unsigned char table[8];
+                        table[0] = block[0];
+                        table[1] = block[1];
+                        if (table[0] > table[1])
+                            for (int k = 1; k < 7; ++k)
+                                table[k + 1] = static_cast<unsigned char>(((7 - k) * table[0] + k * table[1]) / 7);
+                        else
+                        {
+                            for (int k = 1; k < 5; ++k)
+                                table[k + 1] = static_cast<unsigned char>(((5 - k) * table[0] + k * table[1]) / 5);
+                            table[6] = 0;
+                            table[7] = 255;
+                        }
+                        std::uint64_t bits = 0;
+                        for (int k = 0; k < 6; ++k)
+                            bits |= static_cast<std::uint64_t>(block[2 + k]) << (8 * k);
+                        for (int i = 0; i < 16; ++i)
+                            alpha[i] = table[(bits >> (3 * i)) & 7];
+                    }
                     const std::uint32_t indices = static_cast<std::uint32_t>(color[4]) | (static_cast<std::uint32_t>(color[5]) << 8)
                         | (static_cast<std::uint32_t>(color[6]) << 16) | (static_cast<std::uint32_t>(color[7]) << 24);
                     for (int i = 0; i < 16; ++i)
@@ -428,22 +463,31 @@ namespace OpenOblivion
                         const int x = bx * 4 + (i & 3), y = by * 4 + (i >> 2);
                         if (x >= width || y >= height)
                             continue;
-                        std::memcpy(&rgb[(static_cast<std::size_t>(y) * width + x) * 3], palette[(indices >> (2 * i)) & 3], 3);
+                        unsigned char* out = &rgba[(static_cast<std::size_t>(y) * width + x) * 4];
+                        const unsigned char* texel = palette[(indices >> (2 * i)) & 3];
+                        out[0] = texel[0];
+                        out[1] = texel[1];
+                        out[2] = texel[2];
+                        out[3] = dxt1 ? texel[3] : alpha[i];
                     }
                 }
             return true;
         }
         if (image.isCompressed() || image.getDataType() != GL_UNSIGNED_BYTE)
             return false;
-        bool swap = false;
+        bool swap = false, hasAlpha = false;
         switch (format)
         {
             case GL_RGB:
+                break;
             case GL_RGBA:
+                hasAlpha = true;
                 break;
             case GL_BGR:
-            case GL_BGRA:
                 swap = true;
+                break;
+            case GL_BGRA:
+                swap = hasAlpha = true;
                 break;
             default:
                 return false;
@@ -452,10 +496,11 @@ namespace OpenOblivion
             for (int x = 0; x < width; ++x)
             {
                 const unsigned char* in = image.data(x, y);
-                unsigned char* out = &rgb[(static_cast<std::size_t>(y) * width + x) * 3];
+                unsigned char* out = &rgba[(static_cast<std::size_t>(y) * width + x) * 4];
                 out[0] = in[swap ? 2 : 0];
                 out[1] = in[1];
                 out[2] = in[swap ? 0 : 2];
+                out[3] = hasAlpha ? in[3] : 255;
             }
         return true;
     }
@@ -467,7 +512,7 @@ namespace OpenOblivion
     {
         std::vector<unsigned char> head, map;
         int baseWidth = 0, baseHeight = 0, width = 0, height = 0;
-        if (!tes4DecodeRgb(base, head, baseWidth, baseHeight) || !tes4DecodeRgb(baked, map, width, height))
+        if (!tes4DecodeRgba(base, head, baseWidth, baseHeight) || !tes4DecodeRgba(baked, map, width, height))
             return nullptr;
         osg::ref_ptr<osg::Image> face = new osg::Image;
         face->allocateImage(width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -485,11 +530,11 @@ namespace OpenOblivion
                 for (int c = 0; c < 3; ++c)
                 {
                     auto at = [&](int px, int py) {
-                        return static_cast<float>(head[(static_cast<std::size_t>(py) * baseWidth + px) * 3 + c]);
+                        return static_cast<float>(head[(static_cast<std::size_t>(py) * baseWidth + px) * 4 + c]);
                     };
                     const float baseValue = (at(x0, y0) * (1 - fx) + at(x1, y0) * fx) * (1 - fy)
                         + (at(x0, y1) * (1 - fx) + at(x1, y1) * fx) * fy;
-                    const float tint = map[(static_cast<std::size_t>(y) * width + x) * 3 + c] / 255.f;
+                    const float tint = map[(static_cast<std::size_t>(y) * width + x) * 4 + c] / 255.f;
                     out[c] = static_cast<unsigned char>(std::clamp(baseValue * tint * 2.f, 0.f, 255.f));
                 }
                 out[3] = 255;
@@ -530,42 +575,50 @@ namespace OpenOblivion
         node.setStateSet(stateset);
     }
 
-    // Multiplies the materials under a node by the hair colour. Statesets are
-    // shared with the model template, so each is copied before it is changed.
-    class Tes4Tint : public osg::NodeVisitor
+    // As MWRender::overrideTexture, with the colour channels multiplied by the
+    // hair colour (alpha kept, so strands stay cut out). The original tints hair
+    // by modulating its neutral-grey texture; tinting a material instead gave
+    // wrong hues on the host's shaders.
+    inline void tes4OverrideTintedTexture(VFS::Path::NormalizedView texture, Resource::ResourceSystem* resourceSystem,
+        osg::Node& node, const float* rgb)
     {
-    public:
-        explicit Tes4Tint(const float* rgb)
-            : osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)
-            , mRed(rgb[0])
-            , mGreen(rgb[1])
-            , mBlue(rgb[2])
+        static std::map<std::string, osg::ref_ptr<osg::Texture2D>> cache;
+        char key[64];
+        std::snprintf(key, sizeof(key), "|%.3f,%.3f,%.3f", rgb[0], rgb[1], rgb[2]);
+        osg::ref_ptr<osg::Texture2D>& tex = cache[std::string(texture.value()) + key];
+        if (!tex)
         {
-        }
-
-        void apply(osg::Node& node) override
-        {
-            if (const osg::StateSet* source = node.getStateSet())
-                if (const auto* material = dynamic_cast<const osg::Material*>(
-                        source->getAttribute(osg::StateAttribute::MATERIAL)))
+            std::vector<unsigned char> pixels;
+            int width = 0, height = 0;
+            osg::ref_ptr<osg::Image> source = resourceSystem->getImageManager()->getImage(texture);
+            if (!tes4DecodeRgba(*source, pixels, width, height))
+                return;
+            osg::ref_ptr<osg::Image> image = new osg::Image;
+            image->allocateImage(width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+            image->setInternalTextureFormat(GL_RGBA8);
+            for (int y = 0; y < height; ++y)
+                for (int x = 0; x < width; ++x)
                 {
-                    osg::ref_ptr<osg::StateSet> stateset = new osg::StateSet(*source, osg::CopyOp::SHALLOW_COPY);
-                    osg::ref_ptr<osg::Material> tinted = new osg::Material(*material, osg::CopyOp::DEEP_COPY_ALL);
-                    for (const auto face : { osg::Material::FRONT, osg::Material::BACK })
-                    {
-                        osg::Vec4f diffuse = tinted->getDiffuse(face), ambient = tinted->getAmbient(face);
-                        tinted->setDiffuse(face, osg::Vec4f(diffuse.r() * mRed, diffuse.g() * mGreen, diffuse.b() * mBlue, diffuse.a()));
-                        tinted->setAmbient(face, osg::Vec4f(ambient.r() * mRed, ambient.g() * mGreen, ambient.b() * mBlue, ambient.a()));
-                    }
-                    stateset->setAttribute(tinted);
-                    node.setStateSet(stateset);
+                    const unsigned char* in = &pixels[(static_cast<std::size_t>(y) * width + x) * 4];
+                    unsigned char* out = image->data(x, y);
+                    for (int c = 0; c < 3; ++c)
+                        out[c] = static_cast<unsigned char>(std::clamp(in[c] * rgb[c], 0.f, 255.f));
+                    out[3] = in[3];
                 }
-            traverse(node);
+            tex = new osg::Texture2D(image);
+            tex->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+            tex->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+            resourceSystem->getSceneManager()->applyFilterSettings(tex);
         }
-
-    private:
-        float mRed, mGreen, mBlue;
-    };
+        osg::ref_ptr<osg::StateSet> stateset;
+        if (const osg::StateSet* const source = node.getStateSet())
+            stateset = new osg::StateSet(*source, osg::CopyOp::SHALLOW_COPY);
+        else
+            stateset = new osg::StateSet;
+        stateset->setTextureAttribute(0, tex, osg::StateAttribute::OVERRIDE);
+        stateset->setTextureAttribute(0, new SceneUtil::TextureType("diffuseMap"), osg::StateAttribute::OVERRIDE);
+        node.setStateSet(stateset);
+    }
 
     // The weapon an actor carries in its right hand slot: the TES4 mesh, the
     // host animation short group it selects, and the skeleton node that holds

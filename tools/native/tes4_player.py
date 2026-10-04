@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 STAMP = '.openoblivion-tes4-player.json'
 PARENT = '.openoblivion-tes4-movement.json'
-HEADERS = {'tes4_player.hpp': 'apps/openmw/mwrender/openoblivion_tes4_player.hpp'}
+HEADERS = {'tes4_player.hpp': 'apps/openmw/mwrender/openoblivion_tes4_player.hpp',
+           'tes4_crash.hpp': 'apps/openmw/mwrender/openoblivion_tes4_crash.hpp'}
 
 
 def tools_identity(revision):

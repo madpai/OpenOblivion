@@ -19,6 +19,8 @@ local uiOpened = nil
 local util = require('openmw.util')
 local faced = false
 local gave, wielded, gaveItems, equippedItems = false, false, false, false
+local killed = false
+local menuClosed = false
 
 -- Puts a static camera in front of the nearest actor's face (look inspection).
 local function faceNearestActor()
@@ -70,7 +72,11 @@ return {
                     captured = true
                     print('OPENOBLIVION_SCENE_PROBE ui=' .. tostring(config.ui))
                     debug.takeScreenshot()
-                elseif core.getRealTime() - uiOpened > 1.5 then
+                elseif captured and not menuClosed and core.getRealTime() - uiOpened > 1.2 then
+                    menuClosed = true
+                    interfaces.UI.setMode()
+                    print('OPENOBLIVION_SCENE_PROBE menu closed')
+                elseif menuClosed and core.getRealTime() - uiOpened > 4 then
                     finished = true
                     print('OPENOBLIVION_SCENE_PROBE_DONE')
                     core.quit()
@@ -110,6 +116,19 @@ return {
             if config.weapon and gave and not wielded and elapsed >= 0.9 then
                 wielded = true
                 self.object:sendEvent('TES4WieldWeapon', {})
+            end
+            -- Debug: kill the nearest actor a few seconds before the shot (to open its loot).
+            if config.kill and not killed and elapsed >= (config.shot or 6.5) - 3 then
+                killed = true
+                local best, bestDistance = nil, math.huge
+                for _, actor in ipairs(nearby.actors) do
+                    if actor.type ~= types.Player then
+                        local distance = (actor.position - self.position):length()
+                        if distance < bestDistance then best, bestDistance = actor, distance end
+                    end
+                end
+                if best then best:sendEvent('TES4Hit', { health = 999, fatigue = 0, attacker = self.object }) end
+                print('OPENOBLIVION_SCENE_PROBE killed ' .. tostring(best and best.recordId))
             end
             if config.face and not faced and elapsed >= (config.shot or 6.5) - 0.5 then
                 faced = true

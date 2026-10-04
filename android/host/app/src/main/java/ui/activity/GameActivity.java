@@ -24,6 +24,8 @@ public final class GameActivity extends SDLActivity {
                 Os.setenv("OPENOBLIVION_ORIGINAL_BODY", "1", true);
                 Os.setenv("OPENOBLIVION_TES4_MOVEMENT", "1", true);
                 Os.setenv("OPENOBLIVION_TES4_PLAYER", "1", true);
+                // A native crash on the game thread leaves a backtrace here; MainActivity shows it with the scene log.
+                Os.setenv("OPENOBLIVION_CRASH_LOG", new File(getFilesDir(), "preview-user/config/openoblivion-crash.txt").getPath(), true);
             }
             Os.setenv("OPENMW_USER_FILE_STORAGE", new File(getFilesDir(), "preview-user").getPath() + "/", true);
         } catch (android.system.ErrnoException e) { throw new RuntimeException(e); }

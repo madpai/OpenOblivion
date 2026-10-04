@@ -159,6 +159,12 @@ public final class MainActivity extends Activity {
             in.seek(Math.max(0, in.length()-96*1024)); byte[] bytes = new byte[(int)(in.length()-in.getFilePointer())];
             in.readFully(bytes); text = new String(bytes, StandardCharsets.UTF_8);
         } catch (IOException e) { text = "Cannot read log: " + e.getMessage(); }
+        File crash = new File(getFilesDir(), "preview-user/config/openoblivion-crash.txt");
+        if (crash.isFile()) try {
+            // Crash backtraces first: they are what a bug report needs.
+            text = "=== LAST CRASH (openoblivion-crash.txt) ===\n" + new String(Files.readAllBytes(crash.toPath()), StandardCharsets.UTF_8)
+                + "\n=== SCENE LOG ===\n" + text;
+        } catch (IOException e) { text = "Cannot read crash log: " + e.getMessage() + "\n" + text; }
         ScrollView scroll = new ScrollView(this); TextView view = new TextView(this);
         view.setText(text); view.setTextIsSelectable(true); view.setPadding(24, 16, 24, 16); scroll.addView(view);
         new AlertDialog.Builder(this).setTitle("Scene log").setView(scroll).setPositiveButton("Close", null).show();

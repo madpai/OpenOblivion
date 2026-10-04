@@ -1,5 +1,14 @@
 # Maintainer handoff
 
+Hair and crash log, 2026-10-04: served `0.38-crashlog`. The owner reported hair
+still at the feet and a crash when looting (0.37). Hair now hangs on the head
+bone with a software-tinted texture; the likely crash cause (the inventory
+preview hijacking the camera) is fixed and a native crash now writes a
+backtrace the launcher's "View Scene Log" shows. If the owner reports another
+crash, read the `=== LAST CRASH ===` section and symbolicate against
+`~/openoblivion-private/symbols/libopenmw-0.38-crashlog.so`. See
+[TES4_ITEMS.md](research/TES4_ITEMS.md) and [TES4_FACES.md](research/TES4_FACES.md).
+
 Armor, 2026-10-04: served `0.36-armor`. Worn armor reduces incoming physical
 damage by its capped rating (decoded piece rating; the percentage rule itself
 is documented, not decoded). See TES4_COMBAT.md. Next: blocking (no block

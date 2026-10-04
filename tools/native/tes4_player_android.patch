@@ -14,7 +14,7 @@
  namespace
  {
  
-@@ -493,6 +500,141 @@
+@@ -493,6 +500,131 @@
          bool is1stPerson = mViewMode == VM_FirstPerson;
          bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
  
@@ -68,31 +68,6 @@
 +                        if (!mResourceSystem->getVFS()->exists(texture))
 +                            texture.clear();
 +                    }
-+                    // Hair is an unskinned mesh authored in head bind space: carry it on the head
-+                    // bone, undoing its bind pose, so they follow the head instead of sitting at the feet.
-+                    if (part.mRigidHead)
-+                    {
-+                        const NodeMap& skeletonNodes = getNodeMap();
-+                        const auto headBone = skeletonNodes.find("bip01 head");
-+                        if (headBone != skeletonNodes.end())
-+                        {
-+                            const osg::NodePathList headPaths = headBone->second->getParentalNodePaths(mObjectRoot.get());
-+                            if (!headPaths.empty())
-+                            {
-+                                osg::ref_ptr<osg::MatrixTransform> holder
-+                                    = new osg::MatrixTransform(osg::Matrix::inverse(osg::computeLocalToWorld(headPaths[0])));
-+                                std::vector<osg::ref_ptr<osg::Node>> moved;
-+                                for (unsigned i = firstAdded; i < mObjectRoot->getNumChildren(); ++i)
-+                                    moved.emplace_back(mObjectRoot->getChild(i));
-+                                for (const osg::ref_ptr<osg::Node>& node : moved)
-+                                {
-+                                    mObjectRoot->removeChild(node);
-+                                    holder->addChild(node);
-+                                }
-+                                headBone->second->addChild(holder);
-+                            }
-+                        }
-+                    }
 +                    for (unsigned i = firstAdded; i < mObjectRoot->getNumChildren(); ++i)
 +                    {
 +                        osg::Node& added = *mObjectRoot->getChild(i);
@@ -100,13 +75,28 @@
 +                        {
 +                            if (part.mOpaque)
 +                                OpenOblivion::tes4OverrideOpaqueTexture(texture, mResourceSystem, added, faceBase);
++                            else if (part.mTinted)
++                                OpenOblivion::tes4OverrideTintedTexture(texture, mResourceSystem, added, part.mTint);
 +                            else
 +                                overrideTexture(texture, mResourceSystem, added);
 +                        }
-+                        if (part.mTinted)
++                    }
++                    // Hair is an unskinned mesh authored in head-local space: hang it on the head bone so it follows
++                    // the head instead of sitting at the feet (after its texture is set, which visits the root).
++                    if (part.mRigidHead)
++                    {
++                        const NodeMap& skeletonNodes = getNodeMap();
++                        const auto headBone = skeletonNodes.find("bip01 head");
++                        if (headBone != skeletonNodes.end())
 +                        {
-+                            OpenOblivion::Tes4Tint tint(part.mTint);
-+                            added.accept(tint);
++                            std::vector<osg::ref_ptr<osg::Node>> moved;
++                            for (unsigned i = firstAdded; i < mObjectRoot->getNumChildren(); ++i)
++                                moved.emplace_back(mObjectRoot->getChild(i));
++                            for (const osg::ref_ptr<osg::Node>& node : moved)
++                            {
++                                mObjectRoot->removeChild(node);
++                                headBone->second->addChild(node);
++                            }
 +                        }
 +                    }
 +                    Log(Debug::Info) << "OPENOBLIVION_FACE npc=" << tes4Player->mEditorId << " part=" << part.mModel
@@ -156,7 +146,7 @@
          std::string_view base;
          if (!isWerewolf)
          {
-@@ -568,6 +710,25 @@
+@@ -568,6 +700,33 @@
          if (!mObjectRoot.get())
              return;
  
@@ -167,13 +157,21 @@
 +        {
 +            std::string attached;
 +            mObjectRoot->getUserValue("openoblivionParts", attached);
-+            if (attached
-+                != OpenOblivion::tes4PartSignature(
++            // A rebuild can report an equipment change again; never rebuild from inside a rebuild.
++            static bool rebuilding = false;
++            if (!rebuilding
++                && attached
++                    != OpenOblivion::tes4PartSignature(
 +                    OpenOblivion::tes4PlayerPartModels(*tes4Actor, tes4Store, mViewMode == VM_FirstPerson, mPtr),
 +                    OpenOblivion::tes4EquippedWeapon(mPtr, tes4Store).mShort))
 +            {
++                rebuilding = true;
 +                rebuild();
-+                if (mPtr == MWMechanics::getPlayer())
++                rebuilding = false;
++                // Only the world's own animation may hand itself to the camera: the inventory's
++                // character preview also draws the player and would leave the camera pointing at a
++                // dead animation when the menu closes.
++                if (mPtr == MWMechanics::getPlayer() && MWBase::Environment::get().getWorld()->getAnimation(mPtr) == this)
 +                    MWBase::Environment::get().getWorld()->getRenderingManager()->getCamera()->setAnimation(this);
 +            }
 +            return;
@@ -182,7 +180,7 @@
          NpcType curType = getNpcType();
          if (curType != mNpcType)
          {
-@@ -715,6 +876,52 @@
+@@ -715,6 +874,52 @@
                  osg::Quat(mPtr.getRefData().getPosition().rot[0] * rotateFactor, osg::Vec3f(-1, 0, 0)));
              mFirstPersonNeckController->setOffset(mFirstPersonOffset);
          }
@@ -235,7 +233,7 @@
  
          WeaponAnimation::configureControllers(mPtr.getRefData().getPosition().rot[0] + getBodyPitchRadians());
  
-@@ -926,7 +1133,23 @@
+@@ -926,7 +1131,23 @@
          {
              // If there is no active animation, then the bip01 neck node will not be updated each frame, and the
              // RotateController will accumulate rotations.
