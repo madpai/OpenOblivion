@@ -36,6 +36,12 @@ build a texture from FGTS and the race `.egt` tint modes (not done yet).
 - Hair: the HAIR record's model and texture (the NIF's own texture names do not
   exist in the archives), with the NPC's hair colour (HCLR) multiplied into the
   materials.
+- Hair meshes are unskinned and authored in head space; the original attaches
+  them to the head bone. The renderer parents them to `Bip01 Head` with the
+  inverse of the bone's bind pose so they follow the head (they used to sit at
+  the character's feet, which is what the teal "blob" in third person was).
+  The skeleton's node map is built lazily, so it is read through
+  `getNodeMap()`, not `mNodeMap`, while parts attach.
 - Worn armor and clothing for a female actor use the female biped model, else
   the male one (many items have a single model).
 

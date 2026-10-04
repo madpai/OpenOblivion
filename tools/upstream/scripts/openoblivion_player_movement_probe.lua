@@ -24,7 +24,9 @@ local gave, wielded, gaveItems, equippedItems = false, false, false, false
 local function faceNearestActor()
     local best, bestDistance = nil, math.huge
     for _, actor in ipairs(nearby.actors) do
-        if actor ~= self.object then
+        if config.facePlayer then
+            if actor.type == types.Player then best = actor end
+        elseif actor ~= self.object then
             local distance = (actor.position - self.position):length()
             if distance < bestDistance then best, bestDistance = actor, distance end
         end

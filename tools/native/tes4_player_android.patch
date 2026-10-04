@@ -14,7 +14,7 @@
  namespace
  {
  
-@@ -493,6 +500,116 @@
+@@ -493,6 +500,141 @@
          bool is1stPerson = mViewMode == VM_FirstPerson;
          bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
  
@@ -67,6 +67,31 @@
 +                            VFS::Path::Normalized(part.mFallbackTexture), *mResourceSystem->getVFS());
 +                        if (!mResourceSystem->getVFS()->exists(texture))
 +                            texture.clear();
++                    }
++                    // Hair is an unskinned mesh authored in head bind space: carry it on the head
++                    // bone, undoing its bind pose, so they follow the head instead of sitting at the feet.
++                    if (part.mRigidHead)
++                    {
++                        const NodeMap& skeletonNodes = getNodeMap();
++                        const auto headBone = skeletonNodes.find("bip01 head");
++                        if (headBone != skeletonNodes.end())
++                        {
++                            const osg::NodePathList headPaths = headBone->second->getParentalNodePaths(mObjectRoot.get());
++                            if (!headPaths.empty())
++                            {
++                                osg::ref_ptr<osg::MatrixTransform> holder
++                                    = new osg::MatrixTransform(osg::Matrix::inverse(osg::computeLocalToWorld(headPaths[0])));
++                                std::vector<osg::ref_ptr<osg::Node>> moved;
++                                for (unsigned i = firstAdded; i < mObjectRoot->getNumChildren(); ++i)
++                                    moved.emplace_back(mObjectRoot->getChild(i));
++                                for (const osg::ref_ptr<osg::Node>& node : moved)
++                                {
++                                    mObjectRoot->removeChild(node);
++                                    holder->addChild(node);
++                                }
++                                headBone->second->addChild(holder);
++                            }
++                        }
 +                    }
 +                    for (unsigned i = firstAdded; i < mObjectRoot->getNumChildren(); ++i)
 +                    {
@@ -131,7 +156,7 @@
          std::string_view base;
          if (!isWerewolf)
          {
-@@ -568,6 +685,25 @@
+@@ -568,6 +710,25 @@
          if (!mObjectRoot.get())
              return;
  
@@ -157,7 +182,7 @@
          NpcType curType = getNpcType();
          if (curType != mNpcType)
          {
-@@ -715,6 +851,52 @@
+@@ -715,6 +876,52 @@
                  osg::Quat(mPtr.getRefData().getPosition().rot[0] * rotateFactor, osg::Vec3f(-1, 0, 0)));
              mFirstPersonNeckController->setOffset(mFirstPersonOffset);
          }
@@ -210,7 +235,7 @@
  
          WeaponAnimation::configureControllers(mPtr.getRefData().getPosition().rot[0] + getBodyPitchRadians());
  
-@@ -926,7 +1108,23 @@
+@@ -926,7 +1133,23 @@
          {
              // If there is no active animation, then the bip01 neck node will not be updated each frame, and the
              // RotateController will accumulate rotations.

@@ -225,6 +225,7 @@ namespace OpenOblivion
         std::string mTexture;
         std::string mFallbackTexture; // when mTexture is not in the data (no baked face)
         bool mOpaque = false; // skin: the original ignores texture alpha
+        bool mRigidHead = false; // an unskinned mesh in head bind space (hair), carried by the head bone
         bool mTinted = false;
         float mTint[3] = { 1.f, 1.f, 1.f };
     };
@@ -318,12 +319,21 @@ namespace OpenOblivion
                 if (!tes4PathText(hair->mModel).empty())
                 {
                     Tes4PartLook look{ tes4PathText(hair->mModel), hair->mIcon };
+                    look.mRigidHead = true;
                     look.mTinted = true;
                     look.mTint[0] = npc.mHairColour.red / 255.f;
                     look.mTint[1] = npc.mHairColour.green / 255.f;
                     look.mTint[2] = npc.mHairColour.blue / 255.f;
                     parts.push_back(std::move(look));
                 }
+        // Debug: OPENOBLIVION_HIDE_PART=<text> drops parts whose model path contains the text.
+        if (const char* hide = std::getenv("OPENOBLIVION_HIDE_PART"); hide != nullptr && *hide != '\0')
+            parts.erase(std::remove_if(parts.begin(), parts.end(),
+                            [hide](const Tes4PartLook& part) {
+                                return Misc::StringUtils::lowerCase(part.mModel).find(Misc::StringUtils::lowerCase(hide))
+                                    != std::string::npos;
+                            }),
+                parts.end());
         return parts;
     }
 
