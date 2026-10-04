@@ -6,9 +6,9 @@
 -- supplies collision, pathfinding, AI and death. The TES4 object is disabled.
 --
 -- Items: the proxy gets the NPC record's inventory, rolled through the TES4
--- leveled lists. Apparel goes on now (and is drawn from the host equipment);
--- weapons and everything else are held back until death so the host AI does
--- not draw weapons the TES4 combat layer cannot use yet, then placed on the
+-- leveled lists. Apparel and melee weapons go on now (drawn from the host
+-- equipment; the TES4 combat layer fights with the wielded weapon); bows,
+-- staves and everything else are held back until death, then placed on the
 -- body for looting. The player receives the Player record's starting items.
 local items = require('scripts.openoblivion_tes4_items')
 local types = require('openmw.types')
@@ -47,6 +47,10 @@ end
 
 return {
     eventHandlers = {
+        -- Desktop probes and scripts: put a generated item in an actor's inventory.
+        TES4Give = function(event)
+            if event.actor and event.id then give(event.actor, { { id = event.id, count = event.count or 1 } }) end
+        end,
         -- A proxy died: its held-back items go on the body.
         TES4Loot = function(event)
             if event.actor and event.items then give(event.actor, event.items) end
@@ -71,7 +75,7 @@ return {
             proxy:teleport(object.cell, object.position, { rotation = object.rotation })
             local apparel, held = {}, {}
             for _, row in ipairs(items.inventory(formId(record.id), playerLevel())) do
-                table.insert(items.isApparel(row.id) and apparel or held, row)
+                table.insert((items.isApparel(row.id) or items.isMeleeWeapon(row.id)) and apparel or held, row)
             end
             give(proxy, apparel)
             proxy:addScript('scripts/openoblivion_bridge_actor.lua',

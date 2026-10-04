@@ -18,6 +18,7 @@ local nearby = require('openmw.nearby')
 local uiOpened = nil
 local util = require('openmw.util')
 local faced = false
+local gave, wielded = false, false
 
 -- Puts a static camera in front of the nearest actor's face (look inspection).
 local function faceNearestActor()
@@ -89,6 +90,15 @@ return {
             self.controls.yawChange = turned and 0 or config.turn
             self.controls.pitchChange = turned and 0 or (config.pitch or 0)
             turned = true
+            -- Hand the player a generated weapon and wield it (desktop probes cannot use menus).
+            if config.weapon and not gave and elapsed >= 0.4 then
+                gave = true
+                core.sendGlobalEvent('TES4Give', { actor = self.object, id = config.weapon })
+            end
+            if config.weapon and gave and not wielded and elapsed >= 0.9 then
+                wielded = true
+                self.object:sendEvent('TES4WieldWeapon', {})
+            end
             if config.face and not faced and elapsed >= (config.shot or 6.5) - 0.5 then
                 faced = true
                 faceNearestActor()

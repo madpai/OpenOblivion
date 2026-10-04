@@ -6,6 +6,9 @@
 -- (WEAPON button) is the readied state, raising and lowering play the original
 -- equip/unequip clips, and attacking while holstered readies instead of
 -- punching. Readied idle/movement are the host "hh" groups (TES4 renderer).
+-- A carried melee weapon works the same way with its own clip family (group
+-- names carry the host weapon short group: 1h, 1b, 2c, 2b), its damage from
+-- the weapon formula and its reach from the weapon record.
 local anim = require('openmw.animation')
 local input = require('openmw.input')
 local interfaces = require('openmw.interfaces')
@@ -23,6 +26,10 @@ local attackClock = 0
 -- The clip's stop key can be lost when another animation interrupts it.
 local ATTACK_TIMEOUT = 1.2
 local CLIPS = { 'tes4attackright', 'tes4attackleft' }
+local SHORTS = { '', '1h', '1b', '2c', '2b', '2w', 'bow' }
+
+-- A clip group name for the carried weapon's family ('' for fists).
+local function group(name, weapon) return name .. (weapon and weapon.short or '') end
 local stance = nil
 local equipPending = 0
 local readying = 0
@@ -36,9 +43,20 @@ local function strike()
     local stats = interfaces.TES4Stats
     if not stats then return end
     local fatigue = types.Actor.stats.dynamic.fatigue(self)
-    local health, fatigueDamage = combat.handToHand(stats.skill('handToHand') or 5, stats.attribute('strength') or 50,
-        stats.attribute('luck') or 50, fatigue.current, fatigue.base)
-    local best, bestDistance = nil, combat.handReach()
+    local weapon = items.equippedWeapon(self)
+    if weapon and not weapon.melee then weapon = nil end
+    local health, fatigueDamage
+    local reach = combat.handReach()
+    if weapon then
+        health = combat.weapon(weapon.damage, stats.skill(weapon.skill) or 5, stats.attribute('strength') or 50,
+            stats.attribute('luck') or 50, fatigue.current, fatigue.base, weapon.condition)
+        fatigueDamage = 0
+        reach = combat.weaponReach(weapon.reach)
+    else
+        health, fatigueDamage = combat.handToHand(stats.skill('handToHand') or 5, stats.attribute('strength') or 50,
+            stats.attribute('luck') or 50, fatigue.current, fatigue.base)
+    end
+    local best, bestDistance = nil, reach
     for _, actor in ipairs(nearby.actors) do
         if actor ~= self.object and not types.Actor.isDead(actor) then
             local offset = actor.position - self.position
@@ -66,32 +84,37 @@ local function strike()
 end
 
 for _, clip in ipairs(CLIPS) do
-    interfaces.AnimationController.addTextKeyHandler(clip, function(_, key)
-        if key == 'hit' then strike()
-        elseif key == 'stop' then attacking = false end
-    end)
+    for _, short in ipairs(SHORTS) do
+        interfaces.AnimationController.addTextKeyHandler(clip .. short, function(_, key)
+            if key == 'hit' then strike()
+            elseif key == 'stop' then attacking = false end
+        end)
+    end
 end
 
-local function play(clip)
+local function play(clip, speed)
     interfaces.AnimationController.playBlendedAnimation(clip, {
         startKey = 'start', stopKey = 'stop', priority = anim.PRIORITY.Scripted,
-        blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true })
+        blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true, speed = speed or 1 })
 end
 
 local function attack()
-    if attacking or types.Actor.isDead(self) or not anim.hasGroup(self, CLIPS[1]) then return end
+    if attacking or types.Actor.isDead(self) then return end
+    local weapon = items.equippedWeapon(self)
     if types.Actor.getStance(self) ~= types.Actor.STANCE.Weapon then
         types.Actor.setStance(self, types.Actor.STANCE.Weapon)
-        print('OPENOBLIVION_TES4_COMBAT player readies fists')
+        print('OPENOBLIVION_TES4_COMBAT player readies ' .. (weapon and weapon.short or 'fists'))
         return
     end
-    if readying > 0 then return end
+    -- Bows and staves have no combat rules yet; a weapon whose clips are not loaded punches.
+    if weapon and not (weapon.melee and anim.hasGroup(self, group(CLIPS[1], weapon))) then weapon = nil end
+    if not anim.hasGroup(self, group(CLIPS[1], weapon)) or readying > 0 then return end
     attacking = true
     attackClock = 0
-    local clip = leftNext and CLIPS[2] or CLIPS[1]
+    local clip = group(leftNext and anim.hasGroup(self, group(CLIPS[2], weapon)) and CLIPS[2] or CLIPS[1], weapon)
     leftNext = not leftNext
     print('OPENOBLIVION_TES4_COMBAT player swings ' .. clip)
-    play(clip)
+    play(clip, weapon and weapon.speed or 1)
 end
 
 return {
@@ -113,10 +136,12 @@ return {
             end
             local now = types.Actor.getStance(self)
             if stance ~= nil and now ~= stance then
-                if now == types.Actor.STANCE.Weapon and anim.hasGroup(self, 'tes4equip') then
-                    play('tes4equip'); readying = READY_TIME
-                elseif stance == types.Actor.STANCE.Weapon and anim.hasGroup(self, 'tes4unequip') then
-                    play('tes4unequip'); attacking = false
+                local weapon = items.equippedWeapon(self)
+                local equip, unequip = group('tes4equip', weapon), group('tes4unequip', weapon)
+                if now == types.Actor.STANCE.Weapon and anim.hasGroup(self, equip) then
+                    play(equip); readying = READY_TIME
+                elseif stance == types.Actor.STANCE.Weapon and anim.hasGroup(self, unequip) then
+                    play(unequip); attacking = false
                 end
             end
             stance = now
@@ -134,6 +159,11 @@ return {
         -- Desktop probes cannot press buttons; they request an attack instead.
         TES4PlayerAttack = function() attack() end,
         TES4EquipApparel = function() equipPending = 5 end,
+        -- Desktop probes: carry and wield a generated weapon.
+        TES4WieldWeapon = function(event)
+            local weapon = items.equipWeapon(self)
+            print('OPENOBLIVION_ITEMS player wields ' .. tostring(weapon and weapon.item.recordId))
+        end,
         TES4Hit = function(hit)
             local health = types.Actor.stats.dynamic.health(self)
             local fatigue = types.Actor.stats.dynamic.fatigue(self)

@@ -51,3 +51,47 @@ Desktop, owner data, same recorded binary (`evidence/tes4-fight-*`): a bandit
 engages at sight, chases, hits the player for 2.42 per hit (fatigue reduced
 from full); the player's hits do 1.26; the bandit dies after 13 hits and lies
 down. Phone build `0.31-bandit-fights`.
+
+## Weapons (2026-10-04, build `0.35-weapons`)
+
+Weapon damage is transcribed from `Oblivion.exe` 0x547070 (reads the same
+effective-skill helper 0x547b90 and fatigue helper 0x547f00 as hand-to-hand;
+decoded from the disassembly, not yet compared with a live original swing):
+
+    damage = (weapon damage × fDamageWeaponMult)
+           × (fDamageWeaponConditionBase + fDamageWeaponConditionMult × condition)
+           × (fDamageSkillBase + fDamageSkillMult × effective skill / 100)
+           × (fDamageStrengthBase + fDamageStrengthMult × min(Strength, 100) / 100)
+           × fatigue factor
+
+Values: master overrides fDamageWeaponMult 0.5, condition 0.5 + 0.5, skill mult
+1.5, strength 0.75 + 0.5 (the executable supplies skill base 0.2). The weapon's
+skill is Blade, Blunt or Marksman by weapon type; condition is the item's
+health fraction. An Iron Longsword (damage 10) in the starting player's hands
+(blade 5, strength 50, luck 50) deals 1.375, which the desktop fight logs
+(`tes4-weap-01`) reproduce; `tests/test_tes4_combat.lua` covers the formula.
+Weapon reach is fCombatDistance (128) × the weapon's reach plus the same body
+allowance as hands (an inference).
+
+Not done: fatigue cost per swing (fFatigueAttackWeaponBase 7 and Mult 0.1 exist
+but their use is not decoded), power attacks (the executable's direction
+bonuses, master 2.5 to 3), sneak attack ×4, armor reduction, weapon wear
+(fDamageToWeaponPercentage), blocking, staggers, bows and staves.
+
+## Animations and rendering
+
+TES4 ships complete one-hand, two-hand, staff and bow clip sets. The renderer
+loads the equipped weapon's family only (so a rebuild on equipment change), as
+host groups with the weapon short group suffixed (`1h` blade one-hand, `1b`
+blunt one-hand, `2c`/`2b` two-hand, `2w` staff, `bow`): readied idle, walk, run
+and turn clips, plus `tes4equip`, `tes4unequip`, `tes4attackright/left/power`,
+`tes4blockidle`, `tes4stagger` and `tes4recoil`. The weapon mesh sits on the
+skeleton's `Weapon` node in the hand while drawn and on `SideWeapon` (one-hand)
+or `BackWeapon` (two-hand, staff, bow) otherwise; first person shows it only
+when drawn. The weapon moves between nodes when the draw state changes, not at
+the original's `Attach`/`Detach` animation keys.
+
+Bandits wield the strongest melee weapon they were rolled and fight with its
+clips, reach and damage; their weapon skills come from the NPC record
+(blade, blunt, marksman at level 1).
+

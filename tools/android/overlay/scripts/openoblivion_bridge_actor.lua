@@ -25,6 +25,8 @@ local reportedDeath = false
 local equipped = false
 local stance = nil
 local CLIPS = { 'tes4attackright', 'tes4attackleft' }
+local SHORTS = { '', '1h', '1b', '2c', '2b', '2w', 'bow' }
+local function group(name, weapon) return name .. (weapon and weapon.short or '') end
 -- Stand-in for TES4 detection until sneak/detection is implemented: an
 -- aggressive actor (aggression >= 80) engages a visible player within range.
 local HOSTILE_AGGRESSION = 80
@@ -52,36 +54,57 @@ local function apply()
         tostring(data.name), health, aggression, confidence))
 end
 
+-- The wielded melee weapon, or nil for fists.
+local function wielded()
+    local weapon = items.equippedWeapon(self)
+    return weapon and weapon.melee and weapon or nil
+end
+
 local function strike()
     local row = ok and data and npcs[data.formId]
     local player = nearby.players[1]
     if not row or not player or types.Actor.isDead(self) then return end
+    local weapon = wielded()
     local offset = player.position - self.position
-    if offset:length() > combat.handReach() then return end
+    if offset:length() > (weapon and combat.weaponReach(weapon.reach) or combat.handReach()) then return end
     local fatigue = types.Actor.stats.dynamic.fatigue(self)
-    local health, fatigueDamage = combat.handToHand(row[5], row[6], row[7], fatigue.current, fatigue.base)
+    local health, fatigueDamage
+    if weapon then
+        local skill = (weapon.skill == 'blade' and row[8]) or (weapon.skill == 'blunt' and row[9]) or row[10] or 5
+        health, fatigueDamage = combat.weapon(weapon.damage, skill, row[6], row[7], fatigue.current, fatigue.base,
+            weapon.condition), 0
+    else
+        health, fatigueDamage = combat.handToHand(row[5], row[6], row[7], fatigue.current, fatigue.base)
+    end
     player:sendEvent('TES4Hit', { health = health, fatigue = fatigueDamage, attacker = self.object })
 end
 
 for _, clip in ipairs(CLIPS) do
-    interfaces.AnimationController.addTextKeyHandler(clip, function(_, key)
-        if key == 'hit' then strike()
-        elseif key == 'stop' then attacking = false end
-    end)
+    for _, short in ipairs(SHORTS) do
+        interfaces.AnimationController.addTextKeyHandler(clip .. short, function(_, key)
+            if key == 'hit' then strike()
+            elseif key == 'stop' then attacking = false end
+        end)
+    end
 end
 
 local function fight(player)
     if attacking and clock - attackStarted > 1.2 then attacking = false end
-    if attacking or clock < nextAttack or not anim.hasGroup(self, CLIPS[1]) then return end
-    if (player.position - self.position):length() > combat.handReach() then return end
+    local weapon = wielded()
+    if weapon and not anim.hasGroup(self, group(CLIPS[1], weapon)) then weapon = nil end
+    if attacking or clock < nextAttack or not anim.hasGroup(self, group(CLIPS[1], weapon)) then return end
+    if (player.position - self.position):length() > (weapon and combat.weaponReach(weapon.reach) or combat.handReach()) then
+        return
+    end
     attacking = true
     attackStarted = clock
-    nextAttack = clock + 1.5
-    local clip = leftNext and CLIPS[2] or CLIPS[1]
+    local speed = weapon and weapon.speed or 1
+    nextAttack = clock + 1.5 / speed
+    local clip = group(leftNext and anim.hasGroup(self, group(CLIPS[2], weapon)) and CLIPS[2] or CLIPS[1], weapon)
     leftNext = not leftNext
     interfaces.AnimationController.playBlendedAnimation(clip, {
         startKey = 'start', stopKey = 'stop', priority = anim.PRIORITY.Scripted,
-        blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true })
+        blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true, speed = speed })
 end
 
 return {
@@ -126,14 +149,17 @@ return {
             end
             if not equipped and (carried or clock > 3) then
                 equipped = true
-                print(string.format('OPENOBLIVION_ITEMS %s equips %d', tostring(data and data.name),
-                    items.equipApparel(self)))
+                local worn = items.equipApparel(self)
+                local weapon = items.equipWeapon(self)
+                print(string.format('OPENOBLIVION_ITEMS %s equips %d wields %s', tostring(data and data.name), worn,
+                    tostring(weapon and weapon.item.recordId)))
             end
             -- The host AI readies hand-to-hand for combat; play the original raise/lower clips.
             local now = types.Actor.getStance(self)
             if stance ~= nil and now ~= stance then
-                local clip = now == types.Actor.STANCE.Weapon and 'tes4equip'
-                    or stance == types.Actor.STANCE.Weapon and 'tes4unequip' or nil
+                local weapon = wielded()
+                local clip = now == types.Actor.STANCE.Weapon and group('tes4equip', weapon)
+                    or stance == types.Actor.STANCE.Weapon and group('tes4unequip', weapon) or nil
                 if clip and anim.hasGroup(self, clip) then
                     interfaces.AnimationController.playBlendedAnimation(clip, { startKey = 'start', stopKey = 'stop',
                         priority = anim.PRIORITY.Scripted, blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true })

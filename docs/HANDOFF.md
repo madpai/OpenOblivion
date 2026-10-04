@@ -1,5 +1,15 @@
 # Maintainer handoff
 
+Weapons, 2026-10-04: served `0.35-weapons`. Looted melee weapons can be
+equipped and are drawn and sheathed on the skeleton's weapon nodes, with the
+original one-hand/two-hand clip sets, damage from the decoded exe formula
+(0x547070) and bandits that fight with their weapons; baked face maps are
+tints (×2 detail), now composited onto race skins; race body skins and female
+fallbacks fixed. See [TES4_COMBAT.md](research/TES4_COMBAT.md) and
+[TES4_FACES.md](research/TES4_FACES.md). Next: blocking, power attacks,
+fatigue cost per swing, armor reduction, then bows, detection/disposition,
+FaceGen shapes (EGM) and trees.
+
 Faces, 2026-10-04: served `0.34-faces`. NPC heads use baked face textures
 (forced opaque), race head-part textures and hair records with hair colour; see
 [TES4_FACES.md](research/TES4_FACES.md). The desktop probe takes

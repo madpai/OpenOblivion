@@ -14,7 +14,7 @@
  namespace
  {
  
-@@ -493,6 +500,97 @@
+@@ -493,6 +500,116 @@
          bool is1stPerson = mViewMode == VM_FirstPerson;
          bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
  
@@ -34,7 +34,9 @@
 +                std::vector<std::string> partModels;
 +                for (const OpenOblivion::Tes4PartLook& part : parts)
 +                    partModels.push_back(part.mModel);
-+                mObjectRoot->setUserValue("openoblivionParts", OpenOblivion::tes4PartSignature(partModels));
++                const OpenOblivion::Tes4WeaponLook weaponLook = OpenOblivion::tes4EquippedWeapon(mPtr, store);
++                mObjectRoot->setUserValue(
++                    "openoblivionParts", OpenOblivion::tes4PartSignature(partModels, weaponLook.mShort));
 +                for (const OpenOblivion::Tes4PartLook& part : parts)
 +                {
 +                    const unsigned firstAdded = mObjectRoot->getNumChildren();
@@ -51,6 +53,14 @@
 +                        if (!mResourceSystem->getVFS()->exists(texture))
 +                            texture.clear();
 +                    }
++                    VFS::Path::Normalized faceBase;
++                    if (!texture.value().empty() && part.mOpaque && !part.mFallbackTexture.empty())
++                    {
++                        faceBase = Misc::ResourceHelpers::correctTexturePath(
++                            VFS::Path::Normalized(part.mFallbackTexture), *mResourceSystem->getVFS());
++                        if (!mResourceSystem->getVFS()->exists(faceBase))
++                            faceBase.clear();
++                    }
 +                    if (texture.value().empty() && !part.mFallbackTexture.empty())
 +                    {
 +                        texture = Misc::ResourceHelpers::correctTexturePath(
@@ -64,7 +74,7 @@
 +                        if (!texture.value().empty())
 +                        {
 +                            if (part.mOpaque)
-+                                OpenOblivion::tes4OverrideOpaqueTexture(texture, mResourceSystem, added);
++                                OpenOblivion::tes4OverrideOpaqueTexture(texture, mResourceSystem, added, faceBase);
 +                            else
 +                                overrideTexture(texture, mResourceSystem, added);
 +                        }
@@ -74,9 +84,9 @@
 +                            added.accept(tint);
 +                        }
 +                    }
-+                    if (!part.mTexture.empty())
-+                        Log(Debug::Info) << "OPENOBLIVION_FACE part=" << part.mModel << " texture=" << part.mTexture
-+                                         << (texture.value().empty() ? " missing" : " applied");
++                    Log(Debug::Info) << "OPENOBLIVION_FACE npc=" << tes4Player->mEditorId << " part=" << part.mModel
++                                     << " texture=" << part.mTexture
++                                     << (part.mTexture.empty() ? "" : (texture.value().empty() ? " missing" : " applied"));
 +                }
 +                // The host camera tracks a "Head" bone; TES4 skeletons name it "Bip01 Head".
 +                NodeMap& nodes = const_cast<NodeMap&>(getNodeMap());
@@ -91,6 +101,15 @@
 +                    if (!OpenOblivion::tes4UseClip(group, is1stPerson))
 +                        continue;
 +                    const VFS::Path::Normalized clip(directory + std::string(file));
++                    if (!mResourceSystem->getVFS()->exists(clip))
++                        continue;
++                    osg::ref_ptr<const SceneUtil::KeyframeHolder> loaded = mResourceSystem->getKeyframeManager()->get(clip);
++                    if (loaded)
++                        addKeyframeSource(OpenOblivion::tes4RenamedKeyframes(*loaded, group, is1stPerson), clip, skeleton);
++                }
++                for (const auto& [file, group] : OpenOblivion::tes4WeaponClips(weaponLook.mShort))
++                {
++                    const VFS::Path::Normalized clip(directory + file);
 +                    if (!mResourceSystem->getVFS()->exists(clip))
 +                        continue;
 +                    osg::ref_ptr<const SceneUtil::KeyframeHolder> loaded = mResourceSystem->getKeyframeManager()->get(clip);
@@ -112,7 +131,7 @@
          std::string_view base;
          if (!isWerewolf)
          {
-@@ -568,6 +666,24 @@
+@@ -568,6 +685,25 @@
          if (!mObjectRoot.get())
              return;
  
@@ -124,8 +143,9 @@
 +            std::string attached;
 +            mObjectRoot->getUserValue("openoblivionParts", attached);
 +            if (attached
-+                != OpenOblivion::tes4PartSignature(OpenOblivion::tes4PlayerPartModels(
-+                    *tes4Actor, tes4Store, mViewMode == VM_FirstPerson, mPtr)))
++                != OpenOblivion::tes4PartSignature(
++                    OpenOblivion::tes4PlayerPartModels(*tes4Actor, tes4Store, mViewMode == VM_FirstPerson, mPtr),
++                    OpenOblivion::tes4EquippedWeapon(mPtr, tes4Store).mShort))
 +            {
 +                rebuild();
 +                if (mPtr == MWMechanics::getPlayer())
@@ -137,10 +157,51 @@
          NpcType curType = getNpcType();
          if (curType != mNpcType)
          {
-@@ -715,6 +831,11 @@
+@@ -715,6 +851,52 @@
                  osg::Quat(mPtr.getRefData().getPosition().rot[0] * rotateFactor, osg::Vec3f(-1, 0, 0)));
              mFirstPersonNeckController->setOffset(mFirstPersonOffset);
          }
++        // OpenOblivion: a TES4 actor's carried weapon sits in the hand while drawn and on
++        // the hip or back otherwise (not shown holstered in first person).
++        if (mObjectRoot.get() != nullptr)
++        {
++            const MWWorld::ESMStore& weaponStore = *MWBase::Environment::get().getESMStore();
++            if (OpenOblivion::tes4ActorRecordFor(mPtr, mNpc->mHead, weaponStore))
++            {
++                const OpenOblivion::Tes4WeaponLook weaponLook = OpenOblivion::tes4EquippedWeapon(mPtr, weaponStore);
++                const bool drawn = mPtr.getClass().getCreatureStats(mPtr).getDrawState() == MWMechanics::DrawState::Weapon;
++                std::string wanted;
++                if (!weaponLook.mModel.empty() && (drawn || mViewMode != VM_FirstPerson))
++                    wanted = weaponLook.mModel + (drawn ? "@weapon" : std::string("@") + weaponLook.mSheath);
++                std::string current;
++                mObjectRoot->getUserValue("openoblivionWeapon", current);
++                if (wanted != current)
++                {
++                    osg::UserDataContainer* data = mObjectRoot->getOrCreateUserDataContainer();
++                    if (const unsigned index = data->getUserObjectIndex("openoblivionWeaponNode"); index < data->getNumUserObjects())
++                    {
++                        if (osg::Node* old = dynamic_cast<osg::Node*>(data->getUserObject(index)))
++                            while (old->getNumParents() > 0)
++                                old->getParent(0)->removeChild(old);
++                        data->removeUserObject(index);
++                    }
++                    mObjectRoot->setUserValue("openoblivionWeapon", wanted);
++                    if (!wanted.empty())
++                    {
++                        const auto holder = mNodeMap.find(drawn ? "weapon" : weaponLook.mSheath);
++                        if (holder != mNodeMap.end())
++                        {
++                            osg::ref_ptr<osg::Node> instance
++                                = mResourceSystem->getSceneManager()->getInstance(Misc::ResourceHelpers::correctMeshPath(
++                                    VFS::Path::Normalized(weaponLook.mModel)));
++                            instance->setName("openoblivionWeaponNode");
++                            holder->second->addChild(instance);
++                            data->addUserObject(instance);
++                        }
++                    }
++                }
++            }
++        }
 +        if (OpenOblivion::Tes4FirstPersonPitch* pitch = OpenOblivion::tes4FirstPersonPitch(mObjectRoot.get()))
 +        {
 +            pitch->setPitch(mPtr.getRefData().getPosition().rot[0]);
@@ -149,7 +210,7 @@
  
          WeaponAnimation::configureControllers(mPtr.getRefData().getPosition().rot[0] + getBodyPitchRadians());
  
-@@ -926,7 +1047,23 @@
+@@ -926,7 +1108,23 @@
          {
              // If there is no active animation, then the bip01 neck node will not be updated each frame, and the
              // RotateController will accumulate rotations.

@@ -15,6 +15,21 @@ local M = { available = ok }
 
 function M.id(formId) return string.format('oo4_%06x', formId) end
 
+local KINDS
+local function weaponKinds()
+    if KINDS then return KINDS end
+    local T = types.Weapon.TYPE
+    KINDS = {
+        [T.LongBladeOneHand] = { short = '1h', skill = 'blade', melee = true },
+        [T.LongBladeTwoHand] = { short = '2c', skill = 'blade', melee = true },
+        [T.BluntOneHand] = { short = '1b', skill = 'blunt', melee = true },
+        [T.BluntTwoClose] = { short = '2b', skill = 'blunt', melee = true },
+        [T.BluntTwoWide] = { short = '2w', skill = 'blunt', melee = false }, -- staff
+        [T.MarksmanBow] = { short = 'bow', skill = 'marksman', melee = false },
+    }
+    return KINDS
+end
+
 local function flag(flags, bit) return math.floor(flags / bit) % 2 == 1 end
 
 local function pick(list, level)
@@ -66,6 +81,49 @@ end
 function M.isApparel(id)
     local _, kind = M.record(id)
     return kind == types.Armor or kind == types.Clothing
+end
+
+-- Melee weapons the TES4 combat layer can use (not bows or staves).
+function M.isMeleeWeapon(id)
+    local record, kind = M.record(id)
+    if kind ~= types.Weapon then return false end
+    local info = weaponKinds()[record.type]
+    return info ~= nil and info.melee
+end
+
+-- Combat data of a generated TES4 weapon item, or nil.
+function M.weaponData(item)
+    if not item or not types.Weapon.objectIsInstance(item) or item.recordId:sub(1, 4) ~= 'oo4_' then return nil end
+    local record = types.Weapon.record(item)
+    local kind = weaponKinds()[record.type]
+    if not kind then return nil end
+    local condition = 1
+    local ok, data = pcall(types.Item.itemData, item)
+    if ok and data and data.condition and record.health and record.health > 0 then
+        condition = data.condition / record.health
+    end
+    return { item = item, short = kind.short, skill = kind.skill, melee = kind.melee,
+        damage = record.chopMaxDamage, reach = record.reach, speed = record.speed, condition = condition }
+end
+
+-- The weapon in the actor's right hand, as combat data, or nil.
+function M.equippedWeapon(actor)
+    return M.weaponData(types.Actor.getEquipment(actor)[types.Actor.EQUIPMENT_SLOT.CarriedRight])
+end
+
+-- Equip the strongest melee weapon the actor carries (bows need arrows and
+-- staves have no combat rules yet). Local scripts only.
+function M.equipWeapon(actor)
+    local best
+    for _, item in ipairs(types.Actor.inventory(actor):getAll()) do
+        local data = M.weaponData(item)
+        if data and data.melee and (not best or data.damage > best.damage) then best = data end
+    end
+    if not best then return nil end
+    local equipment = types.Actor.getEquipment(actor)
+    equipment[types.Actor.EQUIPMENT_SLOT.CarriedRight] = best.item
+    types.Actor.setEquipment(actor, equipment)
+    return best
 end
 
 -- TES4 body regions each host type covers. TES4 equips one item per region; a

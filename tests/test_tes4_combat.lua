@@ -18,4 +18,12 @@ near(combat.fatigueFactor(0, 150), 0.5, 'exhausted fatigue factor')
 h = combat.handToHand(100, 100, 50, 150, 150)
 near(h, 1 + 14 * 0.75, 'master health cap scale')
 near(combat.handReach(), 128 * 0.6 + 21 + 13.3, 'reach edge to edge')
+-- Weapons (Oblivion.exe 0x547070): damage x 0.5 x condition x skill x strength x fatigue.
+-- Iron Longsword (damage 10) in the starting player's hands: blade 5, strength 50, luck 50.
+near(combat.weapon(10, 5, 50, 50, 150, 150, 1), 1.375, 'starting player with an iron longsword')
+near(combat.weapon(10, 100, 100, 50, 150, 150, 1), 5 * 1.0 * 1.7 * 1.25, 'master skill and strength')
+near(combat.weapon(10, 5, 50, 50, 150, 150, 0), 1.375 * 0.5 / 1.0, 'broken weapon halves damage')
+near(combat.weapon(10, 5, 50, 50, 0, 150, 1), 1.375 * 0.5, 'exhausted fatigue factor')
+near(combat.weapon(10, 5, 150, 50, 150, 150, 1), combat.weapon(10, 5, 100, 50, 150, 150, 1), 'strength clamps to 100')
+near(combat.weaponReach(1.3), 128 * 1.3 + 21 + 13.3, 'weapon reach')
 print('TES4 combat fixtures passed: ' .. checks .. ' checks')

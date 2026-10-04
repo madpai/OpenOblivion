@@ -21,6 +21,7 @@
 #include <components/esm4/loadhair.hpp>
 #include <components/esm4/loadnpc.hpp>
 #include <components/esm4/loadrace.hpp>
+#include <components/esm4/loadweap.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
 #include <components/misc/resourcehelpers.hpp>
@@ -45,12 +46,14 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdio>
 #include <map>
 #include <cstdlib>
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -172,6 +175,8 @@ namespace OpenOblivion
         const bool female = tes4PlayerFemale(npc);
         auto add = [&](const auto& record, std::uint32_t flags) {
             std::string model = tes4PathText(female ? record.mModelFemale : record.mModelMale);
+            if (model.empty()) // many items have one biped model for both sexes
+                model = tes4PathText(record.mModelMale);
             if (model.empty())
                 model = tes4PathText(record.mModel);
             if (model.empty())
@@ -251,17 +256,27 @@ namespace OpenOblivion
         // is the fixed set in Characters\_Male (female meshes share that folder).
         // A worn item replaces the body piece in its slot.
         const std::string_view prefix = female ? "female" : "";
-        const std::pair<std::string_view, std::uint32_t> pieces[] = { { "upperbody", sTes4SlotUpper },
-            { "lowerbody", sTes4SlotLower }, { "hand", sTes4SlotHand }, { "foot", sTes4SlotFoot } };
-        for (const auto& [piece, slot] : pieces)
+        const ESM4::Race* race = store.get<ESM4::Race>().search(npc.mRace);
+        // The race gives each body piece its own skin texture (list order: upper body,
+        // legs, hands, feet); the meshes' own paths are the Imperial default.
+        auto raceBodyTexture = [&](std::size_t index) -> std::string {
+            if (race == nullptr)
+                return {};
+            if (female && index < race->mBodyPartsFemale.size() && !race->mBodyPartsFemale[index].texture.empty())
+                return race->mBodyPartsFemale[index].texture;
+            return index < race->mBodyPartsMale.size() ? race->mBodyPartsMale[index].texture : std::string();
+        };
+        const std::tuple<std::string_view, std::uint32_t, std::size_t> pieces[] = { { "upperbody", sTes4SlotUpper, 0 },
+            { "lowerbody", sTes4SlotLower, 1 }, { "hand", sTes4SlotHand, 2 }, { "foot", sTes4SlotFoot, 3 } };
+        for (const auto& [piece, slot, index] : pieces)
             if ((worn.mCovered & slot) == 0 && (!firstPerson || slot == sTes4SlotUpper || slot == sTes4SlotHand))
-                parts.push_back({ "Characters\\_Male\\" + std::string(prefix) + std::string(piece) + ".nif", {} });
+                parts.push_back({ "Characters\\_Male\\" + std::string(prefix) + std::string(piece) + ".nif",
+                    raceBodyTexture(index) });
         // First person shows only upper-body and hand pieces: the original
         // first-person clips do not pose the legs.
         for (std::size_t i = 0; i < worn.mModels.size(); ++i)
             if (!firstPerson || (worn.mSlots[i] & (sTes4SlotUpper | sTes4SlotHand)) != 0)
                 parts.push_back({ worn.mModels[i], {} });
-        const ESM4::Race* race = store.get<ESM4::Race>().search(npc.mRace);
         if (race != nullptr)
         {
             for (const ESM4::Race::BodyPart& part : female ? race->mBodyPartsFemale : race->mBodyPartsMale)
@@ -272,12 +287,18 @@ namespace OpenOblivion
                 // Head parts by index: 0 head, 1/2 male/female ears, 3 mouth, 4/5 teeth,
                 // 6 tongue, 7/8 eyes. The race gives each its own texture; the engine does
                 // not load EYES records, so eyes keep the race's eye texture.
-                const std::vector<ESM4::Race::BodyPart>& head = female ? race->mHeadPartsFemale : race->mHeadParts;
+                // A part the female list leaves empty (the race shares one head
+                // mesh between the sexes) comes from the male list.
+                const std::vector<ESM4::Race::BodyPart>& head = race->mHeadParts;
                 for (std::size_t i = 0; i < head.size(); ++i)
                 {
-                    if (head[i].mesh.empty() || (i == 1 && female) || (i == 2 && !female))
+                    const ESM4::Race::BodyPart& own = female && i < race->mHeadPartsFemale.size()
+                            && !race->mHeadPartsFemale[i].mesh.empty()
+                        ? race->mHeadPartsFemale[i]
+                        : head[i];
+                    if (own.mesh.empty() || (i == 1 && female) || (i == 2 && !female))
                         continue;
-                    Tes4PartLook look{ head[i].mesh, head[i].texture };
+                    Tes4PartLook look{ own.mesh, own.texture.empty() ? head[i].texture : own.texture };
                     if (i == 0)
                     {
                         look.mOpaque = true;
@@ -347,17 +368,143 @@ namespace OpenOblivion
         }
     }
 
+    // Decoded 8-bit RGB of an image, or false: S3TC (DXT1/3/5) blocks and plain
+    // 8-bit RGB/RGBA/BGR/BGRA. Level 0 only.
+    inline bool tes4DecodeRgb(const osg::Image& image, std::vector<unsigned char>& rgb, int& width, int& height)
+    {
+        width = image.s();
+        height = image.t();
+        const unsigned char* data = image.data();
+        if (data == nullptr || width <= 0 || height <= 0)
+            return false;
+        rgb.assign(static_cast<std::size_t>(width) * height * 3, 0);
+        const GLenum format = image.getPixelFormat();
+        auto expand = [](unsigned c, unsigned char* out) {
+            out[0] = static_cast<unsigned char>(((c >> 11) & 31) * 255 / 31);
+            out[1] = static_cast<unsigned char>(((c >> 5) & 63) * 255 / 63);
+            out[2] = static_cast<unsigned char>((c & 31) * 255 / 31);
+        };
+        if (format == GL_COMPRESSED_RGB_S3TC_DXT1_EXT || format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+            || format == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT || format == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)
+        {
+            const bool dxt1 = format == GL_COMPRESSED_RGB_S3TC_DXT1_EXT || format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            const std::size_t blockSize = dxt1 ? 8 : 16;
+            for (int by = 0; by < (height + 3) / 4; ++by)
+                for (int bx = 0; bx < (width + 3) / 4; ++bx)
+                {
+                    const unsigned char* block = data + (static_cast<std::size_t>(by) * ((width + 3) / 4) + bx) * blockSize;
+                    const unsigned char* color = block + (dxt1 ? 0 : 8);
+                    const unsigned c0 = color[0] | (color[1] << 8), c1 = color[2] | (color[3] << 8);
+                    unsigned char palette[4][3];
+                    expand(c0, palette[0]);
+                    expand(c1, palette[1]);
+                    for (int k = 0; k < 3; ++k)
+                    {
+                        if (c0 > c1 || !dxt1)
+                        {
+                            palette[2][k] = static_cast<unsigned char>((2 * palette[0][k] + palette[1][k]) / 3);
+                            palette[3][k] = static_cast<unsigned char>((palette[0][k] + 2 * palette[1][k]) / 3);
+                        }
+                        else
+                        {
+                            palette[2][k] = static_cast<unsigned char>((palette[0][k] + palette[1][k]) / 2);
+                            palette[3][k] = 0;
+                        }
+                    }
+                    const std::uint32_t indices = static_cast<std::uint32_t>(color[4]) | (static_cast<std::uint32_t>(color[5]) << 8)
+                        | (static_cast<std::uint32_t>(color[6]) << 16) | (static_cast<std::uint32_t>(color[7]) << 24);
+                    for (int i = 0; i < 16; ++i)
+                    {
+                        const int x = bx * 4 + (i & 3), y = by * 4 + (i >> 2);
+                        if (x >= width || y >= height)
+                            continue;
+                        std::memcpy(&rgb[(static_cast<std::size_t>(y) * width + x) * 3], palette[(indices >> (2 * i)) & 3], 3);
+                    }
+                }
+            return true;
+        }
+        if (image.isCompressed() || image.getDataType() != GL_UNSIGNED_BYTE)
+            return false;
+        bool swap = false;
+        switch (format)
+        {
+            case GL_RGB:
+            case GL_RGBA:
+                break;
+            case GL_BGR:
+            case GL_BGRA:
+                swap = true;
+                break;
+            default:
+                return false;
+        }
+        for (int y = 0; y < height; ++y)
+            for (int x = 0; x < width; ++x)
+            {
+                const unsigned char* in = image.data(x, y);
+                unsigned char* out = &rgb[(static_cast<std::size_t>(y) * width + x) * 3];
+                out[0] = in[swap ? 2 : 0];
+                out[1] = in[1];
+                out[2] = in[swap ? 0 : 2];
+            }
+        return true;
+    }
+
+    // The face as the original builds it: the race head texture multiplied by
+    // the NPC's baked FaceGen map twice over (a map of mid-grey leaves the
+    // skin unchanged), as a Gamebryo detail map does. Opaque.
+    inline osg::ref_ptr<osg::Image> tes4ComposeFace(const osg::Image& base, const osg::Image& baked)
+    {
+        std::vector<unsigned char> head, map;
+        int baseWidth = 0, baseHeight = 0, width = 0, height = 0;
+        if (!tes4DecodeRgb(base, head, baseWidth, baseHeight) || !tes4DecodeRgb(baked, map, width, height))
+            return nullptr;
+        osg::ref_ptr<osg::Image> face = new osg::Image;
+        face->allocateImage(width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+        face->setInternalTextureFormat(GL_RGBA8);
+        for (int y = 0; y < height; ++y)
+            for (int x = 0; x < width; ++x)
+            {
+                // Bilinear sample of the base at the face map's pixel.
+                const float u = (x + 0.5f) * baseWidth / width - 0.5f, v = (y + 0.5f) * baseHeight / height - 0.5f;
+                const int x0 = std::clamp(static_cast<int>(std::floor(u)), 0, baseWidth - 1);
+                const int y0 = std::clamp(static_cast<int>(std::floor(v)), 0, baseHeight - 1);
+                const int x1 = std::min(x0 + 1, baseWidth - 1), y1 = std::min(y0 + 1, baseHeight - 1);
+                const float fx = std::clamp(u - x0, 0.f, 1.f), fy = std::clamp(v - y0, 0.f, 1.f);
+                unsigned char* out = face->data(x, y);
+                for (int c = 0; c < 3; ++c)
+                {
+                    auto at = [&](int px, int py) {
+                        return static_cast<float>(head[(static_cast<std::size_t>(py) * baseWidth + px) * 3 + c]);
+                    };
+                    const float baseValue = (at(x0, y0) * (1 - fx) + at(x1, y0) * fx) * (1 - fy)
+                        + (at(x0, y1) * (1 - fx) + at(x1, y1) * fx) * fy;
+                    const float tint = map[(static_cast<std::size_t>(y) * width + x) * 3 + c] / 255.f;
+                    out[c] = static_cast<unsigned char>(std::clamp(baseValue * tint * 2.f, 0.f, 255.f));
+                }
+                out[3] = 255;
+            }
+        return face;
+    }
+
     // As MWRender::overrideTexture, with the skin alpha removed.
-    inline void tes4OverrideOpaqueTexture(
-        VFS::Path::NormalizedView texture, Resource::ResourceSystem* resourceSystem, osg::Node& node)
+    // With a base texture, the image is that base multiplied by the face map (tes4ComposeFace).
+    inline void tes4OverrideOpaqueTexture(VFS::Path::NormalizedView texture, Resource::ResourceSystem* resourceSystem,
+        osg::Node& node, VFS::Path::NormalizedView base = {})
     {
         static std::map<std::string, osg::ref_ptr<osg::Texture2D>> cache;
-        osg::ref_ptr<osg::Texture2D>& tex = cache[std::string(texture.value())];
+        osg::ref_ptr<osg::Texture2D>& tex = cache[std::string(texture.value()) + "|" + std::string(base.value())];
         if (!tex)
         {
-            osg::ref_ptr<osg::Image> image
-                = new osg::Image(*resourceSystem->getImageManager()->getImage(texture), osg::CopyOp::DEEP_COPY_ALL);
-            tes4ForceOpaque(*image);
+            osg::ref_ptr<osg::Image> image;
+            if (!base.value().empty())
+                image = tes4ComposeFace(*resourceSystem->getImageManager()->getImage(base),
+                    *resourceSystem->getImageManager()->getImage(texture));
+            if (!image)
+            {
+                image = new osg::Image(*resourceSystem->getImageManager()->getImage(texture), osg::CopyOp::DEEP_COPY_ALL);
+                tes4ForceOpaque(*image);
+            }
             tex = new osg::Texture2D(image);
             tex->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
             tex->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
@@ -410,13 +557,78 @@ namespace OpenOblivion
         float mRed, mGreen, mBlue;
     };
 
-    // Identifies the attached part set, so an equipment change can rebuild it.
-    inline std::string tes4PartSignature(const std::vector<std::string>& models)
+    // The weapon an actor carries in its right hand slot: the TES4 mesh, the
+    // host animation short group it selects, and the skeleton node that holds
+    // it holstered. TES4 weapon types 0..5 are generated as host types
+    // LongBladeOneHand, LongBladeTwoHand, BluntOneHand, BluntTwoClose,
+    // BluntTwoWide (staff) and MarksmanBow (tools/android/tes4_items.py).
+    struct Tes4WeaponLook
+    {
+        std::string mModel;
+        std::string mShort; // host weapon short group: 1h 2c 1b 2b 2w bow
+        const char* mSheath = "sideweapon";
+    };
+
+    inline Tes4WeaponLook tes4EquippedWeapon(const MWWorld::Ptr& ptr, const MWWorld::ESMStore& store)
+    {
+        Tes4WeaponLook look;
+        if (ptr.isEmpty() || !tes4HostItemsLoaded(store) || !ptr.getClass().hasInventoryStore(ptr))
+            return look;
+        const MWWorld::InventoryStore& inventory = ptr.getClass().getInventoryStore(ptr);
+        const auto equipped = inventory.getSlot(MWWorld::InventoryStore::Slot_CarriedRight);
+        if (equipped == inventory.cend())
+            return look;
+        const ESM4::Weapon* weapon
+            = store.get<ESM4::Weapon>().search(tes4ItemRecordId(equipped->getCellRef().getRefId(), store));
+        if (weapon == nullptr || tes4PathText(weapon->mModel).empty())
+            return look;
+        static constexpr const char* shorts[] = { "1h", "2c", "1b", "2b", "2w", "bow" };
+        if (weapon->mData.type > 5)
+            return look;
+        look.mModel = tes4PathText(weapon->mModel);
+        look.mShort = shorts[weapon->mData.type];
+        // One-handed weapons hang at the hip; two-handed weapons, staves and bows on the back.
+        look.mSheath = (weapon->mData.type == 0 || weapon->mData.type == 2) ? "sideweapon" : "backweapon";
+        return look;
+    }
+
+    // Original clips of a weapon family as (file, host group) pairs. The host
+    // groups are the weapon short group suffixed variants of the plain names.
+    inline std::vector<std::pair<std::string, std::string>> tes4WeaponClips(std::string_view shortGroup)
+    {
+        std::vector<std::pair<std::string, std::string>> clips;
+        std::string_view family;
+        if (shortGroup == "1h" || shortGroup == "1b")
+            family = "onehand";
+        else if (shortGroup == "2c" || shortGroup == "2b")
+            family = "twohand";
+        else if (shortGroup == "2w")
+            family = "staff";
+        else if (shortGroup == "bow")
+            family = "bow";
+        else
+            return clips;
+        static constexpr std::pair<std::string_view, std::string_view> names[] = { { "idle", "idle" },
+            { "forward", "walkforward" }, { "backward", "walkback" }, { "left", "walkleft" },
+            { "right", "walkright" }, { "fastforward", "runforward" }, { "fastbackward", "runback" },
+            { "fastleft", "runleft" }, { "fastright", "runright" }, { "turnleft", "turnleft" },
+            { "turnright", "turnright" }, { "equip", "tes4equip" }, { "unequip", "tes4unequip" },
+            { "attackright", "tes4attackright" }, { "attackleft", "tes4attackleft" },
+            { "attackpower", "tes4attackpower" }, { "attack", "tes4attackright" }, { "blockidle", "tes4blockidle" },
+            { "stagger", "tes4stagger" }, { "recoil_01", "tes4recoil" } };
+        for (const auto& [suffix, group] : names)
+            clips.emplace_back(std::string(family) + std::string(suffix) + ".kf", std::string(group) + std::string(shortGroup));
+        return clips;
+    }
+
+    // Identifies the attached part set and weapon family, so an equipment
+    // change can rebuild it.
+    inline std::string tes4PartSignature(const std::vector<std::string>& models, std::string_view weaponShort = {})
     {
         std::string signature;
         for (const std::string& model : models)
             signature += Misc::StringUtils::lowerCase(model) + '|';
-        return signature;
+        return signature + '#' + std::string(weaponShort);
     }
 
     inline std::string tes4PlayerSkeleton(std::string thirdPerson, bool firstPerson)

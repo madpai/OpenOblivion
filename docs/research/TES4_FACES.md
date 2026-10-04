@@ -4,8 +4,8 @@ Date: 2026-10-04. Phone build `0.34-faces`.
 
 ## What the original does
 
-An NPC's head is the race head mesh (`Characters\<Race>\HeadHuman.nif`) with a
-face texture, plus ears, mouth, teeth, tongue and eyes from the race's head-part
+An NPC's head is the race head mesh (`Characters\<Race>\HeadHuman.nif`; the
+human races share it) with a face texture, plus ears, mouth, teeth, tongue and eyes from the race's head-part
 list, plus the NPC's hair record. The Construction Set bakes one face texture
 per NPC next to the master (`textures\faces\oblivion.esm\<FormID>_0.dds`,
 256×256; `_1` and `_2` are 32×32 tint swatches). Runtime FaceGen also morphs the
@@ -16,23 +16,28 @@ build a texture from FGTS and the race `.egt` tint modes (not done yet).
 
 `tes4_player.hpp` builds a look per attached part:
 
-- Head (race head part 0): the NPC's baked face texture when the master has one,
-  else the race head texture. Baked faces carry a constant alpha of 127 that the
-  original ignores; the host alpha-tests it away (the head vanished in the first
-  attempt), so skin textures are used opaque. The copy of the image has its DXT3
-  or DXT5 alpha blocks rewritten (or alpha bytes if the GPU path decompressed it).
-- Ears, mouth, teeth, tongue and eyes: the race's own texture for that part.
-  The NIF's own paths (for example `textures/facegen/ears/human/earshuman.dds`)
-  do not exist in the archives. Males use head part 1 (ears) and females 2.
-  Head parts come from the female list for female NPCs (they previously always
-  used the male list).
-- Hair: the HAIR record's model and its texture (the NIF's texture names do not
-  exist either, for example `grey_mane.dds`), with the NPC's hair colour (HCLR)
-  multiplied into the materials.
-
-Texture swaps use the host's `overrideTexture` helper (and a copy of it for
-skin), applied to the nodes each part adds. Baked faces are only known for the
-master's NPCs.
+- Head (race head part 0): the race head texture multiplied by the NPC's baked
+  FaceGen map ×2. The baked maps (`textures\faces\oblivion.esm\<FormID>_0.dds`)
+  are not skins: they are grey-blue tint maps centred on mid-grey (mean about
+  0.45 to 0.65) with eyebrows and lips as darker or lighter detail, with a
+  constant alpha of 127, as a Gamebryo detail map (×2 modulate) is used. Using
+  them directly as the face made heads grey, and the alpha made the host
+  alpha-test the whole head away (first attempt). The two images are decoded
+  (DXT1/3/5 in software) and combined into an opaque RGBA texture, cached per
+  pair. The Player has no baked face, so uses the race texture opaque. The
+  ×2 modulate is the interpretation that fits the data; not yet compared with
+  an original face.
+- Body pieces: the RACE record gives each piece (upper, legs, hands, feet) its
+  skin texture, so a Dark Elf has ash-grey skin all over, not Imperial brown.
+- Ears, mouth, teeth, tongue: the race's own texture. Males use head part 1
+  (ears) and females 2. A head part the female list leaves empty (the race
+  shares one head mesh) comes from the male list; using the empty female list
+  made female bandits headless.
+- Hair: the HAIR record's model and texture (the NIF's own texture names do not
+  exist in the archives), with the NPC's hair colour (HCLR) multiplied into the
+  materials.
+- Worn armor and clothing for a female actor use the female biped model, else
+  the male one (many items have a single model).
 
 ## Evidence and limits
 
