@@ -154,6 +154,10 @@ return {
                     tostring(self.controls.sneak)))
                 print(string.format('OPENOBLIVION_PLAYER_VIEW t=%.6f camera_z=%.6f tracked_z=%.6f pitch=%.6f yaw=%.6f',
                     elapsed, camera.getPosition().z, camera.getTrackedPosition().z, camera.getPitch(), camera.getYaw()))
+                local offset = camera.getPosition() - self.position
+                local forward = util.vector2(math.sin(camera.getYaw()), math.cos(camera.getYaw()))
+                print(string.format('OPENOBLIVION_PLAYER_VIEW_OFFSET t=%.6f ahead=%.3f side=%.3f up=%.3f', elapsed,
+                    offset.x * forward.x + offset.y * forward.y, offset.x * forward.y - offset.y * forward.x, offset.z))
             end
             if config.ui and not uiOpened and elapsed >= (config.shot or 6.5) then
                 uiOpened = core.getRealTime()

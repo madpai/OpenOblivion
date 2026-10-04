@@ -106,3 +106,15 @@ backtrace (module, offset, symbol) and then chain to the previous handler.
 "View Scene Log" shows that file first. Resolve offsets against the unstripped
 library kept in `~/openoblivion-private/symbols/`.
 
+## First-person rubber-banding (build `0.39-hair-run`)
+
+Owner report: the first-person view rubber-banded while running. A desktop
+probe printing the camera's offset from the player showed it sliding 200+
+units ahead and snapping back every run cycle. The first-person clips carry
+root motion, which the engine zeroes only for the root controller in blend
+group 0 (`Animation::addAnimSource` registers the accumulation controller only
+when its blend mask is 0). The 0.33 change that put every first-person
+controller in the torso blend group moved the root there too, so the root
+motion leaked into the camera. The root (`Bip01`) controller now keeps its own
+blend group; the offset is constant while running.
+

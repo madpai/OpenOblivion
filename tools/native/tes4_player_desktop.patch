@@ -14,7 +14,7 @@
  namespace
  {
  
-@@ -500,6 +507,131 @@
+@@ -500,6 +507,142 @@
          bool is1stPerson = mViewMode == VM_FirstPerson;
          bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
  
@@ -89,19 +89,30 @@
 +                        const auto headBone = skeletonNodes.find("bip01 head");
 +                        if (headBone != skeletonNodes.end())
 +                        {
++                            // The mesh is upright in character axes at the head's origin; the head bone's own
++                            // axes are rotated, so undo its bind rotation (not its position).
++                            osg::Matrix undo;
++                            const osg::NodePathList headPaths = headBone->second->getParentalNodePaths(mObjectRoot.get());
++                            if (!headPaths.empty())
++                                undo = osg::Matrix::rotate(osg::computeLocalToWorld(headPaths[0]).getRotate().inverse());
++                            osg::ref_ptr<osg::MatrixTransform> holder = new osg::MatrixTransform(undo);
 +                            std::vector<osg::ref_ptr<osg::Node>> moved;
 +                            for (unsigned i = firstAdded; i < mObjectRoot->getNumChildren(); ++i)
 +                                moved.emplace_back(mObjectRoot->getChild(i));
 +                            for (const osg::ref_ptr<osg::Node>& node : moved)
 +                            {
 +                                mObjectRoot->removeChild(node);
-+                                headBone->second->addChild(node);
++                                holder->addChild(node);
 +                            }
++                            headBone->second->addChild(holder);
 +                        }
 +                    }
 +                    Log(Debug::Info) << "OPENOBLIVION_FACE npc=" << tes4Player->mEditorId << " part=" << part.mModel
 +                                     << " texture=" << part.mTexture
-+                                     << (part.mTexture.empty() ? "" : (texture.value().empty() ? " missing" : " applied"));
++                                     << (part.mTexture.empty() ? "" : (texture.value().empty() ? " missing" : " applied"))
++                                     << (part.mTinted ? " tint=" + std::to_string(part.mTint[0]) + "," + std::to_string(part.mTint[1]) + ","
++                                             + std::to_string(part.mTint[2])
++                                                      : std::string());
 +                }
 +                // The host camera tracks a "Head" bone; TES4 skeletons name it "Bip01 Head".
 +                NodeMap& nodes = const_cast<NodeMap&>(getNodeMap());
@@ -146,7 +157,7 @@
          std::string_view base;
          if (!isWerewolf)
          {
-@@ -575,6 +707,33 @@
+@@ -575,6 +718,33 @@
          if (!mObjectRoot.get())
              return;
  
@@ -180,7 +191,7 @@
          NpcType curType = getNpcType();
          if (curType != mNpcType)
          {
-@@ -722,6 +881,52 @@
+@@ -722,6 +892,52 @@
                  osg::Quat(mPtr.getRefData().getPosition().rot[0] * rotateFactor, osg::Vec3f(-1, 0, 0)));
              mFirstPersonNeckController->setOffset(mFirstPersonOffset);
          }
@@ -233,7 +244,7 @@
  
          WeaponAnimation::configureControllers(mPtr.getRefData().getPosition().rot[0] + getBodyPitchRadians());
  
-@@ -932,7 +1137,23 @@
+@@ -932,7 +1148,23 @@
          {
              // If there is no active animation, then the bip01 neck node will not be updated each frame, and the
              // RotateController will accumulate rotations.

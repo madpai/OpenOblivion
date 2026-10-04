@@ -32,6 +32,7 @@
 #include <components/sceneutil/texturetype.hpp>
 #include <components/sceneutil/nodecallback.hpp>
 
+#include <osg/Geometry>
 #include <osg/Material>
 #include <osg/MatrixTransform>
 #include <osg/StateSet>
@@ -575,6 +576,53 @@ namespace OpenOblivion
         node.setStateSet(stateset);
     }
 
+    // Hair meshes ship a coloured material; the original replaces that colour
+    // with the NPC's hair colour. Statesets are shared with the model template,
+    // so each is copied before its material is whitened.
+    class Tes4WhiteMaterials : public osg::NodeVisitor
+    {
+    public:
+        Tes4WhiteMaterials()
+            : osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)
+        {
+        }
+
+        // Hair also carries per-vertex colours that the shaders multiply in; the
+        // original ignores them for hair, so they are set to white.
+        void apply(osg::Drawable& drawable) override
+        {
+            if (osg::Geometry* geometry = drawable.asGeometry())
+                if (const osg::Array* colors = geometry->getColorArray())
+                {
+                    osg::ref_ptr<osg::Vec4Array> white = new osg::Vec4Array(colors->getNumElements());
+                    std::fill(white->begin(), white->end(), osg::Vec4f(1.f, 1.f, 1.f, 1.f));
+                    white->setBinding(colors->getBinding());
+                    geometry->setColorArray(white);
+                }
+            apply(static_cast<osg::Node&>(drawable));
+        }
+
+        void apply(osg::Node& node) override
+        {
+            if (const osg::StateSet* source = node.getStateSet())
+                if (const auto* material = dynamic_cast<const osg::Material*>(
+                        source->getAttribute(osg::StateAttribute::MATERIAL)))
+                {
+                    osg::ref_ptr<osg::StateSet> stateset = new osg::StateSet(*source, osg::CopyOp::SHALLOW_COPY);
+                    osg::ref_ptr<osg::Material> white = new osg::Material(*material, osg::CopyOp::DEEP_COPY_ALL);
+                    for (const auto face : { osg::Material::FRONT, osg::Material::BACK })
+                    {
+                        white->setDiffuse(face, osg::Vec4f(1.f, 1.f, 1.f, white->getDiffuse(face).a()));
+                        white->setAmbient(face, osg::Vec4f(1.f, 1.f, 1.f, white->getAmbient(face).a()));
+                        white->setEmission(face, osg::Vec4f(0.f, 0.f, 0.f, 1.f));
+                    }
+                    stateset->setAttribute(white);
+                    node.setStateSet(stateset);
+                }
+            traverse(node);
+        }
+    };
+
     // As MWRender::overrideTexture, with the colour channels multiplied by the
     // hair colour (alpha kept, so strands stay cut out). The original tints hair
     // by modulating its neutral-grey texture; tinting a material instead gave
@@ -618,6 +666,8 @@ namespace OpenOblivion
         stateset->setTextureAttribute(0, tex, osg::StateAttribute::OVERRIDE);
         stateset->setTextureAttribute(0, new SceneUtil::TextureType("diffuseMap"), osg::StateAttribute::OVERRIDE);
         node.setStateSet(stateset);
+        Tes4WhiteMaterials white;
+        node.accept(white);
     }
 
     // The weapon an actor carries in its right hand slot: the TES4 mesh, the
@@ -843,6 +893,11 @@ namespace OpenOblivion
         if (wholeRig)
             for (auto& [bone, controller] : renamed->mKeyframeControllers)
             {
+                // The engine zeroes the clip's accumulated root motion only for the root
+                // controller in blend group 0; moved to the torso group the first-person
+                // camera slid forward every run cycle and snapped back.
+                if (Misc::StringUtils::ciEqual(bone, "bip01"))
+                    continue;
                 osg::ref_ptr<SceneUtil::KeyframeController> copy
                     = osg::clone(controller.get(), osg::CopyOp::SHALLOW_COPY);
                 copy->setName("Bip01 Spine1");

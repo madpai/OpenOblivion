@@ -1,5 +1,12 @@
 # Maintainer handoff
 
+Hair and first-person run, 2026-10-04: served `0.39-hair-run`. Owner reported
+hair still wrong and first-person rubber-banding. Hair: rotation-only head-bone
+carry plus whitened hair materials and vertex colours (see TES4_FACES.md).
+Rubber-banding: the whole-rig blend-group rename had moved the accumulation
+root out of group 0 (see TES4_ITEMS.md). No crash report arrived for the loot
+crash; if it recurs read the `=== LAST CRASH ===` section of View Scene Log.
+
 Hair and crash log, 2026-10-04: served `0.38-crashlog`. The owner reported hair
 still at the feet and a crash when looting (0.37). Hair now hangs on the head
 bone with a software-tinted texture; the likely crash cause (the inventory
