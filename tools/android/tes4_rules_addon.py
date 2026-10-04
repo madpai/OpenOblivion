@@ -21,12 +21,15 @@ def record(tag, data):
     return tag.encode() + struct.pack('<III', len(data), 0, 0) + data
 
 
-def build():
+def build(extra=()):
+    """The addon bytes; extra = (tag, payload) host records (tes4_items)."""
     header = sub('HEDR', struct.pack('<fi32s256sI', 1.3, 0, b'OpenOblivion contributors',
-                                     b'TES4 rules for the host actors', len(SETTINGS)))
+                                     b'TES4 rules for the host actors', len(SETTINGS) + len(extra)))
     out = record('TES3', header)
     for name, value in SETTINGS.items():
         out += record('GMST', sub('NAME', name.encode() + b'\0') + sub('FLTV', struct.pack('<f', value)))
+    for tag, payload in extra:
+        out += record(tag, payload)
     return out
 
 

@@ -14,6 +14,8 @@ local finished = false
 local turned = false
 local ready = not config.position
 local nextAttack = nil
+local nearby = require('openmw.nearby')
+local uiOpened = nil
 
 local function phase()
     if elapsed < 1 then return 'settle' end
@@ -29,6 +31,19 @@ return {
     },
     engineHandlers = {
         onFrame = function()
+            -- Menus pause the world (and onUpdate); time the menu shot in real time.
+            if uiOpened and not finished then
+                if not captured and core.getRealTime() - uiOpened > 0.6 then
+                    captured = true
+                    print('OPENOBLIVION_SCENE_PROBE ui=' .. tostring(config.ui))
+                    debug.takeScreenshot()
+                elseif core.getRealTime() - uiOpened > 1.5 then
+                    finished = true
+                    print('OPENOBLIVION_SCENE_PROBE_DONE')
+                    core.quit()
+                end
+                return
+            end
             if not ready or not self.cell or core.isWorldPaused() or finished then return end
             interfaces.Controls.overrideMovementControls(true)
             if config.camera == 'third' and camera.getMode() ~= camera.MODE.ThirdPerson then
@@ -63,6 +78,20 @@ return {
                     tostring(self.controls.sneak)))
                 print(string.format('OPENOBLIVION_PLAYER_VIEW t=%.6f camera_z=%.6f tracked_z=%.6f pitch=%.6f yaw=%.6f',
                     elapsed, camera.getPosition().z, camera.getTrackedPosition().z, camera.getPitch(), camera.getYaw()))
+            end
+            if config.ui and not uiOpened and elapsed >= (config.shot or 6.5) then
+                uiOpened = core.getRealTime()
+                if config.ui == 'loot' then
+                    local corpse
+                    for _, actor in ipairs(nearby.actors) do
+                        if actor ~= self.object and types.Actor.isDead(actor) then corpse = actor end
+                    end
+                    print('OPENOBLIVION_SCENE_PROBE loot=' .. tostring(corpse and corpse.recordId))
+                    if corpse then interfaces.UI.setMode('Container', { target = corpse }) end
+                else
+                    interfaces.UI.setMode('Interface', { windows = { 'Inventory' } })
+                end
+                return
             end
             if not captured and elapsed >= (config.shot or 6.5) then
                 captured = true

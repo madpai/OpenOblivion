@@ -4,6 +4,8 @@
 -- from a fight rating near 100, which is used as the stand-in for TES4
 -- aggression until disposition and factions are implemented.
 local anim = require('openmw.animation')
+local core = require('openmw.core')
+local items = require('scripts.openoblivion_tes4_items')
 local interfaces = require('openmw.interfaces')
 local nearby = require('openmw.nearby')
 local util = require('openmw.util')
@@ -20,6 +22,8 @@ local attackStarted = 0
 local nextAttack = 0
 local leftNext = false
 local reportedDeath = false
+local equipped = false
+local stance = nil
 local CLIPS = { 'tes4attackright', 'tes4attackleft' }
 -- Stand-in for TES4 detection until sneak/detection is implemented: an
 -- aggressive actor (aggression >= 80) engages a visible player within range.
@@ -76,7 +80,7 @@ local function fight(player)
     local clip = leftNext and CLIPS[2] or CLIPS[1]
     leftNext = not leftNext
     interfaces.AnimationController.playBlendedAnimation(clip, {
-        startKey = 'start', stopKey = 'stop', priority = anim.PRIORITY.Weapon,
+        startKey = 'start', stopKey = 'stop', priority = anim.PRIORITY.Scripted,
         blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true })
 end
 
@@ -106,9 +110,36 @@ return {
                 if not reportedDeath then
                     reportedDeath = true
                     print('OPENOBLIVION_TES4_COMBAT ' .. tostring(data and data.name) .. ' dies')
+                    if data and data.held and #data.held > 0 then
+                        core.sendGlobalEvent('TES4Loot', { actor = self.object, items = data.held })
+                        data.held = nil
+                    end
                 end
                 return
             end
+            -- Apparel arrives from the global script a frame later.
+            local carried = false
+            if not equipped then
+                for _, item in ipairs(types.Actor.inventory(self):getAll()) do
+                    if item.recordId:sub(1, 4) == 'oo4_' then carried = true end
+                end
+            end
+            if not equipped and (carried or clock > 3) then
+                equipped = true
+                print(string.format('OPENOBLIVION_ITEMS %s equips %d', tostring(data and data.name),
+                    items.equipApparel(self)))
+            end
+            -- The host AI readies hand-to-hand for combat; play the original raise/lower clips.
+            local now = types.Actor.getStance(self)
+            if stance ~= nil and now ~= stance then
+                local clip = now == types.Actor.STANCE.Weapon and 'tes4equip'
+                    or stance == types.Actor.STANCE.Weapon and 'tes4unequip' or nil
+                if clip and anim.hasGroup(self, clip) then
+                    interfaces.AnimationController.playBlendedAnimation(clip, { startKey = 'start', stopKey = 'stop',
+                        priority = anim.PRIORITY.Scripted, blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true })
+                end
+            end
+            stance = now
             local package = interfaces.AI.getActivePackage()
             if package and package.type == 'Combat' and nearby.players[1] then fight(nearby.players[1]) end
             if row and row[1] >= HOSTILE_AGGRESSION and clock >= nextSense then
@@ -133,7 +164,9 @@ return {
             print(string.format('OPENOBLIVION_BRIDGE_STATE %s ai=%s health=%.0f pos=%.0f,%.0f,%.0f', tostring(data.name),
                 package and package.type or 'none', types.Actor.stats.dynamic.health(self).current, p.x, p.y, p.z))
         end,
-        onSave = function() return data end,
-        onLoad = function(saved) data = saved end,
+        onSave = function() return { data = data, equipped = equipped } end,
+        onLoad = function(saved)
+            if saved and saved.data then data, equipped = saved.data, saved.equipped else data, equipped = saved, true end
+        end,
     },
 }

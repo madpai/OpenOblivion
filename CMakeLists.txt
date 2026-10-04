@@ -129,6 +129,8 @@ if(BUILD_TESTING AND NOT ANDROID)
         "${CMAKE_SOURCE_DIR}/tests/test_look_name.lua" "${CMAKE_SOURCE_DIR}")
     add_test(NAME container-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_container.lua" "${CMAKE_SOURCE_DIR}")
+    add_test(NAME tes4-items-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_tes4_items.lua" "${CMAKE_SOURCE_DIR}")
     add_test(NAME tes4-combat-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_tes4_combat.lua" "${CMAKE_SOURCE_DIR}")
     add_test(NAME door-activation-fixtures COMMAND "${Python3_EXECUTABLE}"

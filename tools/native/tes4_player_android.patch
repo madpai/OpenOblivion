@@ -1,18 +1,19 @@
 --- a/apps/openmw/mwrender/npcanimation.cpp
 +++ b/apps/openmw/mwrender/npcanimation.cpp
-@@ -46,6 +46,11 @@
+@@ -46,6 +46,12 @@
  #include "rotatecontroller.hpp"
  #include "vismask.hpp"
  
 +#include <components/resource/keyframemanager.hpp>
 +
++#include "camera.hpp"
 +#include "openoblivion_tes4_player.hpp"
 +#include "openoblivion_tes4_skin.hpp"
 +
  namespace
  {
  
-@@ -493,6 +498,47 @@
+@@ -493,6 +499,53 @@
          bool is1stPerson = mViewMode == VM_FirstPerson;
          bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
  
@@ -27,7 +28,10 @@
 +                    is1stPerson);
 +                setObjectRoot(skeleton, true, true, false);
 +                Resource::SceneManager* manager = mResourceSystem->getSceneManager();
-+                for (const std::string& part : OpenOblivion::tes4PlayerPartModels(*tes4Player, store, is1stPerson))
++                const std::vector<std::string> parts
++                    = OpenOblivion::tes4PlayerPartModels(*tes4Player, store, is1stPerson, mPtr);
++                mObjectRoot->setUserValue("openoblivionParts", OpenOblivion::tes4PartSignature(parts));
++                for (const std::string& part : parts)
 +                    OpenOblivion::Skin::attach(manager->getTemplate(Misc::ResourceHelpers::correctMeshPath(
 +                                                   VFS::Path::Normalized(part))),
 +                        mObjectRoot.get(), manager);
@@ -35,6 +39,9 @@
 +                NodeMap& nodes = const_cast<NodeMap&>(getNodeMap());
 +                if (const auto head = nodes.find("bip01 head"); head != nodes.end())
 +                    nodes.emplace("head", head->second);
++                // First person views from the animated Camera01 node, as the original does.
++                if (const auto camera = nodes.find("camera01"); is1stPerson && camera != nodes.end())
++                    nodes.emplace("camera", camera->second);
 +                const std::string directory = skeleton.substr(0, skeleton.find_last_of('/') + 1);
 +                for (const auto& [file, group] : OpenOblivion::tes4LocomotionGroups())
 +                {
@@ -60,14 +67,40 @@
          std::string_view base;
          if (!isWerewolf)
          {
-@@ -568,6 +614,10 @@
+@@ -568,6 +621,24 @@
          if (!mObjectRoot.get())
              return;
  
-+        // OpenOblivion: TES4-rendered actors have no template body parts.
-+        if (OpenOblivion::tes4ActorRecordFor(mPtr, mNpc->mHead, *MWBase::Environment::get().getESMStore()))
++        // OpenOblivion: TES4-rendered actors have no template body parts; an
++        // equipment change rebuilds their TES4 part set.
++        const MWWorld::ESMStore& tes4Store = *MWBase::Environment::get().getESMStore();
++        if (const ESM4::Npc* tes4Actor = OpenOblivion::tes4ActorRecordFor(mPtr, mNpc->mHead, tes4Store))
++        {
++            std::string attached;
++            mObjectRoot->getUserValue("openoblivionParts", attached);
++            if (attached
++                != OpenOblivion::tes4PartSignature(OpenOblivion::tes4PlayerPartModels(
++                    *tes4Actor, tes4Store, mViewMode == VM_FirstPerson, mPtr)))
++            {
++                rebuild();
++                if (mPtr == MWMechanics::getPlayer())
++                    MWBase::Environment::get().getWorld()->getRenderingManager()->getCamera()->setAnimation(this);
++            }
 +            return;
++        }
 +
          NpcType curType = getNpcType();
          if (curType != mNpcType)
          {
+--- a/components/misc/resourcehelpers.cpp
++++ b/components/misc/resourcehelpers.cpp
+@@ -142,6 +142,9 @@
+ 
+ VFS::Path::Normalized Misc::ResourceHelpers::correctIconPath(VFS::Path::NormalizedView resPath, const VFS::Manager& vfs)
+ {
++    // OpenOblivion: generated TES4 item records name the original icons in place.
++    if (resPath.value().starts_with("textures/menus/icons/"))
++        return VFS::Path::Normalized(resPath);
+     return correctResourcePath({ { icons } }, resPath, vfs, dds);
+ }
+ 

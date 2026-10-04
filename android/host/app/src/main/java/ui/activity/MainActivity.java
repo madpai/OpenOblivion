@@ -27,42 +27,15 @@ public final class MainActivity extends Activity {
     }
     private TextView status;
     private ProgressBar progress;
-    private final List<Button> launches = new ArrayList<>();
+    private final List<TextView> launches = new ArrayList<>();
     private boolean preparing;
     private boolean installedData;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(32, 16, 32, 16);
-        TextView title = new TextView(this);
-        title.setText("OpenOblivion — personal scene preview"); title.setTextSize(24);
-        layout.addView(title);
-        TextView scope = new TextView(this);
-        scope.setText("OpenMW Android 0.51 baseline · ARM64 · OpenGL ES\nWorld viewing and touch movement. Quests, combat and multiplayer are not implemented.\nLeft pad: move. Drag right: look. USE is the lower-right button. JUMP is above it. The top button switches run and walk, and starts on run. Exit: return here.");
-        layout.addView(scope);
-        status = new TextView(this); layout.addView(status);
-        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        progress.setMax(100); layout.addView(progress);
-        LinearLayout buttons = new LinearLayout(this); layout.addView(buttons);
-        addScene(buttons, "Sewer exit (game start)", "ICPrisonSewerExit01");
-        addScene(buttons, "Vilverin interior", "Vilverin");
-        addScene(buttons, "Vilverin exterior", "VilverinExterior");
-        Button logs = new Button(this); logs.setText("View scene log"); buttons.addView(logs);
-        logs.setOnClickListener(v -> {
-            File file = new File(getFilesDir(), "preview-user/config/openmw.log");
-            String text = "No scene log yet. Launch a location first.";
-            if (file.isFile()) try (RandomAccessFile in = new RandomAccessFile(file, "r")) {
-                in.seek(Math.max(0, in.length()-96*1024)); byte[] bytes = new byte[(int)(in.length()-in.getFilePointer())];
-                in.readFully(bytes); text = new String(bytes, StandardCharsets.UTF_8);
-            } catch (IOException e) { text = "Cannot read log: " + e.getMessage(); }
-            ScrollView scroll = new ScrollView(this); TextView view = new TextView(this);
-            view.setText(text); view.setTextIsSelectable(true); view.setPadding(24, 16, 24, 16); scroll.addView(view);
-            new AlertDialog.Builder(this).setTitle("Scene log").setView(scroll).setPositiveButton("Close", null).show();
-        });
-        ScrollView page = new ScrollView(this); page.setFillViewport(true); page.addView(layout);
-        setContentView(page);
+        getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+            | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        setContentView(menu());
         preparing = true;
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         new Thread(() -> {
@@ -71,7 +44,7 @@ public final class MainActivity extends Activity {
                 runOnUiThread(() -> { preparing = false; status.setText(installedData
                         ? "Complete installed assets ready. Choose a location to start. Gameplay parity remains in development."
                         : "Bundled scene assets ready. Choose a location to start.");
-                    progress.setProgress(100); for (Button b : launches) b.setEnabled(true);
+                    progress.setProgress(100); for (TextView b : launches) { b.setEnabled(true); b.setAlpha(1f); }
                     getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); });
             } catch (Exception e) {
                 Log.e("OpenOblivion", "Asset preparation failed", e);
@@ -81,9 +54,114 @@ public final class MainActivity extends Activity {
         }, "OpenOblivion-assets").start();
     }
 
-    private void addScene(LinearLayout layout, String label, String cell) {
-        Button b = new Button(this); b.setText(label); b.setEnabled(false); launches.add(b); layout.addView(b);
-        b.setOnClickListener(v -> startActivity(new Intent(this, GameActivity.class).putExtra("cell", cell)));
+    private static final int GOLD = 0xFFE9D8AE, GOLD_LINE = 0xFFC9A45C, DIM = 0xFFB9AE95;
+    private int dp(float v) { return Math.round(v * getResources().getDisplayMetrics().density); }
+    // Optional private artwork is added to the APK at package time (build_personal.py
+    // --launcher-art); the public source falls back to a plain dark menu.
+    private int art(String name, String type) { return getResources().getIdentifier(name, type, getPackageName()); }
+
+    private android.view.View menu() {
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(0xFF0E0D0B);
+        if (art("menu_background", "drawable") != 0) {
+            ImageView background = new ImageView(this);
+            background.setImageResource(art("menu_background", "drawable"));
+            background.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            root.addView(background, new FrameLayout.LayoutParams(-1, -1));
+        }
+        ScrollView panel = new ScrollView(this);
+        panel.setBackground(new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0xF2000000, 0xC8000000, 0x00000000}));
+        LinearLayout column = new LinearLayout(this);
+        column.setOrientation(LinearLayout.VERTICAL);
+        column.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+        column.setPadding(dp(24), dp(10), dp(48), dp(10));
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        if (art("ic_launcher", "mipmap") != 0) {
+            ImageView emblem = new ImageView(this);
+            emblem.setImageResource(art("ic_launcher", "mipmap"));
+            LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(dp(46), dp(46));
+            size.rightMargin = dp(10);
+            header.addView(emblem, size);
+        }
+        LinearLayout names = new LinearLayout(this);
+        names.setOrientation(LinearLayout.VERTICAL);
+        TextView title = text("OPENOBLIVION", 22, GOLD);
+        title.setLetterSpacing(0.08f);
+        names.addView(title);
+        names.addView(text("Personal Preview", 12, DIM));
+        header.addView(names);
+        column.addView(header);
+        status = text("Preparing…", 11, DIM);
+        status.setPadding(0, dp(6), 0, dp(2));
+        status.setMaxLines(3);
+        column.addView(status, new LinearLayout.LayoutParams(dp(300), -2));
+        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progress.setMax(100);
+        column.addView(progress, new LinearLayout.LayoutParams(dp(300), dp(10)));
+        column.addView(entry("Begin Journey", "Sewer Exit", "ICPrisonSewerExit01", true));
+        column.addView(entry("Vilverin Interior", null, "Vilverin", false));
+        column.addView(entry("Vilverin Exterior", null, "VilverinExterior", false));
+        TextView logs = entry("View Scene Log", null, null, false);
+        logs.setOnClickListener(v -> showLog());
+        column.addView(logs);
+        column.addView(text("Move: left pad · Look: drag right · ATK readies fists, then punches · MORE: walk, sneak, weapon, inventory", 10, DIM),
+            new LinearLayout.LayoutParams(dp(300), -2));
+        panel.addView(column);
+        root.addView(panel, new FrameLayout.LayoutParams(-2, -1));
+        return root;
+    }
+
+    private TextView text(String value, float size, int color) {
+        TextView view = new TextView(this);
+        view.setText(value); view.setTextSize(size); view.setTextColor(color);
+        view.setTypeface(android.graphics.Typeface.SERIF);
+        view.setGravity(android.view.Gravity.CENTER);
+        return view;
+    }
+
+    // Menu entry: the primary one is framed in gold, the rest sit on gold rules.
+    private TextView entry(String label, String detail, String cell, boolean primary) {
+        TextView b = text(detail == null ? label : label + "\n" + detail, primary ? 17 : 15, GOLD);
+        if (detail != null) {
+            android.text.SpannableString styled = new android.text.SpannableString(b.getText());
+            styled.setSpan(new android.text.style.RelativeSizeSpan(0.7f), label.length() + 1, styled.length(), 0);
+            styled.setSpan(new android.text.style.ForegroundColorSpan(DIM), label.length() + 1, styled.length(), 0);
+            b.setText(styled);
+        }
+        android.graphics.drawable.GradientDrawable frame = new android.graphics.drawable.GradientDrawable();
+        frame.setColor(primary ? 0x99000000 : 0x00000000);
+        frame.setCornerRadius(dp(6));
+        frame.setStroke(primary ? dp(1.5f) : 0, GOLD_LINE);
+        android.graphics.drawable.GradientDrawable rule = new android.graphics.drawable.GradientDrawable();
+        rule.setColor(GOLD_LINE);
+        android.graphics.drawable.LayerDrawable background = new android.graphics.drawable.LayerDrawable(
+            primary ? new android.graphics.drawable.Drawable[]{frame} : new android.graphics.drawable.Drawable[]{frame, rule});
+        if (!primary) background.setLayerInset(1, dp(40), dp(39), dp(40), 0);
+        b.setBackground(background);
+        b.setPadding(dp(16), dp(6), dp(16), dp(6));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(300), primary ? -2 : dp(40));
+        lp.topMargin = dp(primary ? 8 : 2);
+        b.setLayoutParams(lp);
+        b.setClickable(true);
+        if (cell != null) {
+            b.setEnabled(false); b.setAlpha(0.45f); launches.add(b);
+            b.setOnClickListener(v -> startActivity(new Intent(this, GameActivity.class).putExtra("cell", cell)));
+        }
+        return b;
+    }
+
+    private void showLog() {
+        File file = new File(getFilesDir(), "preview-user/config/openmw.log");
+        String text = "No scene log yet. Launch a location first.";
+        if (file.isFile()) try (RandomAccessFile in = new RandomAccessFile(file, "r")) {
+            in.seek(Math.max(0, in.length()-96*1024)); byte[] bytes = new byte[(int)(in.length()-in.getFilePointer())];
+            in.readFully(bytes); text = new String(bytes, StandardCharsets.UTF_8);
+        } catch (IOException e) { text = "Cannot read log: " + e.getMessage(); }
+        ScrollView scroll = new ScrollView(this); TextView view = new TextView(this);
+        view.setText(text); view.setTextIsSelectable(true); view.setPadding(24, 16, 24, 16); scroll.addView(view);
+        new AlertDialog.Builder(this).setTitle("Scene log").setView(scroll).setPositiveButton("Close", null).show();
     }
     private String assetText(String path) throws IOException {
         try (InputStream in = getAssets().open(path)) { ByteArrayOutputStream out = new ByteArrayOutputStream(); byte[] buf = new byte[8192]; for (int n; (n=in.read(buf))!=-1;) out.write(buf,0,n); return out.toString("UTF-8"); }

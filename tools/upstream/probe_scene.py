@@ -53,6 +53,7 @@ parser.add_argument('--player-movement', action='store_true', help='Native playe
 parser.add_argument('--movement-camera', choices=('default', 'third'), default='default', help='Camera view for the movement probe')
 parser.add_argument('--movement-shot-time', type=float, default=6.5, help='Probe time of the screenshot (seconds)')
 parser.add_argument('--movement-duration', type=float, default=12.0, help='Seconds before the movement probe quits')
+parser.add_argument('--movement-ui', choices=('inventory', 'loot'), help='Open this menu at the shot time and capture it')
 parser.add_argument('--movement-attack', action='store_true', help='Request a TES4 player attack every 1.5 s (phone overlay)')
 parser.add_argument('--movement-gait', choices=('walk', 'run', 'sneak', 'none'), default='walk', help='Gait the movement probe requests')
 parser.add_argument('--movement-turn', type=float, default=0, help='Initial turn in degrees through native player controls')
@@ -193,7 +194,7 @@ if args.player_movement:
     position = '{' + ','.join(repr(v) for v in args.movement_position) + '}' if args.movement_position else 'nil'
     (movement_data / 'scripts/openoblivion_movement_config.lua').write_text(
         'return {turn=' + repr(math.radians(args.movement_turn)) + ', position=' + position
-        + ', heading=' + repr(math.radians(args.movement_heading)) + ', gait=' + repr(args.movement_gait) + ', camera=' + repr(args.movement_camera) + ', shot=' + repr(args.movement_shot_time) + ', attack=' + ('true' if args.movement_attack else 'false') + ', duration=' + repr(args.movement_duration) + '}\n')
+        + ', heading=' + repr(math.radians(args.movement_heading)) + ', gait=' + repr(args.movement_gait) + ', camera=' + repr(args.movement_camera) + ', shot=' + repr(args.movement_shot_time) + ', attack=' + ('true' if args.movement_attack else 'false') + ', duration=' + repr(args.movement_duration) + ', ui=' + (repr(args.movement_ui) if args.movement_ui else 'nil') + '}\n')
     cfg += ['data=/movement-data']
     if args.raw_eye:
         (movement_data / 'scripts/openoblivion_grounded_eye.lua').write_text(
@@ -220,7 +221,12 @@ if args.phone_overlay:
     (overlay_dir / 'scripts/openoblivion_tes4_stats_values.lua').write_text(stats_lua(master_stats(data / 'Oblivion.esm')))
     (overlay_dir / 'scripts/openoblivion_tes4_npc_values.lua').write_text(npc_lua(npc_table(data / 'Oblivion.esm')))
     from tes4_rules_addon import build as rules_addon
-    (overlay_dir / 'openoblivion_rules.omwaddon').write_bytes(rules_addon())
+    from tes4_items import build as items_build
+    item_records, items_lua = items_build(data / 'Oblivion.esm')
+    (overlay_dir / 'openoblivion_rules.omwaddon').write_bytes(rules_addon(item_records))
+    (overlay_dir / 'scripts/openoblivion_tes4_items_values.lua').write_text(items_lua)
+    from menu_textures import write as write_menu_textures
+    write_menu_textures(overlay_dir / 'textures')
     args.sky_osgt = True
     cfg += ['data=/phone-overlay', 'content=openoblivion_rules.omwaddon', 'content=start_position.omwscripts']
 elif args.sky_osgt:

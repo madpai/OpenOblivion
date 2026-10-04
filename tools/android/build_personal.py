@@ -154,6 +154,9 @@ def main():
     parser.add_argument('--all-assets', action='store_true', help='Package every installed Data file as a signed APK set')
     parser.add_argument('--download-assets', metavar='URL',
                         help='With --all-assets: bundle only the base part; the phone downloads the rest from this private URL')
+    parser.add_argument('--launcher-art', type=Path,
+                        help='Private launcher artwork folder (android-icons/mipmap-*/ic_launcher.png, '
+                             'main-menu-background-1280x720.png); never committed')
     args = parser.parse_args()
     if args.all_assets and not args.native_runtime:
         parser.error('--all-assets requires the source-built native runtime')
@@ -173,6 +176,16 @@ def main():
     os.chmod(work, 0o700)
     host = work / 'host'
     shutil.copytree(ROOT / 'android/host', host, dirs_exist_ok=True)
+    if args.launcher_art:
+        # Private artwork: launcher icon and menu background, added only to the APK.
+        art, res = outside(args.launcher_art), host / 'app/src/main/res'
+        for density in sorted((art / 'android-icons').glob('mipmap-*')):
+            (res / density.name).mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(density / 'ic_launcher.png', res / density.name / 'ic_launcher.png')
+        (res / 'drawable-nodpi').mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(art / 'main-menu-background-1280x720.png', res / 'drawable-nodpi/menu_background.png')
+        manifest = host / 'app/src/main/AndroidManifest.xml'
+        manifest.write_text(manifest.read_text().replace('<application ', '<application android:icon="@mipmap/ic_launcher" ', 1))
     stage = work / 'payload-source'
     stage.mkdir(exist_ok=True)
     jni = host / 'app/src/main/jniLibs/arm64-v8a'
@@ -303,7 +316,12 @@ def main():
     (overlay / 'scripts/openoblivion_tes4_stats_values.lua').write_text(stats_lua(master_stats(data / 'Oblivion.esm')))
     (overlay / 'scripts/openoblivion_tes4_npc_values.lua').write_text(npc_lua(npc_table(data / 'Oblivion.esm')))
     from tes4_rules_addon import build as rules_addon
-    (overlay / 'openoblivion_rules.omwaddon').write_bytes(rules_addon())
+    from tes4_items import build as items_build
+    item_records, items_lua = items_build(data / 'Oblivion.esm')
+    (overlay / 'openoblivion_rules.omwaddon').write_bytes(rules_addon(item_records))
+    (overlay / 'scripts/openoblivion_tes4_items_values.lua').write_text(items_lua)
+    from menu_textures import write as write_menu_textures
+    write_menu_textures(overlay / 'textures')
     (stage / 'template-settings.cfg').write_text(player_collision_settings((template / 'settings.cfg').read_text()))
     paths = [(file, 'template/' + file.relative_to(template / 'game_template/data').as_posix())
              for file in sorted((template / 'game_template/data').rglob('*')) if file.is_file()]

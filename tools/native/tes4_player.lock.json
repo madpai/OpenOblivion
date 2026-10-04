@@ -1,8 +1,10 @@
 {
   "desktop": {
-    "apps/openmw/mwrender/npcanimation.cpp": "a57998eb16b4d6437c638d16769ba039bee1ed79c5bc68d0c6e28abae4f108d0"
+    "apps/openmw/mwrender/npcanimation.cpp": "a57998eb16b4d6437c638d16769ba039bee1ed79c5bc68d0c6e28abae4f108d0",
+    "components/misc/resourcehelpers.cpp": "9770794133e24c205d64db6a3699eafe63a34433266eaa88e8eb5452d5bdc403"
   },
   "android": {
-    "apps/openmw/mwrender/npcanimation.cpp": "87d813beeadb13eaf7bdbe81dbdda00b547160bc99df3bd3e4be9dc3b17dcf38"
+    "apps/openmw/mwrender/npcanimation.cpp": "87d813beeadb13eaf7bdbe81dbdda00b547160bc99df3bd3e4be9dc3b17dcf38",
+    "components/misc/resourcehelpers.cpp": "b6b49d734086f65495420782d20820504703eb41e5ed27d2ace33bc8b01ccd09"
   }
 }

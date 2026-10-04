@@ -1,6 +1,11 @@
 -- SPDX-License-Identifier: GPL-3.0-only
 -- Player side of the TES4 rules layer: hand-to-hand attacks with the original
 -- clips and damage formula, and damage received from TES4 actors.
+--
+-- Fists are readied like a weapon, as in the original: the host weapon stance
+-- (WEAPON button) is the readied state, raising and lowering play the original
+-- equip/unequip clips, and attacking while holstered readies instead of
+-- punching. Readied idle/movement are the host "hh" groups (TES4 renderer).
 local anim = require('openmw.animation')
 local input = require('openmw.input')
 local interfaces = require('openmw.interfaces')
@@ -9,6 +14,7 @@ local self = require('openmw.self')
 local types = require('openmw.types')
 local util = require('openmw.util')
 local combat = require('scripts.openoblivion_tes4_combat')
+local items = require('scripts.openoblivion_tes4_items')
 
 local attacking = false
 local wasPressed = false
@@ -17,6 +23,10 @@ local attackClock = 0
 -- The clip's stop key can be lost when another animation interrupts it.
 local ATTACK_TIMEOUT = 1.2
 local CLIPS = { 'tes4attackright', 'tes4attackleft' }
+local stance = nil
+local equipPending = 0
+local readying = 0
+local READY_TIME = 0.6
 
 local function forward()
     return util.transform.rotateZ(self.rotation:getYaw()) * util.vector3(0, 1, 0)
@@ -62,16 +72,26 @@ for _, clip in ipairs(CLIPS) do
     end)
 end
 
+local function play(clip)
+    interfaces.AnimationController.playBlendedAnimation(clip, {
+        startKey = 'start', stopKey = 'stop', priority = anim.PRIORITY.Scripted,
+        blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true })
+end
+
 local function attack()
     if attacking or types.Actor.isDead(self) or not anim.hasGroup(self, CLIPS[1]) then return end
+    if types.Actor.getStance(self) ~= types.Actor.STANCE.Weapon then
+        types.Actor.setStance(self, types.Actor.STANCE.Weapon)
+        print('OPENOBLIVION_TES4_COMBAT player readies fists')
+        return
+    end
+    if readying > 0 then return end
     attacking = true
     attackClock = 0
     local clip = leftNext and CLIPS[2] or CLIPS[1]
     leftNext = not leftNext
     print('OPENOBLIVION_TES4_COMBAT player swings ' .. clip)
-    interfaces.AnimationController.playBlendedAnimation(clip, {
-        startKey = 'start', stopKey = 'stop', priority = anim.PRIORITY.Weapon,
-        blendMask = anim.BLEND_MASK.UpperBody, autoDisable = true })
+    play(clip)
 end
 
 return {
@@ -81,7 +101,31 @@ return {
                 attackClock = attackClock + dt
                 if attackClock > ATTACK_TIMEOUT then attacking = false end
             end
+            readying = math.max(0, readying - dt)
+            -- Starting items arrive from the global script; equip once they are in.
+            if equipPending > 0 then
+                equipPending = equipPending - 1
+                local count = items.equipApparel(self)
+                if count > 0 or equipPending == 0 then
+                    equipPending = 0
+                    print('OPENOBLIVION_ITEMS player equips ' .. count)
+                end
+            end
+            local now = types.Actor.getStance(self)
+            if stance ~= nil and now ~= stance then
+                if now == types.Actor.STANCE.Weapon and anim.hasGroup(self, 'tes4equip') then
+                    play('tes4equip'); readying = READY_TIME
+                elseif stance == types.Actor.STANCE.Weapon and anim.hasGroup(self, 'tes4unequip') then
+                    play('tes4unequip'); attacking = false
+                end
+            end
+            stance = now
+            -- Menu taps are clicks too; only attack in gameplay.
             local pressed = input.isActionPressed(input.ACTION.Use)
+            if interfaces.UI and interfaces.UI.getMode() ~= nil then
+                wasPressed = pressed
+                return
+            end
             if pressed and not wasPressed then attack() end
             wasPressed = pressed
         end,
@@ -89,6 +133,7 @@ return {
     eventHandlers = {
         -- Desktop probes cannot press buttons; they request an attack instead.
         TES4PlayerAttack = function() attack() end,
+        TES4EquipApparel = function() equipPending = 5 end,
         TES4Hit = function(hit)
             local health = types.Actor.stats.dynamic.health(self)
             local fatigue = types.Actor.stats.dynamic.fatigue(self)

@@ -1,5 +1,15 @@
 # Maintainer handoff
 
+Loot and readied fists, 2026-10-03: served `0.32-loot-readied`. TES4 items are
+generated host records (`tools/android/tes4_items.py`), NPC inventories roll
+through TES4 leveled lists, corpses are lootable, the renderer draws equipped
+items, fists ready like a weapon with the original clips, and first person
+views from `Camera01`. See [TES4_ITEMS.md](research/TES4_ITEMS.md). The
+launcher can take private artwork (`build_personal.py --launcher-art`); the
+owner's icon resembles the official emblem, so artwork is never committed.
+Next: weapons in TES4 combat, blocking, TES4 detection/disposition, face
+textures, gold/barter; then trees.
+
 Bandit fights, 2026-10-03: served `0.31-bandit-fights`. TES4 NPCs become host
 actor proxies (`tools/android/overlay`, actor bridge) drawn by the `tes4_player`
 renderer; hand-to-hand damage is transcribed from the executable and NPC stats

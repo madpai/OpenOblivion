@@ -4,10 +4,31 @@
 -- carries the TES4 NPC's record ID in its head field; the native TES4 renderer
 -- draws that NPC's body, outfit and original animations, while the host actor
 -- supplies collision, pathfinding, AI and death. The TES4 object is disabled.
+--
+-- Items: the proxy gets the NPC record's inventory, rolled through the TES4
+-- leveled lists. Apparel goes on now (and is drawn from the host equipment);
+-- weapons and everything else are held back until death so the host AI does
+-- not draw weapons the TES4 combat layer cannot use yet, then placed on the
+-- body for looting. The player receives the Player record's starting items.
+local items = require('scripts.openoblivion_tes4_items')
 local types = require('openmw.types')
 local world = require('openmw.world')
 
 local proxyRecords = {}
+local playersEquipped = {}
+
+local function give(actor, rows)
+    local inventory = types.Actor.inventory(actor)
+    for _, row in ipairs(rows) do
+        local made, object = pcall(world.createObject, row.id, row.count)
+        if made then object:moveInto(inventory) else print('OPENOBLIVION_ITEMS missing ' .. row.id) end
+    end
+end
+
+local function playerLevel()
+    local player = world.players[1]
+    return player and types.Actor.stats.level(player).current or 1
+end
 
 local function proxyRecord(npc)
     local record = types.ESM4Npc.record(npc)
@@ -25,14 +46,37 @@ local function formId(recordId)
 end
 
 return {
+    eventHandlers = {
+        -- A proxy died: its held-back items go on the body.
+        TES4Loot = function(event)
+            if event.actor and event.items then give(event.actor, event.items) end
+        end,
+    },
     engineHandlers = {
+        onPlayerAdded = function(player)
+            if playersEquipped[player.id] or not items.available then return end
+            playersEquipped[player.id] = true
+            local rows = items.inventory(7, 1)
+            give(player, rows)
+            player:sendEvent('TES4EquipApparel')
+            print('OPENOBLIVION_ITEMS player starts with ' .. #rows .. ' items')
+        end,
+        onSave = function() return { playersEquipped = playersEquipped } end,
+        onLoad = function(saved) playersEquipped = saved and saved.playersEquipped or {} end,
         onObjectActive = function(object)
             if not types.ESM4Npc or not types.ESM4Npc.objectIsInstance(object) or not object.enabled then return end
             if #world.players == 0 then return end
             local record = types.ESM4Npc.record(object)
             local proxy = world.createObject(proxyRecord(object), 1)
             proxy:teleport(object.cell, object.position, { rotation = object.rotation })
-            proxy:addScript('scripts/openoblivion_bridge_actor.lua', { formId = formId(record.id), name = record.name })
+            local apparel, held = {}, {}
+            for _, row in ipairs(items.inventory(formId(record.id), playerLevel())) do
+                table.insert(items.isApparel(row.id) and apparel or held, row)
+            end
+            give(proxy, apparel)
+            proxy:addScript('scripts/openoblivion_bridge_actor.lua',
+                { formId = formId(record.id), name = record.name, held = held })
+            print(string.format('OPENOBLIVION_ITEMS %s wears %d held %d', tostring(record.name), #apparel, #held))
             object.enabled = false
             print('OPENOBLIVION_ACTOR_BRIDGE ' .. tostring(record.name) .. ' ' .. tostring(record.id))
         end,

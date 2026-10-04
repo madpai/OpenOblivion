@@ -39,5 +39,10 @@ return {
         attribute = function(name) return ok and values.attributes[name] or nil end,
         level = function() return ok and values.level or nil end,
     },
-    engineHandlers = { onUpdate = function() apply() end },
+    engineHandlers = {
+        onUpdate = function() apply() end,
+        -- Stats are starting values: apply once per character, not on every load.
+        onSave = function() return { applied = applied } end,
+        onLoad = function(saved) applied = saved and saved.applied or false end,
+    },
 }

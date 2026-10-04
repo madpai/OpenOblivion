@@ -12,6 +12,17 @@ patches) is published; owner meshes and animations stay private. Pre-change
 SHA256s are in `tools/native/tes4_player.lock.json`; the receipt follows the
 movement receipt.
 
+## TES4 items and launcher artwork audit (2026-10-03)
+
+The player receipt also patches `components/misc/resourcehelpers.cpp` (OpenMW,
+GPLv3) so icon paths under `textures/menus/icons/` resolve in place; pre-change
+SHA256s are in the same lock. Generated item records, leveled-list tables and
+inventory frames are written at package time from the owner's master or by
+original code (`tools/android/tes4_items.py`, `menu_textures.py`); generated
+game-derived output is never committed. Launcher artwork made for the owner
+with an image generator stays private (`build_personal.py --launcher-art`):
+its gate emblem resembles the official game emblem, which is a trademark.
+
 ## TES4 player ground-speed audit (2026-10-03)
 
 Intended change: with `OPENOBLIVION_TES4_MOVEMENT=1`, compute the player's
