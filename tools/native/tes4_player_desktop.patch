@@ -1,19 +1,20 @@
 --- a/apps/openmw/mwrender/npcanimation.cpp
 +++ b/apps/openmw/mwrender/npcanimation.cpp
-@@ -46,6 +46,12 @@
+@@ -46,6 +46,13 @@
  #include "rotatecontroller.hpp"
  #include "vismask.hpp"
  
 +#include <components/resource/keyframemanager.hpp>
 +
 +#include "camera.hpp"
++#include "util.hpp"
 +#include "openoblivion_tes4_player.hpp"
 +#include "openoblivion_tes4_skin.hpp"
 +
  namespace
  {
  
-@@ -500,6 +506,55 @@
+@@ -500,6 +507,97 @@
          bool is1stPerson = mViewMode == VM_FirstPerson;
          bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
  
@@ -28,13 +29,55 @@
 +                    is1stPerson);
 +                setObjectRoot(skeleton, true, true, false);
 +                Resource::SceneManager* manager = mResourceSystem->getSceneManager();
-+                const std::vector<std::string> parts
-+                    = OpenOblivion::tes4PlayerPartModels(*tes4Player, store, is1stPerson, mPtr);
-+                mObjectRoot->setUserValue("openoblivionParts", OpenOblivion::tes4PartSignature(parts));
-+                for (const std::string& part : parts)
++                const std::vector<OpenOblivion::Tes4PartLook> parts
++                    = OpenOblivion::tes4PlayerParts(*tes4Player, store, is1stPerson, mPtr);
++                std::vector<std::string> partModels;
++                for (const OpenOblivion::Tes4PartLook& part : parts)
++                    partModels.push_back(part.mModel);
++                mObjectRoot->setUserValue("openoblivionParts", OpenOblivion::tes4PartSignature(partModels));
++                for (const OpenOblivion::Tes4PartLook& part : parts)
++                {
++                    const unsigned firstAdded = mObjectRoot->getNumChildren();
 +                    OpenOblivion::Skin::attach(manager->getTemplate(Misc::ResourceHelpers::correctMeshPath(
-+                                                   VFS::Path::Normalized(part))),
++                                                   VFS::Path::Normalized(part.mModel))),
 +                        mObjectRoot.get(), manager);
++                    // The original draws head parts with the race's, the NPC's baked or the
++                    // hair record's texture, and tints hair with the NPC's hair colour.
++                    VFS::Path::Normalized texture;
++                    if (!part.mTexture.empty())
++                    {
++                        texture = Misc::ResourceHelpers::correctTexturePath(
++                            VFS::Path::Normalized(part.mTexture), *mResourceSystem->getVFS());
++                        if (!mResourceSystem->getVFS()->exists(texture))
++                            texture.clear();
++                    }
++                    if (texture.value().empty() && !part.mFallbackTexture.empty())
++                    {
++                        texture = Misc::ResourceHelpers::correctTexturePath(
++                            VFS::Path::Normalized(part.mFallbackTexture), *mResourceSystem->getVFS());
++                        if (!mResourceSystem->getVFS()->exists(texture))
++                            texture.clear();
++                    }
++                    for (unsigned i = firstAdded; i < mObjectRoot->getNumChildren(); ++i)
++                    {
++                        osg::Node& added = *mObjectRoot->getChild(i);
++                        if (!texture.value().empty())
++                        {
++                            if (part.mOpaque)
++                                OpenOblivion::tes4OverrideOpaqueTexture(texture, mResourceSystem, added);
++                            else
++                                overrideTexture(texture, mResourceSystem, added);
++                        }
++                        if (part.mTinted)
++                        {
++                            OpenOblivion::Tes4Tint tint(part.mTint);
++                            added.accept(tint);
++                        }
++                    }
++                    if (!part.mTexture.empty())
++                        Log(Debug::Info) << "OPENOBLIVION_FACE part=" << part.mModel << " texture=" << part.mTexture
++                                         << (texture.value().empty() ? " missing" : " applied");
++                }
 +                // The host camera tracks a "Head" bone; TES4 skeletons name it "Bip01 Head".
 +                NodeMap& nodes = const_cast<NodeMap&>(getNodeMap());
 +                if (const auto head = nodes.find("bip01 head"); head != nodes.end())
@@ -69,7 +112,7 @@
          std::string_view base;
          if (!isWerewolf)
          {
-@@ -575,6 +630,24 @@
+@@ -575,6 +673,24 @@
          if (!mObjectRoot.get())
              return;
  
@@ -94,7 +137,7 @@
          NpcType curType = getNpcType();
          if (curType != mNpcType)
          {
-@@ -722,6 +795,11 @@
+@@ -722,6 +838,11 @@
                  osg::Quat(mPtr.getRefData().getPosition().rot[0] * rotateFactor, osg::Vec3f(-1, 0, 0)));
              mFirstPersonNeckController->setOffset(mFirstPersonOffset);
          }
@@ -106,7 +149,7 @@
  
          WeaponAnimation::configureControllers(mPtr.getRefData().getPosition().rot[0] + getBodyPitchRadians());
  
-@@ -932,7 +1010,23 @@
+@@ -932,7 +1053,23 @@
          {
              // If there is no active animation, then the bip01 neck node will not be updated each frame, and the
              // RotateController will accumulate rotations.

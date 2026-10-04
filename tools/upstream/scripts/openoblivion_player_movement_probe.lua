@@ -16,6 +16,36 @@ local ready = not config.position
 local nextAttack = nil
 local nearby = require('openmw.nearby')
 local uiOpened = nil
+local util = require('openmw.util')
+local faced = false
+
+-- Puts a static camera in front of the nearest actor's face (look inspection).
+local function faceNearestActor()
+    local best, bestDistance = nil, math.huge
+    for _, actor in ipairs(nearby.actors) do
+        if actor ~= self.object then
+            local distance = (actor.position - self.position):length()
+            if distance < bestDistance then best, bestDistance = actor, distance end
+        end
+    end
+    if not best then return end
+    -- The side the actor faces, so the camera sees its face whatever the player does.
+    local yaw = best.rotation:getYaw() + math.rad(config.faceAngle or 0)
+    local flat = util.vector2(math.sin(yaw), math.cos(yaw))
+    local target = best.position + util.vector3(0, 0, config.faceHeight or 148)
+    local distance = config.faceDistance or 70
+    local sign = distance >= 0 and 1 or -1
+    local position = target + util.vector3(flat.x, flat.y, 0) * distance
+    camera.setMode(camera.MODE.Static, true)
+    camera.setStaticPosition(position)
+    camera.setYaw(math.atan2(-flat.x * sign, -flat.y * sign))
+    camera.setPitch(0)
+    print(string.format('OPENOBLIVION_SCENE_PROBE face actor=%s pos=%.0f,%.0f,%.0f yaw=%.2f player=%.0f,%.0f,%.0f', tostring(best.recordId),
+        best.position.x, best.position.y, best.position.z, best.rotation:getYaw(), self.position.x, self.position.y, self.position.z))
+    for _, actor in ipairs(nearby.actors) do
+        print('OPENOBLIVION_SCENE_PROBE actor ' .. tostring(actor.recordId) .. ' ' .. tostring(actor.type == types.Player) .. string.format(' %.0f,%.0f,%.0f', actor.position.x, actor.position.y, actor.position.z))
+    end
+end
 
 local function phase()
     if elapsed < 1 then return 'settle' end
@@ -46,7 +76,7 @@ return {
             end
             if not ready or not self.cell or core.isWorldPaused() or finished then return end
             interfaces.Controls.overrideMovementControls(true)
-            if config.camera == 'third' and camera.getMode() ~= camera.MODE.ThirdPerson then
+            if config.camera == 'third' and not faced and camera.getMode() ~= camera.MODE.ThirdPerson then
                 camera.setMode(camera.MODE.ThirdPerson, true)
                 camera.setPreferredThirdPersonDistance(260)
                 camera.instantTransition()
@@ -59,6 +89,10 @@ return {
             self.controls.yawChange = turned and 0 or config.turn
             self.controls.pitchChange = turned and 0 or (config.pitch or 0)
             turned = true
+            if config.face and not faced and elapsed >= (config.shot or 6.5) - 0.5 then
+                faced = true
+                faceNearestActor()
+            end
             if config.attack and elapsed >= (nextAttack or 1) then
                 nextAttack = elapsed + 1.5
                 self.object:sendEvent('TES4PlayerAttack', {})

@@ -1,5 +1,12 @@
 # Maintainer handoff
 
+Faces, 2026-10-04: served `0.34-faces`. NPC heads use baked face textures
+(forced opaque), race head-part textures and hair records with hair colour; see
+[TES4_FACES.md](research/TES4_FACES.md). The desktop probe takes
+`--movement-face*` options to put a camera in front of the nearest actor.
+Next: EGM shape morphs and FGTS texture building (player face), weapons in TES4
+combat, blocking, detection/disposition.
+
 First-person fix, 2026-10-04: served `0.33-first-person-fix` after the owner's
 0.32 screenshot showed stretched clothing in first person with fists readied.
 See the first-person section of [TES4_ITEMS.md](research/TES4_ITEMS.md).

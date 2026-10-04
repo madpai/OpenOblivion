@@ -23,10 +23,18 @@
 #include <components/esm4/loadrace.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
+#include <components/misc/resourcehelpers.hpp>
+#include <components/resource/imagemanager.hpp>
+#include <components/resource/resourcesystem.hpp>
+#include <components/resource/scenemanager.hpp>
 #include <components/sceneutil/keyframe.hpp>
+#include <components/sceneutil/texturetype.hpp>
 #include <components/sceneutil/nodecallback.hpp>
 
+#include <osg/Material>
 #include <osg/MatrixTransform>
+#include <osg/StateSet>
+#include <osg/Texture2D>
 
 #include "../mwclass/esm4base.hpp"
 #include "../mwworld/cellref.hpp"
@@ -37,6 +45,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
+#include <map>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -201,45 +211,204 @@ namespace OpenOblivion
         return worn;
     }
 
+    // One attached mesh and how the original draws it: a texture replacing the
+    // mesh's own (race head parts, the NPC's baked FaceGen face, hair and eye
+    // icons) and the hair colour that tints it.
+    struct Tes4PartLook
+    {
+        std::string mModel;
+        std::string mTexture;
+        std::string mFallbackTexture; // when mTexture is not in the data (no baked face)
+        bool mOpaque = false; // skin: the original ignores texture alpha
+        bool mTinted = false;
+        float mTint[3] = { 1.f, 1.f, 1.f };
+    };
+
+    // The NPC's baked FaceGen head texture. The Construction Set writes one per
+    // NPC next to the master; it is the original's face for that record. The
+    // Player and runtime-generated characters have none.
+    inline std::string tes4BakedFaceTexture(const ESM4::Npc& npc, const MWWorld::ESMStore& store)
+    {
+        // Baked faces are filed under the plugin name; only the master's are known.
+        const ESM4::Npc* player = tes4PlayerRecord(store);
+        if (player == nullptr || npc.mId.mContentFile != player->mId.mContentFile)
+            return {};
+        char name[80];
+        std::snprintf(name, sizeof(name), "textures\\faces\\oblivion.esm\\%08x_0.dds", npc.mId.mIndex & 0xffffff);
+        return name;
+    }
+
     // Body, head and hair meshes, in the order the TES4 NPC renderer attaches them.
     // First person uses the original _1stperson skeleton/clips and only body parts
     // (arms and hands); the head and hair would sit in front of the camera.
-    inline std::vector<std::string> tes4PlayerPartModels(
+    inline std::vector<Tes4PartLook> tes4PlayerParts(
         const ESM4::Npc& npc, const MWWorld::ESMStore& store, bool firstPerson, const MWWorld::Ptr& ptr = {})
     {
-        std::vector<std::string> models;
+        std::vector<Tes4PartLook> parts;
         const Tes4Worn worn = tes4PlayerWorn(npc, store, ptr);
+        const bool female = tes4PlayerFemale(npc);
         // TES4 race records carry body textures, not body meshes; the bare body
         // is the fixed set in Characters\_Male (female meshes share that folder).
         // A worn item replaces the body piece in its slot.
-        const std::string_view prefix = tes4PlayerFemale(npc) ? "female" : "";
+        const std::string_view prefix = female ? "female" : "";
         const std::pair<std::string_view, std::uint32_t> pieces[] = { { "upperbody", sTes4SlotUpper },
             { "lowerbody", sTes4SlotLower }, { "hand", sTes4SlotHand }, { "foot", sTes4SlotFoot } };
         for (const auto& [piece, slot] : pieces)
             if ((worn.mCovered & slot) == 0 && (!firstPerson || slot == sTes4SlotUpper || slot == sTes4SlotHand))
-                models.push_back("Characters\\_Male\\" + std::string(prefix) + std::string(piece) + ".nif");
+                parts.push_back({ "Characters\\_Male\\" + std::string(prefix) + std::string(piece) + ".nif", {} });
         // First person shows only upper-body and hand pieces: the original
         // first-person clips do not pose the legs.
         for (std::size_t i = 0; i < worn.mModels.size(); ++i)
             if (!firstPerson || (worn.mSlots[i] & (sTes4SlotUpper | sTes4SlotHand)) != 0)
-                models.push_back(worn.mModels[i]);
+                parts.push_back({ worn.mModels[i], {} });
         const ESM4::Race* race = store.get<ESM4::Race>().search(npc.mRace);
         if (race != nullptr)
         {
-            for (const ESM4::Race::BodyPart& part : tes4PlayerFemale(npc) ? race->mBodyPartsFemale : race->mBodyPartsMale)
+            for (const ESM4::Race::BodyPart& part : female ? race->mBodyPartsFemale : race->mBodyPartsMale)
                 if (!part.mesh.empty())
-                    models.push_back(part.mesh);
+                    parts.push_back({ part.mesh, {} });
             if (!firstPerson)
-                for (const ESM4::Race::BodyPart& part : race->mHeadParts)
-                    if (!part.mesh.empty())
-                        models.push_back(part.mesh);
+            {
+                // Head parts by index: 0 head, 1/2 male/female ears, 3 mouth, 4/5 teeth,
+                // 6 tongue, 7/8 eyes. The race gives each its own texture; the engine does
+                // not load EYES records, so eyes keep the race's eye texture.
+                const std::vector<ESM4::Race::BodyPart>& head = female ? race->mHeadPartsFemale : race->mHeadParts;
+                for (std::size_t i = 0; i < head.size(); ++i)
+                {
+                    if (head[i].mesh.empty() || (i == 1 && female) || (i == 2 && !female))
+                        continue;
+                    Tes4PartLook look{ head[i].mesh, head[i].texture };
+                    if (i == 0)
+                    {
+                        look.mOpaque = true;
+                        const std::string face = tes4BakedFaceTexture(npc, store);
+                        if (!face.empty())
+                        {
+                            look.mFallbackTexture = look.mTexture;
+                            look.mTexture = face;
+                        }
+                    }
+                    parts.push_back(std::move(look));
+                }
+            }
         }
         if (!firstPerson && (worn.mCovered & (sTes4SlotHead | sTes4SlotHair)) == 0 && !npc.mHair.isZeroOrUnset())
             if (const ESM4::Hair* hair = store.get<ESM4::Hair>().search(npc.mHair))
                 if (!tes4PathText(hair->mModel).empty())
-                    models.push_back(tes4PathText(hair->mModel));
+                {
+                    Tes4PartLook look{ tes4PathText(hair->mModel), hair->mIcon };
+                    look.mTinted = true;
+                    look.mTint[0] = npc.mHairColour.red / 255.f;
+                    look.mTint[1] = npc.mHairColour.green / 255.f;
+                    look.mTint[2] = npc.mHairColour.blue / 255.f;
+                    parts.push_back(std::move(look));
+                }
+        return parts;
+    }
+
+    inline std::vector<std::string> tes4PlayerPartModels(
+        const ESM4::Npc& npc, const MWWorld::ESMStore& store, bool firstPerson, const MWWorld::Ptr& ptr = {})
+    {
+        std::vector<std::string> models;
+        for (const Tes4PartLook& part : tes4PlayerParts(npc, store, firstPerson, ptr))
+            models.push_back(part.mModel);
         return models;
     }
+
+    // The Construction Set's baked face textures carry a constant alpha of 127
+    // that the original ignores. The host would alpha-test the whole head away,
+    // so skin textures are used opaque. Edits a private copy of the image.
+    inline void tes4ForceOpaque(osg::Image& image)
+    {
+        unsigned char* data = image.data();
+        if (data == nullptr)
+            return;
+        const std::size_t size = image.getTotalSizeInBytesIncludingMipmaps();
+        switch (image.getPixelFormat())
+        {
+            case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT: // 8-byte alpha block first: both endpoints 255, all indices 0
+                for (std::size_t i = 0; i + 16 <= size; i += 16)
+                {
+                    data[i] = data[i + 1] = 255;
+                    std::memset(data + i + 2, 0, 6);
+                }
+                break;
+            case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+                for (std::size_t i = 0; i + 16 <= size; i += 16)
+                    std::memset(data + i, 0xff, 8);
+                break;
+            case GL_RGBA:
+                if (!image.isCompressed() && image.getDataType() == GL_UNSIGNED_BYTE)
+                    for (std::size_t i = 3; i < size; i += 4)
+                        data[i] = 255;
+                break;
+            default:
+                break;
+        }
+    }
+
+    // As MWRender::overrideTexture, with the skin alpha removed.
+    inline void tes4OverrideOpaqueTexture(
+        VFS::Path::NormalizedView texture, Resource::ResourceSystem* resourceSystem, osg::Node& node)
+    {
+        static std::map<std::string, osg::ref_ptr<osg::Texture2D>> cache;
+        osg::ref_ptr<osg::Texture2D>& tex = cache[std::string(texture.value())];
+        if (!tex)
+        {
+            osg::ref_ptr<osg::Image> image
+                = new osg::Image(*resourceSystem->getImageManager()->getImage(texture), osg::CopyOp::DEEP_COPY_ALL);
+            tes4ForceOpaque(*image);
+            tex = new osg::Texture2D(image);
+            tex->setWrap(osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE);
+            tex->setWrap(osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE);
+            resourceSystem->getSceneManager()->applyFilterSettings(tex);
+        }
+        osg::ref_ptr<osg::StateSet> stateset;
+        if (const osg::StateSet* const source = node.getStateSet())
+            stateset = new osg::StateSet(*source, osg::CopyOp::SHALLOW_COPY);
+        else
+            stateset = new osg::StateSet;
+        stateset->setTextureAttribute(0, tex, osg::StateAttribute::OVERRIDE);
+        stateset->setTextureAttribute(0, new SceneUtil::TextureType("diffuseMap"), osg::StateAttribute::OVERRIDE);
+        node.setStateSet(stateset);
+    }
+
+    // Multiplies the materials under a node by the hair colour. Statesets are
+    // shared with the model template, so each is copied before it is changed.
+    class Tes4Tint : public osg::NodeVisitor
+    {
+    public:
+        explicit Tes4Tint(const float* rgb)
+            : osg::NodeVisitor(TRAVERSE_ALL_CHILDREN)
+            , mRed(rgb[0])
+            , mGreen(rgb[1])
+            , mBlue(rgb[2])
+        {
+        }
+
+        void apply(osg::Node& node) override
+        {
+            if (const osg::StateSet* source = node.getStateSet())
+                if (const auto* material = dynamic_cast<const osg::Material*>(
+                        source->getAttribute(osg::StateAttribute::MATERIAL)))
+                {
+                    osg::ref_ptr<osg::StateSet> stateset = new osg::StateSet(*source, osg::CopyOp::SHALLOW_COPY);
+                    osg::ref_ptr<osg::Material> tinted = new osg::Material(*material, osg::CopyOp::DEEP_COPY_ALL);
+                    for (const auto face : { osg::Material::FRONT, osg::Material::BACK })
+                    {
+                        osg::Vec4f diffuse = tinted->getDiffuse(face), ambient = tinted->getAmbient(face);
+                        tinted->setDiffuse(face, osg::Vec4f(diffuse.r() * mRed, diffuse.g() * mGreen, diffuse.b() * mBlue, diffuse.a()));
+                        tinted->setAmbient(face, osg::Vec4f(ambient.r() * mRed, ambient.g() * mGreen, ambient.b() * mBlue, ambient.a()));
+                    }
+                    stateset->setAttribute(tinted);
+                    node.setStateSet(stateset);
+                }
+            traverse(node);
+        }
+
+    private:
+        float mRed, mGreen, mBlue;
+    };
 
     // Identifies the attached part set, so an equipment change can rebuild it.
     inline std::string tes4PartSignature(const std::vector<std::string>& models)
