@@ -167,10 +167,16 @@ return {
         TES4Hit = function(hit)
             local health = types.Actor.stats.dynamic.health(self)
             local fatigue = types.Actor.stats.dynamic.fatigue(self)
+            local stats = interfaces.TES4Stats
+            local rating = 0
+            if stats then
+                rating = items.armorRating(self, stats.skill, stats.attribute('luck') or 50)
+                hit = { health = hit.health * combat.armorFactor(rating), fatigue = hit.fatigue, attacker = hit.attacker }
+            end
             health.current = math.max(0, health.current - hit.health)
             fatigue.current = fatigue.current - hit.fatigue
-            print(string.format('OPENOBLIVION_TES4_COMBAT player takes health=%.2f fatigue=%.2f now=%.1f', hit.health,
-                hit.fatigue, health.current))
+            print(string.format('OPENOBLIVION_TES4_COMBAT player takes health=%.2f fatigue=%.2f armor=%.1f now=%.1f',
+                hit.health, hit.fatigue, rating, health.current))
         end,
     },
 }

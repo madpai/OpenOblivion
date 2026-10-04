@@ -26,4 +26,11 @@ near(combat.weapon(10, 5, 50, 50, 150, 150, 0), 1.375 * 0.5 / 1.0, 'broken weapo
 near(combat.weapon(10, 5, 50, 50, 0, 150, 1), 1.375 * 0.5, 'exhausted fatigue factor')
 near(combat.weapon(10, 5, 150, 50, 150, 150, 1), combat.weapon(10, 5, 100, 50, 150, 150, 1), 'strength clamps to 100')
 near(combat.weaponReach(1.3), 128 * 1.3 + 21 + 13.3, 'weapon reach')
+-- Armor (Oblivion.exe 0x547370 piece rating, 0x60e540 total capped at fMaxArmorRating).
+near(combat.armorPiece(10, 5, 50, 1), 10 * (0.35 + 0.65 * 0.05), 'iron cuirass at skill 5')
+near(combat.armorPiece(10, 100, 100, 1), 10 * 1.0, 'master armor skill gives the full rating')
+near(combat.armorPiece(10, 100, 100, 0.5), 5, 'condition scales the rating')
+near(combat.armorFactor(0), 1, 'no armor lets everything through')
+near(combat.armorFactor(20), 0.8, 'armor rating blocks that percentage')
+near(combat.armorFactor(500), 0.15, 'rating caps at 85')
 print('TES4 combat fixtures passed: ' .. checks .. ' checks')

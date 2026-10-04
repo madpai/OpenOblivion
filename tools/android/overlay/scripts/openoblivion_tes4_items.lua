@@ -10,6 +10,7 @@
 -- "calculate for each item in count" (flag 2) each counted item rolls again.
 local types = require('openmw.types')
 
+local combat = require('scripts.openoblivion_tes4_combat')
 local ok, values = pcall(require, 'scripts.openoblivion_tes4_items_values')
 local M = { available = ok }
 
@@ -124,6 +125,26 @@ function M.equipWeapon(actor)
     equipment[types.Actor.EQUIPMENT_SLOT.CarriedRight] = best.item
     types.Actor.setEquipment(actor, equipment)
     return best
+end
+
+-- Total armor rating of what the actor wears. skillOf('heavyArmor' or
+-- 'lightArmor') gives the actor's skill. Generated armor records carry the
+-- TES4 rating (rounded) in baseArmor and the heavy flag in enchantCapacity.
+function M.armorRating(actor, skillOf, luck)
+    local total = 0
+    for _, item in pairs(types.Actor.getEquipment(actor)) do
+        if item and types.Armor.objectIsInstance(item) and item.recordId:sub(1, 4) == 'oo4_' then
+            local record = types.Armor.record(item)
+            local condition = 1
+            local found, data = pcall(types.Item.itemData, item)
+            if found and data and data.condition and record.health and record.health > 0 then
+                condition = data.condition / record.health
+            end
+            local skill = skillOf(record.enchantCapacity == 1 and 'heavyArmor' or 'lightArmor') or 5
+            total = total + combat.armorPiece(record.baseArmor, skill, luck, condition)
+        end
+    end
+    return total
 end
 
 -- TES4 body regions each host type covers. TES4 equips one item per region; a

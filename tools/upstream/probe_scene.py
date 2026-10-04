@@ -58,6 +58,7 @@ parser.add_argument('--movement-face', action='store_true', help='Place a static
 parser.add_argument('--movement-face-distance', type=float, default=70, help='Distance of the face camera; negative views from the far side')
 parser.add_argument('--movement-face-angle', type=float, default=0, help='Degrees around the actor from the way it faces')
 parser.add_argument('--movement-face-height', type=float, default=148, help='Height of the face camera target above the actor origin')
+parser.add_argument('--movement-give', help='Comma separated generated item ids given to the player and equipped')
 parser.add_argument('--movement-weapon', help='Generated item id (oo4_xxxxxx) the player is given and wields')
 parser.add_argument('--movement-ui', choices=('inventory', 'loot'), help='Open this menu at the shot time and capture it')
 parser.add_argument('--movement-attack', action='store_true', help='Request a TES4 player attack every 1.5 s (phone overlay)')
@@ -200,7 +201,7 @@ if args.player_movement:
     position = '{' + ','.join(repr(v) for v in args.movement_position) + '}' if args.movement_position else 'nil'
     (movement_data / 'scripts/openoblivion_movement_config.lua').write_text(
         'return {turn=' + repr(math.radians(args.movement_turn)) + ', position=' + position
-        + ', heading=' + repr(math.radians(args.movement_heading)) + ', gait=' + repr(args.movement_gait) + ', camera=' + repr(args.movement_camera) + ', shot=' + repr(args.movement_shot_time) + ', attack=' + ('true' if args.movement_attack else 'false') + ', duration=' + repr(args.movement_duration) + ', ui=' + (repr(args.movement_ui) if args.movement_ui else 'nil') + ', pitch=' + repr(math.radians(args.movement_pitch)) + ', face=' + ('true' if args.movement_face else 'false') + ', weapon=' + (repr(args.movement_weapon) if args.movement_weapon else 'nil') + ', faceDistance=' + repr(args.movement_face_distance) + ', faceAngle=' + repr(args.movement_face_angle) + ', faceHeight=' + repr(args.movement_face_height) + '}\n')
+        + ', heading=' + repr(math.radians(args.movement_heading)) + ', gait=' + repr(args.movement_gait) + ', camera=' + repr(args.movement_camera) + ', shot=' + repr(args.movement_shot_time) + ', attack=' + ('true' if args.movement_attack else 'false') + ', duration=' + repr(args.movement_duration) + ', ui=' + (repr(args.movement_ui) if args.movement_ui else 'nil') + ', pitch=' + repr(math.radians(args.movement_pitch)) + ', face=' + ('true' if args.movement_face else 'false') + ', give=' + (repr(args.movement_give) if args.movement_give else 'nil') + ', weapon=' + (repr(args.movement_weapon) if args.movement_weapon else 'nil') + ', faceDistance=' + repr(args.movement_face_distance) + ', faceAngle=' + repr(args.movement_face_angle) + ', faceHeight=' + repr(args.movement_face_height) + '}\n')
     cfg += ['data=/movement-data']
     if args.raw_eye:
         (movement_data / 'scripts/openoblivion_grounded_eye.lua').write_text(

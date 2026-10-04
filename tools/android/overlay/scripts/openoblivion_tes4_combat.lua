@@ -19,6 +19,10 @@ M.settings = {
     fDamageWeaponConditionBase = 0.5, fDamageWeaponConditionMult = 0.5,
     fDamageSkillBase = 0.2, fDamageSkillMult = 1.5,
     fDamageStrengthBase = 0.75, fDamageStrengthMult = 0.5,
+    -- Armor: exe defaults except fMaxArmorRating (master 85, exe 90).
+    fArmorRatingBase = 0.35, fArmorRatingMax = 1.0,
+    fArmorRatingConditionBase = 0.0, fArmorRatingConditionMult = 1.0,
+    fMaxArmorRating = 85.0,
 }
 
 local function clamp(value, low, high) return math.max(low, math.min(high, value)) end
@@ -55,6 +59,24 @@ function M.weapon(damage, skill, strength, luck, fatigueCurrent, fatigueBase, co
     local skillTerm = s.fDamageSkillBase + s.fDamageSkillMult * M.effectiveSkill(skill, luck) * 0.01
     local strengthTerm = s.fDamageStrengthBase + s.fDamageStrengthMult * math.min(strength, 100) * 0.01
     return weaponTerm * conditionTerm * skillTerm * strengthTerm * M.fatigueFactor(fatigueCurrent, fatigueBase)
+end
+
+-- Rating one worn piece contributes (Oblivion.exe 0x547370): its rating x
+-- (base + (max - base) x effective armor skill / 100) x its condition term.
+-- Rounding the exe applies inside this routine is not reproduced.
+function M.armorPiece(rating, skill, luck, condition)
+    local s = M.settings
+    local skillFactor = s.fArmorRatingBase + (s.fArmorRatingMax - s.fArmorRatingBase) * M.effectiveSkill(skill, luck) * 0.01
+    local conditionFactor = s.fArmorRatingConditionBase + s.fArmorRatingConditionMult * clamp(condition, 0, 1)
+    return rating * skillFactor * conditionFactor
+end
+
+-- Share of a physical hit that gets through: the summed rating is capped at
+-- fMaxArmorRating (0x60e540 sums the slots and clamps) and blocks that
+-- percentage of the damage (the documented rule; the exe's damage routine is
+-- not decoded here).
+function M.armorFactor(totalRating)
+    return 1 - clamp(totalRating, 0, M.settings.fMaxArmorRating) / 100
 end
 
 -- Weapon reach: fCombatDistance x the weapon's reach, with the same body

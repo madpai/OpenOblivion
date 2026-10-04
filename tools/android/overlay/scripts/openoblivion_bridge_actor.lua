@@ -113,10 +113,18 @@ return {
             if types.Actor.isDead(self) then return end
             local health = types.Actor.stats.dynamic.health(self)
             local fatigue = types.Actor.stats.dynamic.fatigue(self)
+            local row = ok and data and npcs[data.formId]
+            local rating = 0
+            if row then
+                rating = items.armorRating(self, function(name)
+                    return name == 'heavyArmor' and row[11] or row[12]
+                end, row[7])
+                hit = { health = hit.health * combat.armorFactor(rating), fatigue = hit.fatigue, attacker = hit.attacker }
+            end
             health.current = math.max(0, health.current - hit.health)
             fatigue.current = fatigue.current - hit.fatigue
-            print(string.format('OPENOBLIVION_TES4_COMBAT %s takes health=%.2f now=%.1f', tostring(data and data.name),
-                hit.health, health.current))
+            print(string.format('OPENOBLIVION_TES4_COMBAT %s takes health=%.2f armor=%.1f now=%.1f',
+                tostring(data and data.name), hit.health, rating, health.current))
             if health.current > 0 and anim.hasGroup(self, 'tes4recoil') then
                 interfaces.AnimationController.playBlendedAnimation('tes4recoil', {
                     startKey = 'start', stopKey = 'stop', priority = anim.PRIORITY.Hit, autoDisable = true })

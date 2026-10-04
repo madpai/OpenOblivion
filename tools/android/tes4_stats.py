@@ -82,7 +82,9 @@ def npc_table(master):
         fatigue = struct.unpack_from('<H', acbs, 6)[0]
         hand, strength, luck = (data[5], data[25], data[32]) if len(data) >= 33 else (0, 0, 0)
         blade, blunt, marksman = (data[2], data[4], data[16]) if len(data) >= 21 else (0, 0, 0)
-        rows[fid & 0xffffff] = (aidt[0], aidt[1], health, fatigue, hand, strength, luck, blade, blunt, marksman)
+        heavy, light = (data[6], data[15]) if len(data) >= 21 else (0, 0)
+        rows[fid & 0xffffff] = (aidt[0], aidt[1], health, fatigue, hand, strength, luck, blade, blunt, marksman, heavy,
+                                light)
     return rows
 
 
@@ -90,7 +92,7 @@ def npc_lua(rows):
     body = ',\n'.join(f'  [{fid}] = {{' + ', '.join(map(str, row)) + '}' for fid, row in sorted(rows.items()))
     return ('-- Generated from the owner\'s Oblivion.esm NPC records; private build output.\n'
             '-- [FormID & 0xffffff] = {aggression, confidence, health, fatigue, handToHand, strength, luck,'
-            ' blade, blunt, marksman}\n'
+            ' blade, blunt, marksman, heavyArmor, lightArmor}\n'
             'return {\n' + body + '\n}\n')
 
 

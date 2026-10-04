@@ -105,7 +105,9 @@ def host_record(tag, fid, fields):
             return 'CLOT', head + sub('CTDT', struct.pack('<ifHH', kind, weight, min(value, 0xffff), 0)) + itex
         if tag == b'CLOT':
             kind = 0
-        return 'ARMO', head + sub('AODT', struct.pack('<ifiiii', kind, weight, value, health, 0, rating // 100)) + itex
+        # The host enchant field carries the heavy-armor flag (BMDT general flag 0x80) for the TES4 rules layer.
+        heavy = 1 if tag == b'ARMO' and general & 0x80 else 0
+        return 'ARMO', head + sub('AODT', struct.pack('<ifiiii', kind, weight, value, health, heavy, (rating + 50) // 100)) + itex
     if tag in (b'WEAP', b'AMMO'):
         if tag == b'WEAP':
             kind, speed, reach, _flags, value, health, weight, damage = struct.unpack_from('<IffIIIfH', data)

@@ -95,3 +95,25 @@ Bandits wield the strongest melee weapon they were rolled and fight with its
 clips, reach and damage; their weapon skills come from the NPC record
 (blade, blunt, marksman at level 1).
 
+## Armor (2026-10-04, build `0.36-armor`)
+
+One worn piece contributes (`Oblivion.exe` 0x547370):
+`rating × (fArmorRatingBase + (fArmorRatingMax − fArmorRatingBase) × effective
+armor skill / 100) × (fArmorRatingConditionBase + fArmorRatingConditionMult ×
+condition)`, with the executable's defaults 0.35, 1.0, 0.0 and 1.0 (no master
+overrides). The actor's total sums the worn slots and is capped at
+`fMaxArmorRating` (0x60e540; master 85, exe 90). Armor ratings are stored ×100
+in ARMO (an Iron Cuirass is 10.00); generated host records keep the rounded
+value in `baseArmor`, and carry the heavy-armor flag (BMDT general flag 0x80)
+in the otherwise unused `enchantCapacity` so the rules layer can pick the
+Heavy or Light Armor skill. NPC armor skills come from the NPC record.
+
+Applying the total to damage as "blocks that percentage, up to the cap" is the
+documented rule and is **not** decoded from the executable's damage routine.
+The rounding the executable applies inside the piece routine is not
+reproduced. Desktop check (`tes4-armor-4`): an iron set (rating 10.7 at the
+starting armor skill) cuts an Iron Mace hit from 2.07 to 1.85.
+
+Armor wear (fDamageToArmorPercentage), the armor-weight class skill gain and
+magic armor are not modelled.
+

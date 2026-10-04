@@ -2,6 +2,9 @@
 -- Fixtures for the TES4 leveled-list rolls (synthetic lists, no game data).
 local root = arg[1]
 package.preload['openmw.types'] = function() return {} end
+package.preload['scripts.openoblivion_tes4_combat'] = function()
+    return dofile(arg[1] .. '/tools/android/overlay/scripts/openoblivion_tes4_combat.lua')
+end
 package.preload['scripts.openoblivion_tes4_items_values'] = function()
     return {
         lists = {

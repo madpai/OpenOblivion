@@ -1,5 +1,11 @@
 # Maintainer handoff
 
+Armor, 2026-10-04: served `0.36-armor`. Worn armor reduces incoming physical
+damage by its capped rating (decoded piece rating; the percentage rule itself
+is documented, not decoded). See TES4_COMBAT.md. Next: blocking (no block
+GMSTs found by name in the executable, decode the damage routine), power
+attacks, fatigue per swing, bows, detection.
+
 Weapons, 2026-10-04: served `0.35-weapons`. Looted melee weapons can be
 equipped and are drawn and sheathed on the skeleton's weapon nodes, with the
 original one-hand/two-hand clip sets, damage from the decoded exe formula
