@@ -65,6 +65,16 @@ matching the speed formula's weapon-drawn input.
 Every `_1stperson` clip animates `Camera01`; the renderer now tracks it in
 first person (it previously tracked `Bip01 Head`, which put the shirt in view).
 
+Owner phone test of 0.32 showed stretched shirt and skin across the view with
+fists readied. Cause: the host mixes clips by body half (lower body from the
+plain idle or walk, upper body from the readied idle), but each original
+first-person clip poses the whole rig, so mixing twisted the torso. Fixes
+(0.33): first-person clips put every bone in one host blend group, so one
+clip drives the whole rig; first person moves with the plain walk/run clips
+(the readied movement clips omit the pelvis and legs); the view pitch rotates
+the whole rig rigidly about `Camera01` instead of bending the neck; and first
+person attaches only upper-body and hand gear.
+
 ## Evidence
 
 Desktop, owner data, recorded binaries (`evidence/tes4-items-01`,

@@ -13,7 +13,7 @@
  namespace
  {
  
-@@ -493,6 +499,53 @@
+@@ -493,6 +499,55 @@
          bool is1stPerson = mViewMode == VM_FirstPerson;
          bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
  
@@ -45,12 +45,14 @@
 +                const std::string directory = skeleton.substr(0, skeleton.find_last_of('/') + 1);
 +                for (const auto& [file, group] : OpenOblivion::tes4LocomotionGroups())
 +                {
++                    if (!OpenOblivion::tes4UseClip(group, is1stPerson))
++                        continue;
 +                    const VFS::Path::Normalized clip(directory + std::string(file));
 +                    if (!mResourceSystem->getVFS()->exists(clip))
 +                        continue;
 +                    osg::ref_ptr<const SceneUtil::KeyframeHolder> loaded = mResourceSystem->getKeyframeManager()->get(clip);
 +                    if (loaded)
-+                        addKeyframeSource(OpenOblivion::tes4RenamedKeyframes(*loaded, group), clip, skeleton);
++                        addKeyframeSource(OpenOblivion::tes4RenamedKeyframes(*loaded, group, is1stPerson), clip, skeleton);
 +                }
 +                if (is1stPerson)
 +                {
@@ -67,7 +69,7 @@
          std::string_view base;
          if (!isWerewolf)
          {
-@@ -568,6 +621,24 @@
+@@ -568,6 +623,24 @@
          if (!mObjectRoot.get())
              return;
  
@@ -92,6 +94,43 @@
          NpcType curType = getNpcType();
          if (curType != mNpcType)
          {
+@@ -715,6 +788,11 @@
+                 osg::Quat(mPtr.getRefData().getPosition().rot[0] * rotateFactor, osg::Vec3f(-1, 0, 0)));
+             mFirstPersonNeckController->setOffset(mFirstPersonOffset);
+         }
++        if (OpenOblivion::Tes4FirstPersonPitch* pitch = OpenOblivion::tes4FirstPersonPitch(mObjectRoot.get()))
++        {
++            pitch->setPitch(mPtr.getRefData().getPosition().rot[0]);
++            pitch->setOffset(mFirstPersonOffset);
++        }
+ 
+         WeaponAnimation::configureControllers(mPtr.getRefData().getPosition().rot[0] + getBodyPitchRadians());
+ 
+@@ -926,7 +1004,23 @@
+         {
+             // If there is no active animation, then the bip01 neck node will not be updated each frame, and the
+             // RotateController will accumulate rotations.
+-            if (mStates.size() > 0)
++            // OpenOblivion: TES4 first-person rigs pitch rigidly about Camera01.
++            if (osg::UserDataContainer* data = mObjectRoot->getUserDataContainer())
++                if (const unsigned index = data->getUserObjectIndex("openoblivionPitch"); index < data->getNumUserObjects())
++                    data->removeUserObject(index);
++            const NodeMap::iterator tes4Rig = mNodeMap.find("bip01");
++            const NodeMap::iterator tes4Camera = mNodeMap.find("camera01");
++            if (mStates.size() > 0 && tes4Rig != mNodeMap.end() && tes4Camera != mNodeMap.end()
++                && OpenOblivion::tes4ActorRecordFor(mPtr, mNpc->mHead, *MWBase::Environment::get().getESMStore()))
++            {
++                osg::ref_ptr<OpenOblivion::Tes4FirstPersonPitch> pitch
++                    = new OpenOblivion::Tes4FirstPersonPitch(mObjectRoot.get(), tes4Camera->second.get());
++                pitch->setName("openoblivionPitch");
++                mObjectRoot->getOrCreateUserDataContainer()->addUserObject(pitch);
++                tes4Rig->second->addUpdateCallback(pitch);
++                mActiveControllers.emplace_back(tes4Rig->second, pitch);
++            }
++            else if (mStates.size() > 0)
+             {
+                 NodeMap::iterator found = mNodeMap.find("bip01 neck");
+                 if (found != mNodeMap.end())
 --- a/components/misc/resourcehelpers.cpp
 +++ b/components/misc/resourcehelpers.cpp
 @@ -142,6 +142,9 @@

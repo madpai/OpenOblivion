@@ -57,6 +57,7 @@ return {
             self.controls.sneak = config.gait == 'sneak'
             self.controls.jump = phase() == 'jump'
             self.controls.yawChange = turned and 0 or config.turn
+            self.controls.pitchChange = turned and 0 or (config.pitch or 0)
             turned = true
             if config.attack and elapsed >= (nextAttack or 1) then
                 nextAttack = elapsed + 1.5

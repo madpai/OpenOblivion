@@ -1,5 +1,10 @@
 # Maintainer handoff
 
+First-person fix, 2026-10-04: served `0.33-first-person-fix` after the owner's
+0.32 screenshot showed stretched clothing in first person with fists readied.
+See the first-person section of [TES4_ITEMS.md](research/TES4_ITEMS.md).
+Desktop probes now take `--movement-pitch`.
+
 Loot and readied fists, 2026-10-03: served `0.32-loot-readied`. TES4 items are
 generated host records (`tools/android/tes4_items.py`), NPC inventories roll
 through TES4 leveled lists, corpses are lootable, the renderer draws equipped

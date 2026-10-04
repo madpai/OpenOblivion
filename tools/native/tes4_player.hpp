@@ -24,6 +24,9 @@
 #include <components/misc/strings/algorithm.hpp>
 #include <components/misc/strings/lower.hpp>
 #include <components/sceneutil/keyframe.hpp>
+#include <components/sceneutil/nodecallback.hpp>
+
+#include <osg/MatrixTransform>
 
 #include "../mwclass/esm4base.hpp"
 #include "../mwworld/cellref.hpp"
@@ -118,6 +121,7 @@ namespace OpenOblivion
     struct Tes4Worn
     {
         std::vector<std::string> mModels;
+        std::vector<std::uint32_t> mSlots; // per model
         std::vector<ESM::RefId> mIds;
         std::uint32_t mCovered = 0;
     };
@@ -163,6 +167,7 @@ namespace OpenOblivion
             if (model.empty())
                 return;
             worn.mModels.push_back(model);
+            worn.mSlots.push_back(flags & 0xffff);
             worn.mCovered |= flags & 0xffff;
         };
         if (!ptr.isEmpty() && tes4HostItemsLoaded(store) && ptr.getClass().hasInventoryStore(ptr))
@@ -213,7 +218,11 @@ namespace OpenOblivion
         for (const auto& [piece, slot] : pieces)
             if ((worn.mCovered & slot) == 0 && (!firstPerson || slot == sTes4SlotUpper || slot == sTes4SlotHand))
                 models.push_back("Characters\\_Male\\" + std::string(prefix) + std::string(piece) + ".nif");
-        models.insert(models.end(), worn.mModels.begin(), worn.mModels.end());
+        // First person shows only upper-body and hand pieces: the original
+        // first-person clips do not pose the legs.
+        for (std::size_t i = 0; i < worn.mModels.size(); ++i)
+            if (!firstPerson || (worn.mSlots[i] & (sTes4SlotUpper | sTes4SlotHand)) != 0)
+                models.push_back(worn.mModels[i]);
         const ESM4::Race* race = store.get<ESM4::Race>().search(npc.mRace);
         if (race != nullptr)
         {
@@ -306,12 +315,95 @@ namespace OpenOblivion
         return groups;
     }
 
+    // First-person view pitch for the TES4 rig. The host pitches only the neck
+    // so the arms follow the view; on a TES4 first-person skeleton that bends
+    // the arms away from a still torso and stretches worn upper-body meshes.
+    // Instead pitch the whole rig ("Bip01") rigidly about Camera01, which every
+    // original first-person clip animates, so the view point does not move.
+    class Tes4FirstPersonPitch : public SceneUtil::NodeCallback<Tes4FirstPersonPitch, osg::MatrixTransform*>
+    {
+    public:
+        Tes4FirstPersonPitch(osg::Node* relativeTo, osg::Node* camera)
+            : mRelativeTo(relativeTo)
+            , mCamera(camera)
+        {
+        }
+
+        void setPitch(float pitch) { mRotate = osg::Quat(pitch, osg::Vec3f(-1, 0, 0)); }
+        void setOffset(const osg::Vec3f& offset) { mOffset = offset; }
+
+        void operator()(osg::MatrixTransform* node, osg::NodeVisitor* nv)
+        {
+            // Without a keyframe update this frame, start again from the animated pose.
+            osg::Matrix matrix = node->getMatrix();
+            if (matrix == mWritten)
+                matrix = mBase;
+            else
+                mBase = matrix;
+            osg::Quat worldOrient;
+            const osg::NodePathList paths = node->getParentalNodePaths(mRelativeTo);
+            if (!paths.empty())
+                worldOrient = osg::computeLocalToWorld(paths[0]).getRotate();
+            const osg::Quat worldOrientInverse = worldOrient.inverse();
+            osg::Vec3f before = matrix.getTrans();
+            const osg::NodePathList cameraPaths = mCamera->getParentalNodePaths(node);
+            if (!cameraPaths.empty())
+            {
+                osg::NodePath path = cameraPaths[0];
+                if (!path.empty() && path.front() == node)
+                    path.erase(path.begin());
+                before = osg::computeLocalToWorld(path).getTrans() * matrix;
+            }
+            const osg::Vec3f local = before * osg::Matrix::inverse(matrix);
+            osg::Matrix rotated = matrix;
+            rotated.setRotate(worldOrient * mRotate * worldOrientInverse * matrix.getRotate());
+            rotated.setTrans(rotated.getTrans() + (before - local * rotated) + worldOrientInverse * mOffset);
+            node->setMatrix(rotated);
+            mWritten = rotated;
+            traverse(node, nv);
+        }
+
+    private:
+        osg::Quat mRotate;
+        osg::Vec3f mOffset;
+        osg::Node* mRelativeTo;
+        osg::ref_ptr<osg::Node> mCamera;
+        osg::Matrix mBase;
+        osg::Matrix mWritten;
+    };
+
+    inline Tes4FirstPersonPitch* tes4FirstPersonPitch(osg::Node* root)
+    {
+        osg::UserDataContainer* data = root != nullptr ? root->getUserDataContainer() : nullptr;
+        return data != nullptr ? dynamic_cast<Tes4FirstPersonPitch*>(data->getUserObject("openoblivionPitch")) : nullptr;
+    }
+
+    // The original first-person readied movement clips leave the torso bones
+    // unanimated, which stretches worn upper-body meshes; first person moves
+    // with the plain clips and keeps the readied idle on the arms instead.
+    inline bool tes4UseClip(std::string_view group, bool firstPerson)
+    {
+        return !firstPerson || group == "idlehh" || group.size() < 2 || group.substr(group.size() - 2) != "hh";
+    }
+
     // Copy a loaded clip with every text key moved to the chosen group.
+    // First-person clips each pose the whole rig and are not made to be mixed
+    // by body half (lower-body idle with upper-body readied idle twisted the
+    // torso and stretched the shirt). Naming every controller after the host's
+    // torso blend root puts the whole rig in one blend group.
     inline osg::ref_ptr<SceneUtil::KeyframeHolder> tes4RenamedKeyframes(
-        const SceneUtil::KeyframeHolder& source, std::string_view group)
+        const SceneUtil::KeyframeHolder& source, std::string_view group, bool wholeRig = false)
     {
         osg::ref_ptr<SceneUtil::KeyframeHolder> renamed = new SceneUtil::KeyframeHolder;
         renamed->mKeyframeControllers = source.mKeyframeControllers;
+        if (wholeRig)
+            for (auto& [bone, controller] : renamed->mKeyframeControllers)
+            {
+                osg::ref_ptr<SceneUtil::KeyframeController> copy
+                    = osg::clone(controller.get(), osg::CopyOp::SHALLOW_COPY);
+                copy->setName("Bip01 Spine1");
+                controller = copy;
+            }
         for (const auto& [time, key] : source.mTextKeys)
         {
             const auto separator = key.find(':');
