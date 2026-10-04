@@ -1,5 +1,23 @@
 # Maintainer handoff
 
+End-of-session state, 2026-10-04 (phone build `0.39-hair-run`, commit `cab2eef`):
+the Vilverin slice is playable: TES4 player and NPC bodies, faces, hair, worn
+items, readied fists and weapons, armor, loot, bandit AI, first-person view.
+Where things stand and how to work:
+
+- Per-feature notes: TES4_PLAYER, TES4_COMBAT (formulas with exe addresses),
+  TES4_ITEMS (also crash log, first-person fixes), TES4_FACES under docs/research.
+- The owner tests on a phone over SSH; desktop and phone can differ, so ask for
+  screenshots and the View Scene Log text (a native crash is written at the top).
+- Engine work flows through the hash-locked receipts in `tools/native`; the
+  player receipt is edited by changing the patched copies and regenerating
+  `tes4_player_{desktop,android}.patch` (see the private session tools README).
+- Not done yet, in the order planned: blocking (decode the executable's damage
+  routine; no block GMSTs by name), power attacks and fatigue per swing, bows
+  and staves, TES4 detection/disposition and sneak, FaceGen shape morphs (EGM)
+  and the player's custom face, gold/barter and a TES4 inventory UI, then
+  trees (SpeedTree) and water for the outdoors.
+
 Hair and first-person run, 2026-10-04: served `0.39-hair-run`. Owner reported
 hair still wrong and first-person rubber-banding. Hair: rotation-only head-bone
 carry plus whitened hair materials and vertex colours (see TES4_FACES.md).
