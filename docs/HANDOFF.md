@@ -18,6 +18,20 @@ Where things stand and how to work:
   and the player's custom face, gold/barter and a TES4 inventory UI, then
   trees (SpeedTree) and water for the outdoors.
 
+Quests, journal and dialogue, 2026-10-04: build `0.41-quests`. NPCs can be talked
+to and the main quest has a journal. A compiler turns the master's script source
+into Lua using the exact command table read from Oblivion.exe; a pure-Lua runtime
+runs quest stages and scripts, a dialogue engine picks greetings, topics and
+responses by the real conditions, and a plain list UI shows the conversation
+window and the journal (the J key / JOURNAL button). The new game starts with
+MQ02 stage 0 (journal text, the Amulet of Kings in the inventory); arriving in
+Chorrol and at Weynon Priory advances it, and Jauffre's conversation runs to the
+start of MQ03. See [TES4_SCRIPTS.md](research/TES4_SCRIPTS.md) for the checks
+(7,943 of 7,945 scripts match the game's own bytecode statement for statement) and
+the guesses (topic list rule, GetInCell dummy cells). Next: voices, object
+scripts on placed references, more commands (MoveTo, packages, combat), checking
+the topic rule against the reference game, a phone-friendly conversation UI.
+
 Trees, 2026-10-04: served `0.40-trees`. SpeedTree `.spt` models were drawn as
 nothing, so every outdoor view was treeless. The new `tes4_trees` receipt (after
 `tes4_player`) draws each tree as two crossed quads carrying the original

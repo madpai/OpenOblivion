@@ -64,7 +64,7 @@ parser.add_argument('--movement-weapon', help='Generated item id (oo4_xxxxxx) th
 parser.add_argument('--hide-part', help='Debug: drop TES4 actor parts whose model path contains this text')
 parser.add_argument('--movement-face-player', action='store_true', help='The face camera frames the player rather than the nearest actor')
 parser.add_argument('--movement-kill', action='store_true', help='Kill the nearest actor 3 s before the shot (loot tests)')
-parser.add_argument('--movement-ui', choices=('inventory', 'loot'), help='Open this menu at the shot time and capture it')
+parser.add_argument('--movement-ui', choices=('inventory', 'loot', 'dialogue', 'journal'), help='Open this menu at the shot time and capture it')
 parser.add_argument('--movement-attack', action='store_true', help='Request a TES4 player attack every 1.5 s (phone overlay)')
 parser.add_argument('--movement-gait', choices=('walk', 'run', 'sneak', 'none'), default='walk', help='Gait the movement probe requests')
 parser.add_argument('--movement-turn', type=float, default=0, help='Initial turn in degrees through native player controls')
@@ -238,12 +238,20 @@ if args.phone_overlay:
     item_records, items_lua = items_build(data / 'Oblivion.esm')
     (overlay_dir / 'openoblivion_rules.omwaddon').write_bytes(rules_addon(item_records))
     (overlay_dir / 'scripts/openoblivion_tes4_items_values.lua').write_text(items_lua)
+    executable = data.parent / 'Oblivion.exe'
+    if executable.is_file():
+        import tes4_gamedata
+        tes4_gamedata.build(data / 'Oblivion.esm', executable, overlay_dir)
+        cfg.append('TES4_GAME_PLACEHOLDER')
     from menu_textures import write as write_menu_textures
     write_menu_textures(overlay_dir / 'textures')
     args.sky_osgt = True
     # An explicit --movement-position replaces the overlay's sewer-exit start.
-    cfg += ['data=/phone-overlay', 'content=openoblivion_rules.omwaddon',
-            *([] if args.movement_position else ['content=start_position.omwscripts'])]
+    if args.movement_position:
+        (overlay_dir / 'scripts/openoblivion_start_override.lua').write_text('return { skip = true }\n')
+    cfg += ['data=/phone-overlay', 'content=openoblivion_rules.omwaddon', 'content=start_position.omwscripts',
+            *(['content=tes4_game.omwscripts'] if 'TES4_GAME_PLACEHOLDER' in cfg else [])]
+    cfg = [line for line in cfg if line != 'TES4_GAME_PLACEHOLDER']
 elif args.sky_osgt:
     cfg.append('data=/phone-overlay')
 (config / 'openmw.cfg').write_text('\n'.join(cfg) + '\n')

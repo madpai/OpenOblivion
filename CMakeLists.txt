@@ -145,4 +145,10 @@ if(BUILD_TESTING AND NOT ANDROID)
         "${CMAKE_SOURCE_DIR}/tests/test_tes4_combat.lua" "${CMAKE_SOURCE_DIR}")
     add_test(NAME door-activation-fixtures COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_SOURCE_DIR}/tests/test_door_activation.py")
+    add_test(NAME tes4-script-compiler-fixtures COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_tes4_script.py")
+    add_test(NAME tes4-script-runtime-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_tes4_script_rt.lua" "${CMAKE_SOURCE_DIR}")
+    add_test(NAME tes4-dialogue-fixtures COMMAND "${OO_LUA_EXECUTABLE}"
+        "${CMAKE_SOURCE_DIR}/tests/test_tes4_dialogue.lua" "${CMAKE_SOURCE_DIR}")
 endif()

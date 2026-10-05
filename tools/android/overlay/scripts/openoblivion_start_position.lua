@@ -10,7 +10,9 @@ local util = require('openmw.util')
 local START_CELL = 'icprisonsewerexit01'
 local EXIT_POSITION = util.vector3(47073.2, 82958.1, 301.8)
 local EXIT_HEADING = 0.785398
-local done = false
+-- A desktop probe that places the player itself ships this module (private, probe output only).
+local overridden, override = pcall(require, 'scripts.openoblivion_start_override')
+local done = overridden and override and override.skip or false
 
 return {
     engineHandlers = {

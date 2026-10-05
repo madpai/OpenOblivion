@@ -326,6 +326,13 @@ def main():
     item_records, items_lua = items_build(data / 'Oblivion.esm')
     (overlay / 'openoblivion_rules.omwaddon').write_bytes(rules_addon(item_records))
     (overlay / 'scripts/openoblivion_tes4_items_values.lua').write_text(items_lua)
+    executable = data.parent / 'Oblivion.exe'
+    if executable.is_file():
+        import tes4_gamedata
+        stats = tes4_gamedata.build(data / 'Oblivion.esm', executable, overlay)
+        print('TES4 game data:', {k: v for k, v in stats.items() if k != 'warnings_list'})
+    else:
+        print('Oblivion.exe not found next to Data: quests, scripts and dialogue are not packaged')
     from menu_textures import write as write_menu_textures
     write_menu_textures(overlay / 'textures')
     (stage / 'template-settings.cfg').write_text(player_collision_settings((template / 'settings.cfg').read_text()))

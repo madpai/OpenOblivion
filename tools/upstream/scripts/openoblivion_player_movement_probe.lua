@@ -168,12 +168,27 @@ return {
                     end
                     print('OPENOBLIVION_SCENE_PROBE loot=' .. tostring(corpse and corpse.recordId))
                     if corpse then interfaces.UI.setMode('Container', { target = corpse }) end
+                elseif config.ui == 'dialogue' then
+                    local best, bestDistance
+                    for _, actor in ipairs(nearby.actors) do
+                        local distance = (actor.position - self.position):length()
+                        if actor ~= self.object and not types.Actor.isDead(actor) and (not best or distance < bestDistance) then
+                            best, bestDistance = actor, distance
+                        end
+                    end
+                    for _, actor in ipairs(nearby.actors) do
+                        print(string.format('OPENOBLIVION_SCENE_PROBE actor %s %.0f,%.0f,%.0f', tostring(actor.recordId), actor.position.x, actor.position.y, actor.position.z))
+                    end
+                    print('OPENOBLIVION_SCENE_PROBE talk=' .. tostring(best and best.recordId))
+                    if best then core.sendGlobalEvent('TES4Talk', { npc = best, player = self.object }) end
+                elseif config.ui == 'journal' then
+                    interfaces.UI.setMode('Journal', { windows = { 'Journal' } })
                 else
                     interfaces.UI.setMode('Interface', { windows = { 'Inventory' } })
                 end
                 return
             end
-            if not captured and elapsed >= (config.shot or 6.5) then
+            if not captured and not config.ui and elapsed >= (config.shot or 6.5) then
                 captured = true
                 print('OPENOBLIVION_SCENE_PROBE cell=' .. tostring(self.cell.id)
                     .. ' name=' .. tostring(self.cell.name)

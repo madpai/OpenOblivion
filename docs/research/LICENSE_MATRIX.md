@@ -2,6 +2,19 @@
 
 Research snapshot: 2026-09-30. Original OpenOblivion code is **GPL-3.0-only**.
 
+## TES4 scripts, quests and dialogue audit (2026-10-04)
+
+Intended change: compile the owner's script source and read the owner's quest and
+dialogue records into private Lua data, and run them in a new runtime. All code
+(`tools/android/tes4_commands.py`, `tes4_script.py`, `tes4_master.py`,
+`tes4_gamedata.py`, the `openoblivion_tes4_*` Lua scripts and the tests) is
+original OpenOblivion GPL-3.0-only code written from observation of the
+owner's files. The command
+table is read from the owner's Oblivion.exe at package time (names, opcodes and
+parameter types only, no executable code) and, like all generated data, is never
+committed or uploaded; the repository holds only a synthetic table in tests. No
+third-party scripting, SpeedTree or OBSE code is used.
+
 ## TES4 tree billboards audit (2026-10-04)
 
 Intended change: with `OPENOBLIVION_TES4_TREES=1`, draw a TES4 tree's `.spt`

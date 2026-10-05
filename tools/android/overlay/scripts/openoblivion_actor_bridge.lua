@@ -11,6 +11,7 @@
 -- staves and everything else are held back until death, then placed on the
 -- body for looting. The player receives the Player record's starting items.
 local items = require('scripts.openoblivion_tes4_items')
+local I = require('openmw.interfaces')
 local types = require('openmw.types')
 local world = require('openmw.world')
 
@@ -43,6 +44,24 @@ end
 local function formId(recordId)
     local hex = recordId:match('0x(%x+)')
     return hex and (tonumber(hex, 16) % 0x1000000) or nil
+end
+
+-- Activating a living bridged NPC opens the TES4 conversation window instead of the host's
+-- dialogue window. The NPC's base record is the `head` of its proxy record.
+local function conversationBase(object)
+    local ok, record = pcall(types.NPC.record, object)
+    if not ok or not record or type(record.head) ~= 'string' then return nil end
+    return formId(record.head)
+end
+
+if I.Activation and I.Activation.addHandlerForType then
+    I.Activation.addHandlerForType(types.NPC, function(object, actor)
+        local base = conversationBase(object)
+        local game = I.OpenOblivionTES4
+        if not base or not game or not types.Player.objectIsInstance(actor) then return end
+        if types.Actor.isDead(object) then return end
+        if game.talk(object, actor, base) then return false end
+    end)
 end
 
 return {

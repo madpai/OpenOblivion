@@ -379,6 +379,7 @@ public final class MainActivity extends Activity {
             + "content=phone_qa.omwscripts\ncontent=run_gate.omwscripts\ncontent=camera_repair.omwscripts\ncontent=look_name.omwscripts\ncontent=container.omwscripts\n"
             + (new File(overlay, "openoblivion_rules.omwaddon").isFile() ? "content=openoblivion_rules.omwaddon\n" : "")
             + "content=start_position.omwscripts\n"
+            + (new File(overlay, "scripts/tes4data/quests.lua").isFile() ? "content=tes4_game.omwscripts\n" : "")
             + (com.libopenmw.openmw.BuildConfig.NATIVE_GROUNDED_EYE ? "content=native_stair_qa.omwscripts\n" : "")
             + "encoding=win1252\n"
             ;
@@ -395,14 +396,18 @@ public final class MainActivity extends Activity {
     }
     /** Launcher scripts bundled in the APK; refreshed on every launch, independent of the payload. */
     private void copyOverlay(File overlay) throws IOException {
-        String[] top = getAssets().list("overlay");
-        if (top == null) return;
-        for (String name : top) {
-            String[] children = getAssets().list("overlay/" + name);
-            if (children != null && children.length > 0) {
-                for (String child : children) copyAsset("overlay/" + name + "/" + child, new File(overlay, name + "/" + child));
-            } else copyAsset("overlay/" + name, new File(overlay, name));
-        }
+        // The overlay (quest, script and dialogue data included) only changes with the app build.
+        File marker = new File(overlay, ".build");
+        String build = String.valueOf(com.libopenmw.openmw.BuildConfig.VERSION_CODE);
+        if (marker.isFile() && build.equals(read(marker).trim())) return;
+        copyAssetTree("overlay", overlay);
+        write(marker, build);
+    }
+    private void copyAssetTree(String assetPath, File dest) throws IOException {
+        String[] children = getAssets().list(assetPath);
+        if (children != null && children.length > 0) {
+            for (String child : children) copyAssetTree(assetPath + "/" + child, new File(dest, child));
+        } else copyAsset(assetPath, dest);
     }
     private void copyAsset(String path, File dest) throws IOException {
         dest.getParentFile().mkdirs();
