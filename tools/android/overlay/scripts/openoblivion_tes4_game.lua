@@ -10,6 +10,7 @@ if not ok then return {} end
 local core = require('openmw.core')
 local world = require('openmw.world')
 local types = require('openmw.types')
+local I = require('openmw.interfaces')
 local vfsOk, vfs = pcall(require, 'openmw.vfs')
 local Script = require('scripts.openoblivion_tes4_script')
 local Dialogue = require('scripts.openoblivion_tes4_dialogue')
@@ -35,8 +36,15 @@ end
 local function formString(formId) return core.getFormId('Oblivion.esm', formId % 0x1000000) end
 
 -- A reference by FormID, or nil when it is not loaded (the engine throws on unloaded objects).
+-- A bridged TES4 NPC is stood in for by a host actor; scripts mean that actor.
 local function object(formId)
     if formId == PLAYER then return player() end
+    local bridge = I.OpenOblivionBridge
+    local proxy = bridge and bridge.proxyFor(formId)
+    if proxy then
+        local usable = pcall(function() return proxy.position end)
+        if usable then return proxy end
+    end
     local found, result = pcall(world.getObjectByFormId, formString(formId))
     if not found or not result then return nil end
     local usable = pcall(function() return result.position end)
@@ -107,12 +115,139 @@ function host.isDisabled(ref)
     return found and not enabled
 end
 
+local activating   -- {ref = formId, allowed = bool} while an OnActivate block runs
+
+function host.activate(ref, activator)
+    if activating and activating.ref == ref then
+        activating.allowed = true  -- the script asked for the object's own default action
+        return
+    end
+    local target, actor = object(ref), object(activator or PLAYER)
+    if target and actor then pcall(function() target:activateBy(actor) end) end
+end
+
+function host.moveTo(ref, marker)
+    local target, destination = object(ref), object(marker)
+    if not target or not destination then return end
+    pcall(function()
+        target:teleport(destination.cell, destination.position, { rotation = destination.rotation })
+    end)
+end
+
+function host.kill(ref)
+    local target = object(ref)
+    if not target then return end
+    pcall(function() target:sendEvent('TES4Kill') end)
+end
+
+-- Health, magicka, fatigue and the eight attributes exist in the host under the same names;
+-- skills do not map one to one yet and read as 0.
+local DYNAMIC = { health = true, magicka = true, fatigue = true }
+function host.actorValue(ref, name)
+    local target = object(ref)
+    if not target then return 0 end
+    local ok2, value = pcall(function()
+        if DYNAMIC[name] then return types.Actor.stats.dynamic[name](target).current end
+        local attribute = types.Actor.stats.attributes[name]
+        return attribute and attribute(target).modified or 0
+    end)
+    return ok2 and value or 0
+end
+
+function host.level(ref)
+    local target = object(ref)
+    local ok2, value = pcall(function() return types.Actor.stats.level(target).current end)
+    if ok2 and value then return value end
+    local actor = data.actors[ref]
+    return actor and actor.level or 1
+end
+
+function host.getPosition(ref, axis)
+    local target = object(ref)
+    local ok2, value = pcall(function() return target.position[axis] end)
+    return ok2 and value or 0
+end
+
+function host.isDead(ref)
+    local target = object(ref)
+    if not target then return false end
+    local ok2, dead = pcall(types.Actor.isDead, target)
+    return ok2 and dead or false
+end
+
 local rt = Script.new(host, data)
 local dialogue = Dialogue.new(rt, data)
 local started = false
 local sinceUpdate = 0
 local sessions = {}      -- [player id] = {session, npc}
 local game = {}          -- the interface other global scripts use
+
+-- -- scripts on placed references ---------------------------------------------------------------
+local OBJECT_SECONDS = 0.25
+local scripted = {}        -- [refId] = {object, last}
+local sinceObjects = 0
+
+local function usable(object)
+    return pcall(function() return object.position end)
+end
+
+local function attachObject(object)
+    if not started then return end
+    local found, base = pcall(function() return hexId(object.recordId) end)
+    local scriptId = found and base and data.index.baseScripts[base]
+    if not scriptId then return end
+    local refOk, refId = pcall(function() return hexId(object.id) end)
+    if not refOk or not refId then return end
+    local instance = rt.attach(refId, scriptId)
+    if not instance then return end
+    if not scripted[refId] then
+        scripted[refId] = { object = object, last = core.getSimulationTime() }
+        host.log(string.format('script %x on %x', scriptId, refId))
+        rt.runBlock(instance, 'onload')
+    end
+end
+
+local function runObjects(now)
+    for refId, entry in pairs(scripted) do
+        if not usable(entry.object) then
+            scripted[refId] = nil
+            rt.detach(refId)
+        else
+            local instance = rt.instances[refId]
+            if instance then
+                local dt = now - entry.last
+                entry.last = now
+                rt.runBlock(instance, 'gamemode', dt)
+            end
+        end
+    end
+end
+
+-- OnActivate: a scripted object's block replaces its normal activation unless the script calls
+-- Activate on itself.
+local function onActivate(object, actor)
+    local ok2, refId = pcall(function() return hexId(object.id) end)
+    local entry = ok2 and refId and scripted[refId]
+    if not entry then return end
+    local instance = rt.instances[refId]
+    if not instance or not instance.compiled.blocks.onactivate then return end
+    local actorId = types.Player.objectIsInstance(actor) and PLAYER or hexId(actor.id) or 0
+    local previous = activating
+    activating = { ref = refId, allowed = false }
+    local ran = rt.runBlock(instance, 'onactivate', 0, actorId)
+    local allowed = activating.allowed or not ran  -- a script that failed must not lock the object
+    activating = previous
+    if not allowed then return false end
+end
+
+local ACTIVATABLE = { 'ESM4Activator', 'ESM4Door', 'ESM4Container', 'ESM4Furniture', 'ESM4Flora', 'ESM4Light',
+    'ESM4MiscItem', 'ESM4Book', 'ESM4Potion', 'ESM4Weapon', 'ESM4Armor', 'ESM4Clothing', 'ESM4Ingredient',
+    'ESM4Ammunition', 'ESM4Terminal' }
+if I.Activation and I.Activation.addHandlerForType then
+    for _, name in ipairs(ACTIVATABLE) do
+        if types[name] then I.Activation.addHandlerForType(types[name], onActivate) end
+    end
+end
 
 local function nameOf(npc)
     local ok2, record = pcall(types.NPC.record, npc)
@@ -203,6 +338,7 @@ return {
     interface = game,
     engineHandlers = {
         onPlayerAdded = function() start() end,
+        onObjectActive = attachObject,
         onSave = function() return { rt = rt.save() } end,
         onLoad = function(saved)
             if saved and saved.rt then rt.load(saved.rt) end
@@ -210,6 +346,11 @@ return {
         end,
         onUpdate = function(dt)
             if not started then return end
+            sinceObjects = sinceObjects + dt
+            if sinceObjects >= OBJECT_SECONDS then
+                sinceObjects = 0
+                runObjects(core.getSimulationTime())
+            end
             for _, held in pairs(sessions) do
                 if held.queue then
                     local ok2, active = pcall(core.sound.isSayActive, held.npc)
@@ -224,6 +365,11 @@ return {
         end,
     },
     eventHandlers = {
+        -- A bridged NPC died: run its script's OnDeath block.
+        TES4ActorDied = function(event)
+            local instance = event.ref and rt.instances[event.ref]
+            if instance then rt.runBlock(instance, 'ondeath', 0, PLAYER) end
+        end,
         -- Probe hook: talk to a bridged NPC without going through activation.
         TES4Talk = function(event)
             local ok2, record = pcall(types.NPC.record, event.npc)

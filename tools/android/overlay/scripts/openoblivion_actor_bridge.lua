@@ -16,6 +16,7 @@ local types = require('openmw.types')
 local world = require('openmw.world')
 
 local proxyRecords = {}
+local proxyByRef = {}  -- [placed reference FormID] = host actor standing in for it
 local playersEquipped = {}
 
 local function give(actor, rows)
@@ -65,6 +66,11 @@ if I.Activation and I.Activation.addHandlerForType then
 end
 
 return {
+    interfaceName = 'OpenOblivionBridge',
+    interface = {
+        -- The host actor standing in for a TES4 NPC reference, or nil.
+        proxyFor = function(refId) return proxyByRef[refId] end,
+    },
     eventHandlers = {
         -- Desktop probes and scripts: put a generated item in an actor's inventory.
         TES4Give = function(event)
@@ -97,10 +103,14 @@ return {
                 table.insert((items.isApparel(row.id) or items.isMeleeWeapon(row.id)) and apparel or held, row)
             end
             give(proxy, apparel)
+            local refHex = tostring(object.id):match('0x(%x+)')
             proxy:addScript('scripts/openoblivion_bridge_actor.lua',
-                { formId = formId(record.id), name = record.name, held = held })
+                { formId = formId(record.id), name = record.name, held = held,
+                  refId = refHex and (tonumber(refHex, 16) % 0x1000000) or nil })
             print(string.format('OPENOBLIVION_ITEMS %s wears %d held %d', tostring(record.name), #apparel, #held))
             object.enabled = false
+            local refId = tostring(object.id):match('0x(%x+)')
+            if refId then proxyByRef[tonumber(refId, 16) % 0x1000000] = proxy end
             print('OPENOBLIVION_ACTOR_BRIDGE ' .. tostring(record.name) .. ' ' .. tostring(record.id))
         end,
     },

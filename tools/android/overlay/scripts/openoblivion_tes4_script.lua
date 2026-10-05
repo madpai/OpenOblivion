@@ -115,12 +115,38 @@ function M.new(host, data)
         return { compiled = compiled, v = v, S = { ref = ref, script = scriptId }, id = scriptId }
     end
 
-    function rt.runBlock(instance, block)
+    -- `dt` is the time since the block last ran (GetSecondsPassed); `actionRef` the reference that
+    -- triggered it (GetActionRef), for OnActivate and the like.
+    function rt.runBlock(instance, block, dt, actionRef)
         local fn = instance.compiled.blocks[block]
         if not fn then return false end
+        local previousDt, previousAction = rt.dt, rt.actionRef
+        rt.dt, rt.actionRef = dt or 0, actionRef
         local ok, err = pcall(fn, instance.S, instance.v)
+        rt.dt, rt.actionRef = previousDt, previousAction
         if not ok then host.log('TES4 script error in block ' .. block .. ': ' .. tostring(err)) end
         return ok
+    end
+
+    -- Scripts attached to placed references: variables are shared with `Ref.var` reads and writes.
+    rt.instances = {}
+    function rt.attach(refId, scriptId)
+        local existing = rt.instances[refId]
+        if existing then return existing end
+        local instance = rt.instance(scriptId, refId)
+        if not instance then return nil end
+        for name, value in pairs(state.refvars[refId] or {}) do instance.v[name] = value end
+        rt.instances[refId] = instance
+        return instance
+    end
+    function rt.detach(refId)
+        local instance = rt.instances[refId]
+        if instance then
+            local stored = state.refvars[refId] or {}
+            state.refvars[refId] = stored
+            for name, value in pairs(instance.v) do stored[name] = value end
+            rt.instances[refId] = nil
+        end
     end
 
     -- A quest's variables live in its script instance, created on first use.
@@ -146,10 +172,14 @@ function M.new(host, data)
         if instance then instance.v[name] = value else qstate(formId).vars[name] = value end
     end
     function rt.rget(refId, name)
+        local instance = rt.instances[refId]
+        if instance and instance.v[name] ~= nil then return num(instance.v[name]) end
         local vars = state.refvars[refId]
         return vars and num(vars[name]) or 0
     end
     function rt.rset(refId, name, value)
+        local instance = rt.instances[refId]
+        if instance and instance.v[name] ~= nil then instance.v[name] = value; return end
         local vars = state.refvars[refId]
         if not vars then vars = {}; state.refvars[refId] = vars end
         vars[name] = value
@@ -288,6 +318,14 @@ function M.new(host, data)
             if instance then vars[formId] = instance.v end
         end
         saved.questVars = vars
+        local refvars = {}
+        for refId, v in pairs(state.refvars) do refvars[refId] = v end
+        for refId, instance in pairs(rt.instances) do
+            local merged = refvars[refId] or {}
+            for name, value in pairs(instance.v) do merged[name] = value end
+            refvars[refId] = merged
+        end
+        saved.refvars = refvars
         return saved
     end
     function rt.load(saved)

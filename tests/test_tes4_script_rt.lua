@@ -39,6 +39,18 @@ local chunks = {
         [1] = function(rt)
             local C, N = rt.C, rt.N
             return {
+                [78] = {
+                    vars = { { 'uses', 'short' } },
+                    blocks = {
+                        onactivate = function(S, v)
+                            if N(C.isactionref(S.ref, 20)) == 1 then
+                                v.uses = v.uses + 1
+                                C.setstage(Q2, 10 + N(C.getsecondspassed()))
+                                C.activate(S.ref, N(C.getactionref()))
+                            end
+                        end,
+                    },
+                },
                 [77] = {
                     vars = { { 'count', 'short' } },
                     blocks = {
@@ -62,7 +74,7 @@ local data = {
         [Q2] = { id = 'QTwo', name = 'Two', flags = 0, priority = 40, stages = { [10] = { { flags = 0, log = 'Two ten.' } } } },
     },
     index = {
-        fragmentsPerChunk = 128, scriptChunk = { [77] = 1 }, globals = { [900] = 5.0 }, cells = { [9] = { ['3,-4'] = 7777 } }, areas = { [8888] = { world = 9 }, [8889] = { world = 10 }, [8890] = { world = 9, cells = { ['3,-4'] = true } },
+        fragmentsPerChunk = 128, scriptChunk = { [77] = 1, [78] = 1 }, globals = { [900] = 5.0 }, cells = { [9] = { ['3,-4'] = 7777 } }, areas = { [8888] = { world = 9 }, [8889] = { world = 10 }, [8890] = { world = 9, cells = { ['3,-4'] = true } },
             [8891] = { world = 9, cells = { ['0,0'] = true } } },
         functions = {
             [58] = { 'getstage', false, 'Quest' }, [14] = { 'getactorvalue', true, 'ActorValue' },
@@ -126,6 +138,24 @@ rt.C.setfactionrank(50, 700, 3)
 check(rt.C.getinfaction(50, 700) == 1 and rt.C.getfactionrank(50, 700) == 3 and rt.C.getfactionrank(50, 701) == -1, 'faction ranks')
 rt.C.moddisposition(50, 20, 15)
 check(rt.C.getdisposition(50, 20) == 65, 'disposition modifier')
+
+-- scripts attached to references share their variables with Ref.var and see who activated them
+local activations = {}
+host.activate = function(ref, activator) table.insert(activations, { ref, activator }) end
+local door = rt.attach(900, 78)
+check(door and rt.attach(900, 78) == door, 'attach is idempotent')
+check(rt.runBlock(door, 'onactivate', 3, 20), 'OnActivate block runs')
+check(rt.rget(900, 'uses') == 1 and door.v.uses == 1, 'Ref.var reads the attached instance')
+check(#activations == 1 and activations[1][1] == 900 and activations[1][2] == 20, 'Activate and GetActionRef')
+check(rt.C.getstage(Q2) == 13, 'GetSecondsPassed inside a block')
+rt.runBlock(door, 'onactivate', 0, 99)
+check(rt.rget(900, 'uses') == 1, 'a different activator does not match IsActionRef')
+rt.rset(900, 'uses', 5)
+check(door.v.uses == 5, 'Ref.var writes the attached instance')
+rt.detach(900)
+check(rt.rget(900, 'uses') == 5, 'variables survive detach')
+local again = rt.attach(900, 78)
+check(again.v.uses == 5, 'variables are restored on re-attach')
 
 -- messages
 rt.C.messagebox('Gold: %g of %.1f %s &sUActnForward;', 7, 2.5, 'x')

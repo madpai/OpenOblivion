@@ -1,6 +1,6 @@
 # TES4 scripts, quests and dialogue
 
-Date: 2026-10-04/05. Builds `0.41-quests` and `0.42-voices`. Until now the port had no
+Date: 2026-10-04/05. Builds `0.41-quests`, `0.42-voices` and `0.43-object-scripts`. Until now the port had no
 quest state, no journal and no way to talk to anyone: NPC activation opened the
 host's empty Morrowind dialogue window. This note records what exists, how it
 was checked, and what is still a guess.
@@ -78,15 +78,27 @@ another with the engine's `say` (the FFmpeg decoder is linked into libopenmw); a
 lack is logged and skipped. Playback is confirmed only as file resolution on the desktop; hearing
 it needs the phone.
 
+## Scripts on placed references
+
+3,042 base records carry a script (`baseScripts` in the index). When a reference becomes active the
+global script attaches its base record's script: variables are shared with `Ref.var` reads and writes,
+`OnLoad` runs once, `GameMode` runs every 0.25 s with the elapsed time as `GetSecondsPassed`, a bridged
+NPC's death runs `OnDeath`, and activating a scripted door, container, activator, light or item runs
+its `OnActivate`. As in the original, that block replaces the normal activation unless the script calls
+`Activate` on itself (a block that fails to run falls back to the normal activation so no object is
+locked by a bug). Implemented object commands: GetSelf, GetActionRef, IsActionRef, Activate, Enable,
+Disable, GetDisabled, GetDead, MoveToMarker, KillActor, GetPos, GetActorValue (health, magicka, fatigue
+and the eight attributes), GetLevel. A bridged NPC's script talks to the host actor that stands in
+for it. `OnHit`, `OnEquip`, `OnAdd`, `OnTrigger*`, package events and spell-effect blocks are not
+dispatched.
+
 ## Not done
 
-Object scripts are compiled but not attached to references (OnActivate, OnLoad,
-GameMode of placed objects); most presentation commands (PlayGroup, Say,
-MoveTo, StartCombat, packages) are counted stubs; lip sync, facial
-animation, persuasion, barter and training are absent; disposition is a plain modifier;
-faction reaction, crime and fame are no-ops. Plugins other than Oblivion.esm
-(Shivering Isles, Knights) are not read. The conversation window and journal are
-a plain list UI, not the original's.
+Presentation and AI commands are counted stubs (PlayGroup, Say, StartCombat, packages, lock state,
+PlaceAtMe, SetOpenState, ...); lip sync, facial animation, persuasion, barter and training are absent;
+disposition is a plain modifier; faction reaction, crime and fame are no-ops. Plugins other than
+Oblivion.esm (Shivering Isles, Knights) are not read. The conversation window and journal are a plain
+list UI, not the original's.
 
 ## Reproduce
 

@@ -109,6 +109,11 @@ end
 
 return {
     eventHandlers = {
+        -- A script's Kill command.
+        TES4Kill = function()
+            if types.Actor.isDead(self) then return end
+            types.Actor.stats.dynamic.health(self).current = 0
+        end,
         TES4Hit = function(hit)
             if types.Actor.isDead(self) then return end
             local health = types.Actor.stats.dynamic.health(self)
@@ -141,6 +146,10 @@ return {
                 if not reportedDeath then
                     reportedDeath = true
                     print('OPENOBLIVION_TES4_COMBAT ' .. tostring(data and data.name) .. ' dies')
+                    -- OnDeath of the NPC's script (quest NPCs, essential characters, ...)
+                    if data and data.refId then
+                        core.sendGlobalEvent('TES4ActorDied', { ref = data.refId, base = data.formId })
+                    end
                     if data and data.held and #data.held > 0 then
                         core.sendGlobalEvent('TES4Loot', { actor = self.object, items = data.held })
                         data.held = nil

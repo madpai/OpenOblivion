@@ -64,7 +64,7 @@ return function(rt, host, data, state, PLAYER, AV_NAMES)
     -- -- time and chance ------------------------------------------------------
     function C.getrandompercent() return math.floor(host.random() * 100) end
     function C.getcurrenttime() return host.hour() end
-    function C.getsecondspassed() return host.dt and host.dt() or 0 end
+    function C.getsecondspassed() return rt.dt or 0 end
 
     -- -- actors -----------------------------------------------------------------
     function C.getisid(ref, base) return baseOf(ref) == base and 1 or 0 end
@@ -152,6 +152,23 @@ return function(rt, host, data, state, PLAYER, AV_NAMES)
     function C.getgold(ref) return host.itemCount(ref or PLAYER, GOLD) end
 
     -- -- references -------------------------------------------------------------------
+    function C.getself(ref) return ref or 0 end
+    function C.getactionref() return rt.actionRef or 0 end
+    function C.isactionref(ref, other) return rt.actionRef ~= nil and rt.actionRef == other and 1 or 0 end
+    function C.getparentref(ref) return host.linkedParent and host.linkedParent(ref) or 0 end
+    -- Activate runs the object's normal activation; inside its own OnActivate it is what lets the
+    -- default action happen.
+    function C.activate(ref, activator)
+        if host.activate then host.activate(ref, activator or rt.actionRef or PLAYER) end
+        return 0
+    end
+    function C.getlocked(ref) return host.isLocked and host.isLocked(ref) and 1 or 0 end
+    function C.lock(ref, level) if host.setLocked then host.setLocked(ref, true, level) end; return 0 end
+    function C.unlock(ref) if host.setLocked then host.setLocked(ref, false) end; return 0 end
+    function C.movetomarker(ref, marker) if host.moveTo then host.moveTo(ref, marker) end; return 0 end
+    function C.killactor(ref, killer) if host.kill then host.kill(ref, killer) end; return 0 end
+    function C.getisreference(ref, other) return ref == other and 1 or 0 end
+    function C.getpos(ref, axis) return host.getPosition and host.getPosition(ref, axis) or 0 end
     function C.enable(ref) if host.setEnabled then host.setEnabled(ref, true) end; return 0 end
     function C.disable(ref) if host.setEnabled then host.setEnabled(ref, false) end; return 0 end
 

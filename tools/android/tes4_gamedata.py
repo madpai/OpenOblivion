@@ -19,6 +19,9 @@ import struct
 import tes4_master
 from tes4_script import CommandTable, Resolver, compile_fragment, compile_script, lua_string
 
+# Base records that can carry an object script (SCRI).
+SCRIPTED_TYPES = {b'ACTI', b'ALCH', b'AMMO', b'APPA', b'ARMO', b'BOOK', b'CLOT', b'CONT', b'CREA', b'DOOR', b'FLOR',
+                  b'FURN', b'INGR', b'KEYM', b'LIGH', b'MISC', b'NPC_', b'SGST', b'SLGM', b'WEAP'}
 FRAGMENTS_PER_CHUNK = 128
 SCRIPTS_PER_CHUNK = 32
 TOPICS_PER_CHUNK = 64
@@ -105,6 +108,7 @@ class GameData:
         self.quest_scripts = {}
         self.worlds = {}  # lower-case EDID -> (FormID, lower-case FULL name)
         self.markers = {}  # lower-case EDID of a map marker reference -> (x, y)
+        self.base_scripts = {}  # base object FormID -> SCPT FormID
         self.warnings = []
         self.fragments = []  # Lua function expressions, 1-based ids
         self.fragment_sources = []
@@ -121,6 +125,8 @@ class GameData:
                 self.worlds[(editor or '').lower()] = (record.formid, (record.full_name() or '').lower())
             elif record.type == b'REFR' and editor and editor.lower().endswith('mapmarker') and record.first(b'DATA'):
                 self.markers[editor.lower()] = struct.unpack_from('<2f', record.first(b'DATA'), 0)
+            if record.type in SCRIPTED_TYPES and record.first(b'SCRI'):
+                self.base_scripts[record.formid] = struct.unpack('<I', record.first(b'SCRI'))[0]
             if record.type == b'SCPT':
                 self.scripts[record.formid] = text(record.first(b'SCTX', b''))
                 self.script_names[record.formid] = editor
@@ -417,6 +423,7 @@ class GameData:
                  'scriptOfQuest': {fid: q['script'] for fid, q in quests.items() if 'script' in q},
                  'functions': self.functions(), 'races': self.races(), 'topics': listing, 'speakerTopics': speaker_topics,
                  'genericTopics': generic_topics,
+                 'baseScripts': self.base_scripts,
                  'greeting': next((fid for fid, topic in listing.items() if topic['id'] == 'GREETING'), None)}
         (data_dir / 'actors.lua').write_text('-- Generated from the owner\'s Oblivion.esm; private build output.\nreturn '
                                              + lua(self.actors()) + '\n')
