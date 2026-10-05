@@ -10,6 +10,7 @@ if not ok then return {} end
 local core = require('openmw.core')
 local world = require('openmw.world')
 local types = require('openmw.types')
+local vfsOk, vfs = pcall(require, 'openmw.vfs')
 local Script = require('scripts.openoblivion_tes4_script')
 local Dialogue = require('scripts.openoblivion_tes4_dialogue')
 local items = require('scripts.openoblivion_tes4_items')
@@ -118,6 +119,34 @@ local function nameOf(npc)
     return ok2 and record and record.name or ''
 end
 
+-- The recorded voice of a conversation: lines play one after another from the NPC.
+local function stopVoice(held)
+    if held and held.queue then
+        held.queue = nil
+        pcall(core.sound.stopSay, held.npc)
+    end
+end
+
+local function playNext(held)
+    while held.queue and held.queue[held.index] do
+        local line = held.queue[held.index]
+        held.index = held.index + 1
+        if line.voice and not (vfsOk and vfs.fileExists(line.voice)) then host.log('no recorded voice ' .. line.voice) end
+        if line.voice and vfsOk and vfs.fileExists(line.voice) then
+            local ok2, err = pcall(core.sound.say, line.voice, held.npc, line.text)
+            if ok2 then return end
+            host.log('voice failed ' .. tostring(err))
+        end
+    end
+    held.queue = nil
+end
+
+local function startVoice(held)
+    stopVoice(held)
+    held.queue, held.index = held.session.lines, 1
+    playNext(held)
+end
+
 local function pack(session, npc)
     return { name = nameOf(npc), lines = session.lines, topics = session.topics, choices = session.choices,
         ended = session.ended }
@@ -128,8 +157,10 @@ end
 function game.talk(npc, actor, base)
     if not started then return false end
     local session = dialogue.begin(base)
-    sessions[actor.id] = { session = session, npc = npc }
+    local held = { session = session, npc = npc }
+    sessions[actor.id] = held
     actor:sendEvent('TES4DialogueOpen', pack(session, npc))
+    startVoice(held)
     return true
 end
 
@@ -179,6 +210,12 @@ return {
         end,
         onUpdate = function(dt)
             if not started then return end
+            for _, held in pairs(sessions) do
+                if held.queue then
+                    local ok2, active = pcall(core.sound.isSayActive, held.npc)
+                    if not (ok2 and active) then playNext(held) end
+                end
+            end
             sinceUpdate = sinceUpdate + dt
             if sinceUpdate >= UPDATE_SECONDS then
                 sinceUpdate = 0
@@ -198,9 +235,13 @@ return {
             if not held then return end
             held.session = dialogue.choose(held.session, event.topic)
             event.player:sendEvent('TES4DialogueUpdate', pack(held.session, held.npc))
+            startVoice(held)
         end,
         TES4DialogueClose = function(event)
-            if event.player then sessions[event.player.id] = nil end
+            if event.player then
+                stopVoice(sessions[event.player.id])
+                sessions[event.player.id] = nil
+            end
         end,
         TES4JournalRequest = function(event)
             if event.player then event.player:sendEvent('TES4JournalData', { quests = journalData() }) end

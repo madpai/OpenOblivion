@@ -241,6 +241,11 @@ class GameData:
                                                                       for dx in range(-2, 3) for dy in range(-2, 3)}}
         return grid, areas
 
+    def races(self):
+        """RACE FormID -> lower-case name, which is also the voice folder (sound/voice/oblivion.esm/<race>/)."""
+        return {record.formid: (record.full_name() or '').lower()
+                for record in tes4_master.records(self.master, {b'RACE'})}
+
     # -- actors -----------------------------------------------------------
     def actors(self):
         """NPC_ base records as seen by conditions: race, class, sex, level, factions."""
@@ -410,7 +415,7 @@ class GameData:
         index = {'fragmentsPerChunk': FRAGMENTS_PER_CHUNK, 'fragmentChunks': fragment_chunks,
                  'scriptChunk': chunk_of_script, 'globals': self.globals(), 'cells': cells, 'areas': areas,
                  'scriptOfQuest': {fid: q['script'] for fid, q in quests.items() if 'script' in q},
-                 'functions': self.functions(), 'topics': listing, 'speakerTopics': speaker_topics,
+                 'functions': self.functions(), 'races': self.races(), 'topics': listing, 'speakerTopics': speaker_topics,
                  'genericTopics': generic_topics,
                  'greeting': next((fid for fid, topic in listing.items() if topic['id'] == 'GREETING'), None)}
         (data_dir / 'actors.lua').write_text('-- Generated from the owner\'s Oblivion.esm; private build output.\nreturn '

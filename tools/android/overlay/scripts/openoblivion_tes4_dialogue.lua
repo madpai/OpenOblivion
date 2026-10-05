@@ -94,15 +94,28 @@ function D.new(rt, data)
         return out
     end
 
+    -- The recorded voice of one response, as the original names it:
+    -- sound/voice/oblivion.esm/<race>/<m|f>/<quest>_<topic>_<info id, 8 hex digits>_<response>.mp3
+    function d.voiceFile(info, dial, npc, number)
+        local actor = data.actors and data.actors[npc]
+        local race = actor and data.index.races and data.index.races[actor.race]
+        local quest = info.quest and data.quests[info.quest]
+        local topic = data.index.topics[dial]
+        if not race or race == '' or not quest or not topic then return nil end
+        return string.lower(string.format('sound/voice/oblivion.esm/%s/%s/%s_%s_%08x_%d.mp3', race,
+            actor.female and 'f' or 'm', quest.id, topic.id, info.id, number))
+    end
+
     -- Say `info`: mark it, learn its topics, run its result script. Returns the spoken lines.
-    function d.say(info, npc)
+    function d.say(info, npc, dial)
         if flag(info.flags, FLAG_SAY_ONCE) then rt.state.said[info.id] = true end
         for _, dial in ipairs(info.add or {}) do rt.C.addtopic(dial) end
         rt.state.talked = rt.state.talked or {}
         rt.state.talked[npc] = true
         local lines = {}
         for _, response in ipairs(info.r or {}) do
-            table.insert(lines, { text = response.text or '', emotion = response.emotion, number = response.n })
+            table.insert(lines, { text = response.text or '', emotion = response.emotion, number = response.n,
+                voice = dial and d.voiceFile(info, dial, npc, response.n) or nil })
         end
         if info.result then
             local fn = rt.fragment(info.result)
@@ -128,7 +141,7 @@ function D.new(rt, data)
         local session = { npc = npc, lines = {}, topics = {}, choices = {}, ended = false }
         local greeting = data.index.greeting and d.pick(data.index.greeting, npc)
         if greeting then
-            session.lines = d.say(greeting, npc)
+            session.lines = d.say(greeting, npc, data.index.greeting)
             session.choices = choicesOf(greeting)
             session.ended = flag(greeting.flags, FLAG_GOODBYE)
         end
@@ -141,7 +154,7 @@ function D.new(rt, data)
         local info = d.pick(dial, session.npc)
         session.lines, session.choices = {}, {}
         if info then
-            session.lines = d.say(info, session.npc)
+            session.lines = d.say(info, session.npc, dial)
             session.choices = choicesOf(info)
             session.ended = flag(info.flags, FLAG_GOODBYE)
         end

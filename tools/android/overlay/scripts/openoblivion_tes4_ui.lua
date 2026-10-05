@@ -65,6 +65,16 @@ local function text(content, props)
     }
 end
 
+local function row(content, props)
+    -- a tappable row: larger text and a gap below so a finger can pick it
+    props = props or {}
+    props.size = props.size or 23
+    return {
+        type = ui.TYPE.Flex, props = { horizontal = false, autoSize = true },
+        content = ui.content { text(content, props), text(' ', { size = 9 }) },
+    }
+end
+
 local function panel(size, content)
     return ui.create {
         layer = LAYER,
@@ -104,7 +114,7 @@ local function showDialogue()
     if #state.choices > 0 then table.insert(left, text('Choose:', { size = 18, color = DIM })) end
     for i = (state.page - 1) * PAGE + 1, math.min(#source, state.page * PAGE) do
         local entry = source[i]
-        table.insert(left, text(entry.name, { size = 20, color = LINK, onClick = function() chooseTopic(entry.id) end }))
+        table.insert(left, row(entry.name, { color = LINK, onClick = function() chooseTopic(entry.id) end }))
     end
     if pages > 1 then
         table.insert(left, {
@@ -119,7 +129,7 @@ local function showDialogue()
         })
     end
     table.insert(left, text(' ', { size = 8 }))
-    table.insert(left, text('Goodbye', { size = 20, color = GOLD, onClick = close }))
+    table.insert(left, row('Goodbye', { color = GOLD, onClick = close }))
     local right = { text(' ', { size = 8 }) }
     local size = sizes()
     for _, line in ipairs(state.lines) do
@@ -158,12 +168,12 @@ local function showJournal()
     local quests = journal.quests
     for i, quest in ipairs(quests) do
         local color = i == journal.selected and GOLD or (quest.completed and DIM or LINK)
-        table.insert(left, text(quest.name .. (quest.completed and ' (done)' or ''), { size = 19, color = color,
+        table.insert(left, row(quest.name .. (quest.completed and ' (done)' or ''), { size = 21, color = color,
             onClick = function() journal.selected = i; showJournal() end }))
     end
     if #quests == 0 then table.insert(left, text('No entries yet.', { size = 19, color = DIM })) end
     table.insert(left, text(' ', { size = 8 }))
-    table.insert(left, text('Close', { size = 20, color = GOLD, onClick = close }))
+    table.insert(left, row('Close', { color = GOLD, onClick = close }))
     local right = { text(' ', { size = 8 }) }
     local quest = quests[journal.selected]
     local size = sizes()

@@ -1,6 +1,6 @@
 # TES4 scripts, quests and dialogue
 
-Date: 2026-10-04. Build `0.41-quests` (first version). Until now the port had no
+Date: 2026-10-04/05. Builds `0.41-quests` and `0.42-voices`. Until now the port had no
 quest state, no journal and no way to talk to anyone: NPC activation opened the
 host's empty Morrowind dialogue window. This note records what exists, how it
 was checked, and what is still a guess.
@@ -68,12 +68,22 @@ was checked, and what is still a guess.
 | Unloaded references are 1e9 units away | Choice, so "near X" triggers do not fire |
 | Unimplemented commands return 0 and are logged once | Choice; some conditions therefore pass wrongly |
 
+## Voices
+
+A response's recorded line is `sound/voice/oblivion.esm/<race>/<m|f>/<quest>_<topic>_<INFO id,
+8 hex digits>_<response number>.mp3` in the voice archives (measured: e.g. the Breton male
+folder holds `mq02_greeting_0001dc44_1.mp3`). The speaker's race name comes from the NPC record's
+race, the quest from the response's QSTI. The global script plays a conversation's lines one after
+another with the engine's `say` (the FFmpeg decoder is linked into libopenmw); a file the archives
+lack is logged and skipped. Playback is confirmed only as file resolution on the desktop; hearing
+it needs the phone.
+
 ## Not done
 
 Object scripts are compiled but not attached to references (OnActivate, OnLoad,
 GameMode of placed objects); most presentation commands (PlayGroup, Say,
-MoveTo, StartCombat, packages) are counted stubs; voice files, lip sync,
-persuasion, barter and training are absent; disposition is a plain modifier;
+MoveTo, StartCombat, packages) are counted stubs; lip sync, facial
+animation, persuasion, barter and training are absent; disposition is a plain modifier;
 faction reaction, crime and fame are no-ops. Plugins other than Oblivion.esm
 (Shivering Isles, Knights) are not read. The conversation window and journal are
 a plain list UI, not the original's.

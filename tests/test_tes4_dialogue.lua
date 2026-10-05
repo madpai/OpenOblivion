@@ -35,7 +35,7 @@ local chunks = {
                     { id = 6, flags = 1, r = { { text = 'Never reached.', n = 1 } } },
                 } },
                 { dial = JAUFFRE, from = 0, infos = {
-                    { id = 7, flags = 1, speakers = { NPC_B }, r = { { text = 'I am Jauffre.', n = 1 } },
+                    { id = 7, flags = 1, quest = QUEST, speakers = { NPC_B }, r = { { text = 'I am Jauffre.', n = 1 } },
                       add = { SECRET }, result = 1, choices = { CHOICE } },
                     { id = 8, flags = 0, r = { { text = 'Never heard of him.', n = 1 } } },
                 } },
@@ -46,9 +46,11 @@ local chunks = {
     },
 }
 local data = {
+    actors = { [NPC_A] = { race = 7, female = true }, [NPC_B] = { race = 8 } },
     quests = { [QUEST] = { id = 'Q', name = 'Q', flags = 0, priority = 1, stages = { [20] = { { flags = 0, log = 'Twenty.' } } } } },
     index = {
         fragmentsPerChunk = 128, scriptChunk = {}, globals = {}, cells = {}, greeting = GREETING,
+        races = { [7] = 'high elf', [8] = 'imperial' },
         functions = { [58] = { 'getstage', false, 'Quest' } },
         topics = {
             [GREETING] = { id = 'GREETING', name = 'GREETING', type = 0, chunks = { 1 } },
@@ -105,4 +107,9 @@ check(s.lines[1].text == 'You chose.', 'choice answered')
 -- the other NPC gets the generic answer for the same topic
 s = d.choose(d.begin(NPC_A), JAUFFRE)
 check(s.lines[1].text == 'Never heard of him.' and not s.ended, 'generic response for an NPC the topic is not bound to')
+-- recorded voices are named after the speaker's race and sex, the quest, the topic and the response id
+s = d.choose(d.begin(NPC_B), JAUFFRE)
+check(s.lines[1].voice == 'sound/voice/oblivion.esm/imperial/m/q_jauffretopic_00000007_1.mp3', 'voice file name: ' .. tostring(s.lines[1].voice))
+s = d.begin(NPC_A)
+check(s.lines[1].voice == nil, 'no voice name for a response without a quest')
 print(string.format('TES4 dialogue fixtures passed: %d checks', checks))
