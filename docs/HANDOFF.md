@@ -1,9 +1,12 @@
 # Maintainer handoff
 
-End-of-session state, 2026-10-04 (phone build `0.39-hair-run`, commit `cab2eef`):
-the Vilverin slice is playable: TES4 player and NPC bodies, faces, hair, worn
-items, readied fists and weapons, armor, loot, bandit AI, first-person view.
-Where things stand and how to work:
+End-of-session state, 2026-10-05 (phone build `0.43-object-scripts`): the Vilverin
+slice plus the open world is playable as before (TES4 player and NPC bodies, faces,
+hair, items, fists and weapons, armor, loot, bandit AI, first person) and now has
+trees (billboards), a journal, spoken conversations with every bridged NPC, the
+main quest's opening (new game = MQ02 stage 0 with the Amulet of Kings; Chorrol and
+Weynon Priory advance it; Jauffre's handover conversation runs to MQ03), and the
+game's own scripts running on placed references. Where things stand and how to work:
 
 - Per-feature notes: TES4_PLAYER, TES4_COMBAT (formulas with exe addresses),
   TES4_ITEMS (also crash log, first-person fixes), TES4_FACES under docs/research.
@@ -12,7 +15,14 @@ Where things stand and how to work:
 - Engine work flows through the hash-locked receipts in `tools/native`; the
   player receipt is edited by changing the patched copies and regenerating
   `tes4_player_{desktop,android}.patch` (see the private session tools README).
-- Not done yet, in the order planned: blocking (decode the executable's damage
+- New this session (all private data is generated at package time from the owner's files):
+  `tes4_trees` receipt, `tools/android/tes4_script.py` + `tes4_gamedata.py` and the
+  `openoblivion_tes4_*` Lua scripts; see TES4_TREES.md and TES4_SCRIPTS.md. The owner has not yet
+  tested 0.40-0.43 on the phone: ask for the JOURNAL button, tapping an NPC, voices, trees,
+  frame rate, and View Scene Log after any crash.
+- Next candidates: creatures (ESM4Creature objects load but are not bridged like NPCs), barter and
+  trade, spells and magic, checking the topic-list and GetInCell guesses against the reference game,
+  trunk collision for trees, grass, the TES4 menu look. Older plan: blocking (decode the executable's damage
   routine; no block GMSTs by name), power attacks and fatigue per swing, bows
   and staves, TES4 detection/disposition and sneak, FaceGen shape morphs (EGM)
   and the player's custom face, gold/barter and a TES4 inventory UI, then
