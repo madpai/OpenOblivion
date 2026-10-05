@@ -45,6 +45,7 @@ parser.add_argument('--authored-collision', action='store_true', help='Enable th
 parser.add_argument('--original-body', action='store_true', help='Enable the measured classic TES4 player hull in a recorded body build')
 parser.add_argument('--tes4-movement', action='store_true', help='Enable the classic TES4 player ground-speed formula in a recorded build')
 parser.add_argument('--tes4-player', action='store_true', help='Render the player as the TES4 Player record in a recorded player build')
+parser.add_argument('--tes4-trees', action='store_true', help='Draw TES4 trees from the original billboard images in a recorded trees build')
 parser.add_argument('--phone-overlay', action='store_true', help='Mount the phone launcher overlay (scripts, sky, generated TES4 stats) as on Android')
 parser.add_argument('--sky-osgt', action='store_true', help='Use the phone overlay OSGT sky atmosphere instead of the template COLLADA file')
 parser.add_argument('--async-physics-threads', type=int, choices=range(5), help='Explicit physics worker count for a controlled comparison')
@@ -160,6 +161,8 @@ cfg = ['replace=content', 'replace=fallback-archive',
        'encoding=win1252']
 if args.tes4_player and (not native_manifest or not native_manifest.get('tes4_player')):
     parser.error('--tes4-player requires a recorded player integration')
+if args.tes4_trees and (not native_manifest or not native_manifest.get('tes4_trees')):
+    parser.error('--tes4-trees requires a recorded trees integration')
 if args.tes4_movement and (not native_manifest or not native_manifest.get('tes4_movement')):
     parser.error('--tes4-movement requires a recorded movement integration')
 if args.original_body and not native_manifest.get('tes4_body'):
@@ -238,7 +241,9 @@ if args.phone_overlay:
     from menu_textures import write as write_menu_textures
     write_menu_textures(overlay_dir / 'textures')
     args.sky_osgt = True
-    cfg += ['data=/phone-overlay', 'content=openoblivion_rules.omwaddon', 'content=start_position.omwscripts']
+    # An explicit --movement-position replaces the overlay's sewer-exit start.
+    cfg += ['data=/phone-overlay', 'content=openoblivion_rules.omwaddon',
+            *([] if args.movement_position else ['content=start_position.omwscripts'])]
 elif args.sky_osgt:
     cfg.append('data=/phone-overlay')
 (config / 'openmw.cfg').write_text('\n'.join(cfg) + '\n')
@@ -271,6 +276,7 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            *(['--env', 'OPENOBLIVION_ORIGINAL_BODY=1'] if args.original_body else []),
            *(['--env', 'OPENOBLIVION_TES4_MOVEMENT=1'] if args.tes4_movement else []),
            *(['--env', 'OPENOBLIVION_TES4_PLAYER=1'] if args.tes4_player else []),
+           *(['--env', 'OPENOBLIVION_TES4_TREES=1'] if args.tes4_trees else []),
            *(['--env', 'OPENOBLIVION_HIDE_PART=' + args.hide_part] if args.hide_part else []),
            *(['--env', 'OPENOBLIVION_GROUNDED_EYE=1'] if args.native_grounded_eye else []),
            '--volume', f'{work}:/work:ro',
@@ -471,6 +477,7 @@ metrics['authored_collision_enabled'] = args.tes4_doors or args.authored_collisi
 metrics['original_body_enabled'] = args.original_body
 metrics['tes4_movement_enabled'] = args.tes4_movement
 metrics['tes4_player_enabled'] = args.tes4_player
+metrics['tes4_trees_enabled'] = args.tes4_trees
 body_logged = 'OpenOblivion original TES4 player body: half extents' in log
 metrics['original_body_logged'] = body_logged
 if body_logged != args.original_body:

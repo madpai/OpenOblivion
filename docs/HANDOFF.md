@@ -18,6 +18,18 @@ Where things stand and how to work:
   and the player's custom face, gold/barter and a TES4 inventory UI, then
   trees (SpeedTree) and water for the outdoors.
 
+Trees, 2026-10-04: served `0.40-trees`. SpeedTree `.spt` models were drawn as
+nothing, so every outdoor view was treeless. The new `tes4_trees` receipt (after
+`tes4_player`) draws each tree as two crossed quads carrying the original
+pre-rendered billboard image, sized from the TREE record's BNAM; trees are lit
+by sun and ambient only. Stand-in, not parity: no 3D trunks/branches, no wind,
+and no trunk collision yet (see [TES4_TREES.md](research/TES4_TREES.md), which
+also records the SceneUtil::Material vs osg::Material pitfall between the two
+engine vintages). Probes take `--tes4-trees`, and `--movement-position` now also
+replaces the overlay's sewer-exit start so any place can be photographed.
+Next for trees: trunk collision (measure the original), a camera-facing
+sprite, brightness against the original, grass.
+
 Hair and first-person run, 2026-10-04: served `0.39-hair-run`. Owner reported
 hair still wrong and first-person rubber-banding. Hair: rotation-only head-bone
 carry plus whitened hair materials and vertex colours (see TES4_FACES.md).

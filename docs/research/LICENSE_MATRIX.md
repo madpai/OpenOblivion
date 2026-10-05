@@ -2,6 +2,21 @@
 
 Research snapshot: 2026-09-30. Original OpenOblivion code is **GPL-3.0-only**.
 
+## TES4 tree billboards audit (2026-10-04)
+
+Intended change: with `OPENOBLIVION_TES4_TREES=1`, draw a TES4 tree's `.spt`
+model as two crossed quads carrying the original billboard image, sized from the
+TREE record's BNAM, and give `.spt` models no mesh-derived collision. Files
+changed (OpenMW, GPLv3 project grant): `components/resource/scenemanager.cpp`,
+`components/resource/bulletshapemanager.cpp`, `components/esm4/loadtree.cpp`
+(desktop blobs from pin 46bd459; Android donor f4bec41). The headers
+`tools/native/tes4_trees.hpp` and `tes4_trees_scene.hpp`, receipt tool and
+fixture are original OpenOblivion GPL-3.0-only code. No SpeedTree code is used
+or reimplemented; `.spt` files are only inspected as research and the game's
+own images are read from the owner's installation at run time. Pre-change
+SHA256s are in `tools/native/tes4_trees.lock.json`; the receipt follows the
+player receipt.
+
 ## TES4 player body and locomotion audit (2026-10-03)
 
 Intended change: with `OPENOBLIVION_TES4_PLAYER=1`, `apps/openmw/mwrender/npcanimation.cpp`

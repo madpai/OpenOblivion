@@ -1,0 +1,12 @@
+{
+  "desktop": {
+    "components/resource/scenemanager.cpp": "953083a849de6f1e162185942c74a1859cbaa94b037d90391ed85502ef381138",
+    "components/esm4/loadtree.cpp": "df532fc69e1101147e0cfb1755def29c9f544efa4e330e52a2ee8681c59f3b4f",
+    "components/resource/bulletshapemanager.cpp": "5848fc1ba2d4b5c51e24b0cf83daf6b1b3751c14ab721cf877317b3975e3debd"
+  },
+  "android": {
+    "components/resource/scenemanager.cpp": "94e699f27e332bee328ce8def8744d39dfb4054ff4972ae7ca5c641852f27110",
+    "components/esm4/loadtree.cpp": "df532fc69e1101147e0cfb1755def29c9f544efa4e330e52a2ee8681c59f3b4f",
+    "components/resource/bulletshapemanager.cpp": "debcedf5af2aa21bebea8ab5eab063781b1751957c548db811ec172f90d28f0c"
+  }
+}

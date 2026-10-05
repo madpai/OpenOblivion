@@ -16,6 +16,7 @@ import tes4_animation
 import tes4_body
 import tes4_movement
 import tes4_player
+import tes4_trees
 import tes4_interactions
 
 LIBRARIES = {'libopenmw.so', 'libSDL2.so', 'libGL.so', 'libopenal.so', 'libcollada-dom2.5-dp.so', 'libc++_shared.so'}
@@ -167,6 +168,18 @@ class NativePlayerReceipt(unittest.TestCase):
             self.assertEqual({l[6:] for l in text.splitlines() if l.startswith('+++ b/')}, set(lock[name]))
             self.assertIn('tes4ActorRecordFor', text)
         self.assertEqual(tes4_player.PARENT, '.openoblivion-tes4-movement.json')
+
+
+class NativeTreesReceipt(unittest.TestCase):
+    def test_lock_matches_patch_targets(self):
+        lock = json.loads((Path(tes4_trees.HERE) / 'tes4_trees.lock.json').read_text())
+        player = json.loads((Path(tes4_player.HERE) / 'tes4_player.lock.json').read_text())
+        for name in ('desktop', 'android'):
+            text = (Path(tes4_trees.HERE) / ('tes4_trees_' + name + '.patch')).read_text()
+            self.assertEqual({l[6:] for l in text.splitlines() if l.startswith('+++ b/')}, set(lock[name]))
+            self.assertIn('tes4TreesEnabled()', text)
+            self.assertFalse(set(lock[name]) & set(player[name]))
+        self.assertEqual(tes4_trees.PARENT, '.openoblivion-tes4-player.json')
 
 
 if __name__ == '__main__':

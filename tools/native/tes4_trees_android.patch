@@ -1,0 +1,108 @@
+--- a/components/resource/scenemanager.cpp
++++ b/components/resource/scenemanager.cpp
+@@ -60,6 +60,7 @@
+ #include "imagemanager.hpp"
+ #include "niffilemanager.hpp"
+ #include "objectcache.hpp"
++#include "openoblivion_tes4_trees_scene.hpp"
+ 
+ namespace
+ {
+@@ -808,6 +809,13 @@
+             return NifOsg::Loader::load(*nifFileManager->get(normalizedFilename), imageManager, materialMgr);
+         else if (ext == "spt")
+         {
++            // OpenOblivion: draw the original billboard image of the tree when enabled.
++            if (OpenOblivion::tes4TreesEnabled())
++            {
++                if (osg::ref_ptr<osg::Node> tree
++                    = OpenOblivion::loadTreeBillboard(normalizedFilename, vfs, imageManager))
++                    return tree;
++            }
+             Log(Debug::Warning) << "Ignoring SpeedTree data file " << normalizedFilename;
+             return new osg::Node();
+         }
+--- a/components/esm4/loadtree.cpp
++++ b/components/esm4/loadtree.cpp
+@@ -28,6 +28,8 @@
+ 
+ #include <stdexcept>
+ 
++#include <components/misc/openoblivion_tes4_trees.hpp>
++
+ #include "reader.hpp"
+ //#include "writer.hpp"
+ 
+@@ -36,6 +38,9 @@
+     mId = reader.getFormIdFromHeader();
+     mFlags = reader.hdr().record.flags;
+ 
++    float billboardWidth = 0.f;
++    float billboardHeight = 0.f;
++
+     while (reader.getSubRecordHeader())
+     {
+         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
+@@ -53,12 +58,15 @@
+             case ESM::fourCC("MODB"):
+                 reader.get(mBoundRadius);
+                 break;
++            case ESM::fourCC("BNAM"): // Billboard width and height
++                reader.get(billboardWidth);
++                reader.get(billboardHeight);
++                break;
+             case ESM::fourCC("MODT"): // Model data
+             case ESM::fourCC("MODC"):
+             case ESM::fourCC("MODS"):
+             case ESM::fourCC("MODF"): // Model data end
+             case ESM::fourCC("CNAM"):
+-            case ESM::fourCC("BNAM"):
+             case ESM::fourCC("SNAM"):
+             case ESM::fourCC("FULL"):
+             case ESM::fourCC("OBND"):
+@@ -70,6 +78,9 @@
+                 throw std::runtime_error("ESM4::TREE::load - Unknown subrecord " + ESM::printName(subHdr.typeId));
+         }
+     }
++
++    // OpenOblivion: the billboard drawn for the tree's SpeedTree model is this size.
++    OpenOblivion::registerTreeSize(OpenOblivion::treeModelText(mModel), billboardWidth, billboardHeight);
+ }
+ 
+ // void ESM4::Tree::save(ESM4::Writer& writer) const
+--- a/components/resource/bulletshapemanager.cpp
++++ b/components/resource/bulletshapemanager.cpp
+@@ -20,6 +20,8 @@
+ 
+ #include "bulletshape.hpp"
+ #include "multiobjectcache.hpp"
++#include <components/misc/openoblivion_tes4_trees.hpp>
++
+ #include "niffilemanager.hpp"
+ #include "objectcache.hpp"
+ #include "scenemanager.hpp"
+@@ -119,6 +121,24 @@
+             NifBullet::BulletNifLoader loader;
+             shape = loader.load(*mNifFileManager->get(name));
+         }
++        else if (Misc::getFileExtension(name.value()) == "spt")
++        {
++            // OpenOblivion: a SpeedTree model has no mesh to collide with, and the billboard
++            // standing in for it must not become a wall. Where the original ships a trunk
++            // collision NIF beside the tree (meshes/trees/<name>.nif), use that.
++            if (OpenOblivion::tes4TreesEnabled())
++            {
++                const VFS::Path::Normalized collisionPath(
++                    "meshes/trees/" + OpenOblivion::treeKey(name.value()) + ".nif");
++                if (getVFS()->exists(collisionPath))
++                {
++                    NifBullet::BulletNifLoader loader;
++                    shape = loader.load(*mNifFileManager->get(collisionPath));
++                }
++            }
++            if (!shape)
++                return {};
++        }
+         else
+         {
+             // TODO: support .bullet shape files
