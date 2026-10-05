@@ -52,6 +52,6 @@ public final class GameActivity extends SDLActivity {
         if (controls != null) { if (focus) controls.syncRun(); else controls.release(); }
         super.onWindowFocusChanged(focus);
     }
-    @Override public void onBackPressed() { finish(); }
+    @Override public void onBackPressed() { if (controls != null && controls.closeMenu()) return; finish(); }
     @Override protected void onDestroy() { if (controls != null) controls.release(); super.onDestroy(); android.os.Process.killProcess(android.os.Process.myPid()); }
 }

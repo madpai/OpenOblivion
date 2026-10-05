@@ -64,7 +64,7 @@ parser.add_argument('--movement-weapon', help='Generated item id (oo4_xxxxxx) th
 parser.add_argument('--hide-part', help='Debug: drop TES4 actor parts whose model path contains this text')
 parser.add_argument('--movement-face-player', action='store_true', help='The face camera frames the player rather than the nearest actor')
 parser.add_argument('--movement-kill', action='store_true', help='Kill the nearest actor 3 s before the shot (loot tests)')
-parser.add_argument('--movement-ui', choices=('inventory', 'loot', 'dialogue', 'journal'), help='Open this menu at the shot time and capture it')
+parser.add_argument('--movement-ui', choices=('inventory', 'loot', 'dialogue', 'journal', 'journal-wait', 'dialogue-wait'), help='Open this menu at the shot time and capture it')
 parser.add_argument('--movement-attack', action='store_true', help='Request a TES4 player attack every 1.5 s (phone overlay)')
 parser.add_argument('--movement-gait', choices=('walk', 'run', 'sneak', 'none'), default='walk', help='Gait the movement probe requests')
 parser.add_argument('--movement-turn', type=float, default=0, help='Initial turn in degrees through native player controls')

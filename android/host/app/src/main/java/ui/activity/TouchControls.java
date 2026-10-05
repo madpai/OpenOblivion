@@ -29,7 +29,7 @@ final class TouchControls extends View {
     private boolean ctrlSent;
     private boolean moreOpen;
     private boolean guiMode;
-    private int guiPointer = -1;
+    private int guiPointer = -1, backPointer = -1;
     private float guiX, guiY;
     private final int[] directions = {KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_D};
 
@@ -64,8 +64,29 @@ final class TouchControls extends View {
     // Leaves the engine compass/minimap visible under USE. Not a gameplay constant.
     private float bottomGap() { return getHeight() * .13f; }
 
+    // While a menu is up every tap goes to it, so the way out must not depend on hitting a small
+    // target inside it: BACK sends Escape, which closes the journal, conversation, inventory and so on.
+    private RectF backRect() {
+        float s = side(), g = gap();
+        return new RectF(getWidth() - g - s * 1.9f, g, getWidth() - g, g + s * 0.9f);
+    }
+    private void pressEscape(boolean down) {
+        if (down) SDLActivity.onNativeKeyDown(KeyEvent.KEYCODE_ESCAPE);
+        else SDLActivity.onNativeKeyUp(KeyEvent.KEYCODE_ESCAPE);
+    }
+    /** The Android back button: leave a menu if one is open. Returns false in the game view. */
+    boolean closeMenu() {
+        if (!guiMode) return false;
+        pressEscape(true);
+        postDelayed(() -> pressEscape(false), 80);
+        return true;
+    }
+
     @Override protected void onDraw(Canvas c) {
-        if (guiMode) return;
+        if (guiMode) {
+            button(c, "BACK", backRect(), backPointer != -1);
+            return;
+        }
         float r = radius(); paint.setColor(0x55777777); c.drawCircle(cx(), cy(), r, paint);
         paint.setColor(Color.WHITE); paint.setTextSize(Math.max(16, getHeight() * .035f));
         c.drawText("MOVE", cx() - r * .42f, cy() + 8, paint);
@@ -219,7 +240,14 @@ final class TouchControls extends View {
         boolean gui = SDLActivity.isMouseShown() != 0;
         if (gui != guiMode) { release(); guiMode = gui; moreOpen = false; invalidate(); }
         if (gui) {
-            if (a == MotionEvent.ACTION_CANCEL) { release(); return true; }
+            if (a == MotionEvent.ACTION_CANCEL) { if (backPointer != -1) pressEscape(false); backPointer = -1; release(); return true; }
+            if (a == MotionEvent.ACTION_DOWN && backRect().contains(e.getX(ix), e.getY(ix))) {
+                backPointer = id; pressEscape(true); invalidate(); return true;
+            }
+            if ((a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_POINTER_UP) && id == backPointer) {
+                backPointer = -1; pressEscape(false); invalidate(); return true;
+            }
+            if (id == backPointer) return true;
             if (a == MotionEvent.ACTION_DOWN && guiPointer == -1) {
                 guiPointer = id; guiX = e.getX(ix); guiY = e.getY(ix);
                 SDLActivity.onNativeMouse(SDL_LEFT, MotionEvent.ACTION_DOWN, gx(guiX), gy(guiY), false);

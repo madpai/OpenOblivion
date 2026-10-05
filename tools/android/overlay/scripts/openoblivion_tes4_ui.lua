@@ -20,6 +20,15 @@ local LINK = util.color.rgb(0.75, 0.9, 1)
 
 local window, kind
 
+-- Taps are logged (View Scene Log shows them) so a phone report can tell "the tap never arrived"
+-- from "the tap arrived and did nothing".
+local function logged(name, fn)
+    return function(...)
+        print('OPENOBLIVION_UI tap ' .. name)
+        return fn(...)
+    end
+end
+
 -- Panel and column sizes follow the screen (the phone runs 960x540, desktop probes 800x600).
 local function sizes()
     local screen = ui.screenSize()
@@ -61,7 +70,7 @@ local function text(content, props)
         type = ui.TYPE.Text,
         props = { text = content, textSize = props.size or 20, textColor = props.color or TEXT, autoSize = props.autoSize ~= false,
             multiline = props.multiline, wordWrap = props.wordWrap, size = props.box },
-        events = props.onClick and { mouseClick = async:callback(props.onClick) } or nil,
+        events = props.onClick and { mouseClick = async:callback(logged(tostring(content), props.onClick)) } or nil,
     }
 end
 
@@ -75,11 +84,28 @@ local function row(content, props)
     }
 end
 
-local function panel(size, content)
+-- A real button: a filled block a finger can hit, not a line of text.
+local function button(label, onClick)
+    return {
+        type = ui.TYPE.Widget,
+        props = { size = util.vector2(240, 54) },
+        events = { mouseClick = async:callback(logged(label, onClick)) },
+        content = ui.content {
+            { type = ui.TYPE.Image, props = { resource = ui.texture { path = 'white' },
+                color = util.color.rgb(0.32, 0.26, 0.12), alpha = 0.85, relativeSize = util.vector2(1, 1) } },
+            { type = ui.TYPE.Text, props = { text = label, textSize = 26, textColor = GOLD, position = util.vector2(18, 12),
+                autoSize = true } },
+        },
+    }
+end
+
+local function panel(size, content, onBackgroundClick)
     return ui.create {
         layer = LAYER,
         type = ui.TYPE.Widget,
         props = { position = util.vector2(24, 24), size = size },
+        -- clicks on parts of the panel that handle nothing reach the panel itself
+        events = onBackgroundClick and { mouseClick = async:callback(logged('panel', onBackgroundClick)) } or nil,
         content = ui.content {
             { type = ui.TYPE.Image, props = { resource = ui.texture { path = 'white' },
                 color = util.color.rgb(0.05, 0.045, 0.04), alpha = 0.92, relativeSize = util.vector2(1, 1) } },
@@ -129,7 +155,7 @@ local function showDialogue()
         })
     end
     table.insert(left, text(' ', { size = 8 }))
-    table.insert(left, row('Goodbye', { color = GOLD, onClick = close }))
+    table.insert(left, button('Goodbye', close))
     local right = { text(' ', { size = 8 }) }
     local size = sizes()
     for _, line in ipairs(state.lines) do
@@ -173,7 +199,7 @@ local function showJournal()
     end
     if #quests == 0 then table.insert(left, text('No entries yet.', { size = 19, color = DIM })) end
     table.insert(left, text(' ', { size = 8 }))
-    table.insert(left, row('Close', { color = GOLD, onClick = close }))
+    table.insert(left, button('Close', close))
     local right = { text(' ', { size = 8 }) }
     local quest = quests[journal.selected]
     local size = sizes()
@@ -183,8 +209,9 @@ local function showJournal()
                 box = util.vector2(size.right - 20, 24 * math.ceil(#line / math.max(20, (size.right - 20) / 10)) + 8) }))
         end
     end
+    -- tapping the page (anywhere that is not an entry) closes the journal too
     window = panel(util.vector2(size.width, size.height),
-        ui.content { column(size.left + 20, size.height, left), column(size.right, size.height, right) })
+        ui.content { column(size.left + 20, size.height, left), column(size.right, size.height, right) }, close)
 end
 
 local function registerJournal()
@@ -214,6 +241,7 @@ return {
             showJournal()
         end,
         UiModeChanged = function(data)
+            print('OPENOBLIVION_UI mode ' .. tostring(data.oldMode) .. ' -> ' .. tostring(data.newMode))
             if kind == 'dialogue' and data.newMode ~= 'Interface' then vanish() end
         end,
     },

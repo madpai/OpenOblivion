@@ -92,6 +92,17 @@ and the eight attributes), GetLevel. A bridged NPC's script talks to the host ac
 for it. `OnHit`, `OnEquip`, `OnAdd`, `OnTrigger*`, package events and spell-effect blocks are not
 dispatched.
 
+## Leaving menus (0.44)
+
+A phone report said the journal could not be closed. On the desktop engine a click on the 22 px
+"Close" text works but is easy to miss; Escape also closes the journal override. 0.44 therefore adds,
+independent of the menu's own widgets: a BACK button in the touch overlay (drawn while any menu is
+open, sends Escape), the Android back key doing the same, big Close/Goodbye buttons, and a tap on
+any unused part of the journal page closing it. Taps are logged (`OPENOBLIVION_UI tap ...`) so View
+Scene Log shows whether a phone tap reached the UI. Desktop probes `--movement-ui journal-wait` and
+`dialogue-wait` keep a menu open for an xdotool click (image `openoblivion-research-build:xdotool`,
+the founding image plus xdotool).
+
 ## Not done
 
 Presentation and AI commands are counted stubs (PlayGroup, Say, StartCombat, packages, lock state,

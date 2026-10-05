@@ -67,6 +67,24 @@ return {
     engineHandlers = {
         onFrame = function()
             -- Menus pause the world (and onUpdate); time the menu shot in real time.
+            if uiOpened and not finished and config.ui:find('wait', 1, true) then
+                -- Keep the menu open for an external click (xdotool) and report when it closes.
+                local waited = core.getRealTime() - uiOpened
+                if not captured and waited > 2 then
+                    captured = true
+                    print('OPENOBLIVION_SCENE_PROBE ui=' .. tostring(config.ui))
+                    debug.takeScreenshot()
+                elseif captured and interfaces.UI.getMode() == nil then
+                    print('OPENOBLIVION_SCENE_PROBE ui closed after ' .. string.format('%.1f', waited))
+                    finished = true
+                    core.quit()
+                elseif waited > 45 then
+                    print('OPENOBLIVION_SCENE_PROBE ui still open after ' .. string.format('%.1f', waited))
+                    finished = true
+                    core.quit()
+                end
+                return
+            end
             if uiOpened and not finished then
                 if not captured and core.getRealTime() - uiOpened > 0.6 then
                     captured = true
@@ -181,7 +199,14 @@ return {
                     end
                     print('OPENOBLIVION_SCENE_PROBE talk=' .. tostring(best and best.recordId))
                     if best then core.sendGlobalEvent('TES4Talk', { npc = best, player = self.object }) end
-                elseif config.ui == 'journal' then
+                elseif config.ui == 'dialogue-wait' then
+                    for _, actor in ipairs(nearby.actors) do
+                        if actor ~= self.object and not types.Actor.isDead(actor) then
+                            core.sendGlobalEvent('TES4Talk', { npc = actor, player = self.object })
+                            break
+                        end
+                    end
+                elseif config.ui == 'journal' or config.ui == 'journal-wait' then
                     interfaces.UI.setMode('Journal', { windows = { 'Journal' } })
                 else
                     interfaces.UI.setMode('Interface', { windows = { 'Inventory' } })
