@@ -405,6 +405,12 @@ authoritative co-op slice before broad TES4 combat/quest conversion. See
 [ROADMAP.md](ROADMAP.md) for acceptance gates and [MULTIPLAYER.md](MULTIPLAYER.md)
 for ownership/persistence requirements.
 
+Executable recon (2026-10-06): the retail `Oblivion.exe` has full RTTI and its game-setting defaults can be
+recovered, which settles the "movement settings absent from the master" question (plugin value if present, else the
+exe default) and gives code-level evidence for the dialogue, quest-delay and menu rules. See
+[research/EXECUTABLE_RECON.md](research/EXECUTABLE_RECON.md); generic tools and the wider reverse-engineering knowledge
+base live in [game-decomp-compendium](https://github.com/madpai/game-decomp-compendium).
+
 ## Tooling boundaries and authored limits
 
 - `openoblivion-inspect`: read-only classic TES4 1.0/1.2, 20-byte headers,

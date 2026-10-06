@@ -70,6 +70,10 @@ was checked, and what is still a guess.
 
 ## Voices
 
+Verified 2026-10-06 against the executable (its format string for the file base name and the `mp3`/`wav`/`lip` type
+strings next to `Data\Sound\Voice`) and independently by the bsa-rs documentation example; see
+[EXECUTABLE_RECON.md](EXECUTABLE_RECON.md). Lip-sync `.lip` files exist in the original and are not used by the port yet.
+
 A response's recorded line is `sound/voice/oblivion.esm/<race>/<m|f>/<quest>_<topic>_<INFO id,
 8 hex digits>_<response number>.mp3` in the voice archives (measured: e.g. the Breton male
 folder holds `mq02_greeting_0001dc44_1.mp3`). The speaker's race name comes from the NPC record's
