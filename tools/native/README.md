@@ -89,6 +89,23 @@ enables native smoothing in the scene process and includes bounded read-only
 stair QA. The rejected Lua smoothing experiment remains excluded. Without this
 option the packager retains the released 0.3 baseline behavior.
 
+## x86_64 build for the Android emulator
+
+The emulator cannot run the arm64 libraries' GL path (see [ANDROID.md](../../docs/ANDROID.md)), so build the
+same audited source for x86_64. After the arm64 build and receipts exist in the work directory:
+
+```sh
+tools/native/build_emulator_x86_64.sh /outside/native-android 6
+python3 tools/android/make_emulator_apk.py --apk <phone apk> --libs /outside/native-android/runtime-x86_64 \
+  --output /outside/sideload/openoblivion-emulator-x86_64.apk --sdk ~/android/sdk
+python3 tools/android/device_gate.py --serial emulator-5582 --apk /outside/sideload/openoblivion-emulator-x86_64.apk
+```
+
+The script applies two donor-script fixes (libjpeg-turbo without SIMD because no `nasm`, FFmpeg `-march=x86-64`),
+builds the x86_64 dependencies, overlays the receipt-patched engine tree from the arm64 build by checksum, rebuilds
+`openmw` and collects the six libraries. The emulator APK is never served to the phone. An x86_64 compile is not
+evidence about arm64 code generation.
+
 ## Desktop comparison
 
 Use a separate checkout of desktop pin

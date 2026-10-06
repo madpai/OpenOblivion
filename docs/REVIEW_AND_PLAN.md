@@ -187,3 +187,17 @@ the evidence level in the ledger.
   subsystems first for the AI/animation/magic ones, UI interpreter in parallel because it is independent.
 - Replace the faulty RAM stick.
 - Confirm multiplayer stays deferred.
+
+## 9. Addendum 2026-10-06: the device loop without the phone
+
+The owner asked to keep the phone out of testing for now, so the device gate was built on an emulator.
+Fact: the shipped arm64 libraries cannot render in an x86_64 emulator (crash in the translation layer's GLES proxy,
+Android 14 and 16, host GPU and software). A native x86_64 build of the same receipt-patched source works
+(`tools/native/build_emulator_x86_64.sh`, `tools/android/make_emulator_apk.py`), and `tools/android/device_gate.py`
+now passes six checks on an Android 16 emulator: launcher ready, engine started, 20 s stable, drawn frame, journal
+opens, system BACK closes it. F1 is therefore reduced from "no device loop" to "no phone loop": Phase 0 item 1 is done
+for emulators and the same script runs on a phone only with `--allow-physical`. The gate also caught a start-up
+deadlock (see [ANDROID.md](ANDROID.md)) and verified the system back-key fix (`GameActivity.dispatchKeyEvent`),
+both fixed in the Java host and awaiting packaging as the next phone build. Still open: phone batch acceptance of
+0.40-0.44, frame-time evidence (an emulator proves nothing about phone speed), the other menus and the scripted
+walk/stairs/door/talk scenario in the gate, and CI for the gate (needs a runner with KVM).

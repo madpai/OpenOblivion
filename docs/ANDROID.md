@@ -63,6 +63,24 @@ world initialization but reported Android Collada model load failures. This
 does not establish phone scene rendering or touch movement. No physical device
 was connected to ADB.
 
+**Emulator testing works with a native x86_64 build (2026-10-06).** Fact: on Android 14 (ndk_translation)
+and Android 16 (berberis) x86_64 images the arm64 libraries still crash at scene start in the translation layer's
+GLES proxy (null call target, `unsigned int ()` trampoline), with the host GPU as well as software rendering.
+Building the same receipt-patched engine source for x86_64
+([build_emulator_x86_64.sh](../tools/native/build_emulator_x86_64.sh)) and adding it to the phone APK
+([make_emulator_apk.py](../tools/android/make_emulator_apk.py)) removes the translation. On an Android 16 emulator
+(`sdk_gphone64_x86_64`, host GPU) `tools/android/device_gate.py` then passes: launcher ready, engine thread starts,
+scene stays alive 20 s with no crash, a drawn frame, journal opens from MORE/JOURNAL, the system BACK key closes it.
+The same run reproduces the empty square at the bottom right, the letterbox and the visible system bars.
+Fact, found on the way: with the emulator's slower EGL start the main thread hung before the first frame in 3 of 4
+launches. Backtrace: main thread in `libEGL` `egl_init_drivers` (called from GL4ES's load-time `eglGetDisplay`
+while the linker lock is held), the UI RenderThread in the same function loading the driver (needs that linker
+lock). `GameActivity` now calls `EGL14.eglGetDisplay` before loading the libraries: 5 of 5 launches start.
+Inference: the same race can occur on a phone, rarely, because EGL starts faster there; it was not observed on the
+phone. Limits: this is an x86_64 compile and the host GPU through gfxstream, so it checks Java, Lua, UI, input and
+engine logic, not arm64 code generation, phone GPU behaviour or performance numbers. The arm64 libraries in the
+phone APK are untouched.
+
 The owner's subsequent physical-phone test of build 0.1 reaches Vilverin under
 GL4ES/OpenGL 2.1 but reports an incorrect interior and mostly sky outside. Its
 log confirms Collada sky/player model failures and missing NPC race/body/hair/

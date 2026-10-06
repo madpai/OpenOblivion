@@ -30,6 +30,10 @@ public final class GameActivity extends SDLActivity {
             }
             Os.setenv("OPENMW_USER_FILE_STORAGE", new File(getFilesDir(), "preview-user").getPath() + "/", true);
         } catch (android.system.ErrnoException e) { throw new RuntimeException(e); }
+        // Load libEGL's drivers before any native library: libGL (GL4ES) calls eglGetDisplay from its load-time
+        // initialiser while the dynamic linker's lock is held, and the UI RenderThread may hold libEGL's driver-init
+        // lock while it needs that linker lock (dlsym). Seen as a hang before the first frame on the emulator.
+        android.opengl.EGL14.eglGetDisplay(android.opengl.EGL14.EGL_DEFAULT_DISPLAY);
         for (String lib : new String[]{"c++_shared", "openal", "SDL2", "GL", "collada-dom2.5-dp", "openmw"}) System.loadLibrary(lib);
         getPathToJni(getFilesDir().getParent(), new File(getFilesDir(), "preview-user").getPath());
     }
@@ -53,5 +57,14 @@ public final class GameActivity extends SDLActivity {
         super.onWindowFocusChanged(focus);
     }
     @Override public void onBackPressed() { if (controls != null && controls.closeMenu()) return; finish(); }
+    private boolean backHandled;
+    // SDLActivity hands the back key to the engine and consumes it, so onBackPressed never runs: close menus here.
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && controls != null) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) backHandled = controls.closeMenu();
+            if (backHandled) { if (event.getAction() == KeyEvent.ACTION_UP) backHandled = false; return true; }
+        }
+        return super.dispatchKeyEvent(event);
+    }
     @Override protected void onDestroy() { if (controls != null) controls.release(); super.onDestroy(); android.os.Process.killProcess(android.os.Process.myPid()); }
 }
