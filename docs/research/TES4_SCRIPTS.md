@@ -64,7 +64,7 @@ was checked, and what is still a guess.
 | Topic list = type "topic" with a passing response, once learned if any AddTopic/add-topic names it, never if only reachable as a choice | **Inference**; the real list rule is unmeasured |
 | `GetInCell` of a "dummy cell for GetInCell" = the city worldspace of the same name, or the exterior cells within two of the location's map marker | **Approximation**; the original's rule is unknown |
 | `SetStage` starts a quest that is not running | Inferred (MQ02 is never started otherwise) |
-| Quest scripts run every 5 s | The original's delay is a game setting, not read yet |
+| Quest scripts run every 5 s | **Verified source**: INI setting `fQuestScriptDelayTime`, shipped default 5.0 in `Oblivion_default.ini`. There is no object-script delay setting, so the 0.25 s object tick stays unverified |
 | Unloaded references are 1e9 units away | Choice, so "near X" triggers do not fire |
 | Unimplemented commands return 0 and are logged once | Choice; some conditions therefore pass wrongly |
 

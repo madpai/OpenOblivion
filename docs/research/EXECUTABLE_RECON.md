@@ -19,11 +19,14 @@ defaults) are generated locally into `~/openoblivion-private/research/` and neve
 | Condition (CTDA) records are 24 bytes in all 48,531 conditions of the master's INFO records | **verified** on data | The dialogue engine's layout assumption holds for the whole master |
 
 ## Consequences for the port
-1. **Movement settings**: the HANDOFF notes several movement settings absent from the master. Their effective values come from
-   the executable's defaults; regenerate the table locally with
-   `python3 skills/bethesda-gamebryo-re/scripts/gmst_defaults.py Oblivion.exe --esm Oblivion.esm` (compendium repository)
-   and apply "plugin value if present, else exe default" in the game-settings loader instead of inventing values. Character body
-   dimensions are not GMSTs (Havok character proxy) and remain unrecovered.
+1. **Game settings**: a master only stores settings that differ from the engine's defaults, so the effective value of any
+   setting is the plugin's GMST record if present, else the executable's default (the INI defaults file covers INI settings).
+   The ground-speed formula was already decoded and implemented ([TES4_MOVEMENT.md](TES4_MOVEMENT.md)); what the full table adds
+   is a systematic source for what is still unmodelled (carried weight, swimming, jump height, fall damage, persuasion, barter,
+   disposition). Regenerate it locally with
+   `python3 skills/bethesda-gamebryo-re/scripts/gmst_defaults.py Oblivion.exe --esm Oblivion.esm` (compendium repository) and
+   load it as an effective-settings table instead of inventing values. Character body dimensions are not GMSTs (Havok
+   character proxy) and remain unrecovered.
 2. **Conversation window**: topic list, greeting selection and quest-script delay can now be checked against the code of
    `TESTopic`, `TESTopicInfo`, `TopicInfoArray`, `DialogMenu` and `TESQuest` instead of inferred; see the status table in
    [TES4_SCRIPTS.md](TES4_SCRIPTS.md).
