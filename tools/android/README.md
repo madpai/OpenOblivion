@@ -142,6 +142,37 @@ The packager recreates the generated APK while retaining compilation caches,
 then rejects excessive unused ZIP space. This prevents incremental APK updates
 from retaining a replaced large payload as hundreds of MiB of dead bytes.
 
+## Emulator and device gate
+
+The phone APK's arm64 libraries cannot render in an x86_64 emulator (see [ANDROID.md](../../docs/ANDROID.md)), so
+the gate runs an emulator-only copy of the APK with x86_64 libraries added. Needs KVM, Java 17 and the Android SDK
+command-line tools; everything below stays outside the checkout.
+
+```sh
+# once: emulator image and a 4 GB Android 16 AVD
+sdkmanager "emulator" "system-images;android-36;google_apis;x86_64"
+avdmanager create avd -n oo-api36 -k "system-images;android-36;google_apis;x86_64" -d pixel_6
+#   then in ~/.android/avd/oo-api36.avd/config.ini: hw.ramSize=4096, disk.dataPartition.size=16G
+
+# build the x86_64 libraries from the audited arm64 engine tree, then the emulator APK
+tools/native/build_emulator_x86_64.sh /outside/native-android 6
+python3 tools/android/make_emulator_apk.py --apk <phone or gradle debug apk> \
+  --libs /outside/native-android/runtime-x86_64 --output /outside/sideload/openoblivion-emulator-x86_64.apk --sdk ~/android/sdk
+
+# boot headless and detached, then run the gate
+setsid nohup emulator -avd oo-api36 -port 5582 -no-window -no-audio -no-boot-anim -no-snapshot -gpu host \
+  > /tmp/emulator.log 2>&1 < /dev/null &
+python3 tools/android/device_gate.py --serial emulator-5582 --apk /outside/sideload/openoblivion-emulator-x86_64.apk
+```
+
+The first launch on a fresh data partition unpacks and verifies the payload (a few minutes) and Android shows a
+one-time "Viewing full screen" notice that the gate dismisses. The gate writes `gate-result.json`, screenshots and
+logcat to `~/openoblivion-private/evidence/gate-<time>/` and exits non-zero on any failed check. It accepts only
+`emulator-NNNN` serials unless `--allow-physical` is passed, which needs the owner's explicit request. For a
+Java-only change, copy the edited file into the staged `<work>/host` project and run Gradle with the same three
+`-Poo...` flags `build_personal.py` uses (about 10 s), then run `make_emulator_apk.py` on its `app-debug.apk`.
+An emulator proves Java, UI, input, Lua and engine logic only, not arm64 code, phone GPU behaviour or speed.
+
 ## Private server
 
 Copy the verified APK into an external private directory. Create `download.json`

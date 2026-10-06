@@ -30,6 +30,11 @@ We start by researching and reproducing existing work. OpenMW is the selected
 compatibility foundation; Vulkan and multiplayer integration remain separate
 engineering milestones. See the [foundation decision](docs/decisions/0001-foundation.md).
 
+> **Status, 2026-10-06:** the progress section below stops at the 0.22 builds and is being rebuilt from a ledger.
+> For the current state read [docs/HANDOFF.md](docs/HANDOFF.md) ("Start here") and the
+> [project review and plan](docs/REVIEW_AND_PLAN.md). The phone preview is at 0.44; Android changes are now checked
+> by a scripted emulator gate ([tools/android/README.md](tools/android/README.md)).
+
 ## Progress so far
 
 **New in 0.22-body:** the original Oblivion player collision body was measured

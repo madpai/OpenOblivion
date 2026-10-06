@@ -1,5 +1,38 @@
 # Maintainer handoff
 
+## Start here (2026-10-06)
+
+State: the served phone build is still `0.44-menu-exit`. The repo is ahead of it by two Java fixes
+(`GameActivity`: EGL pre-initialisation against a start-up deadlock, and the Android back key closing menus) that are
+verified on the emulator and not yet packaged (next phone build: `0.45`). Read in this order:
+[REVIEW_AND_PLAN.md](REVIEW_AND_PLAN.md) (verdict, findings F1-F12, phases 0-6 with gates, section 9 is the latest
+addendum), [DEVICE_SESSION_20261006.md](research/DEVICE_SESSION_20261006.md) (first scripted phone session and the
+adb-over-Tailscale recipe), [ANDROID.md](ANDROID.md) (emulator paragraph), then the sections below for features.
+
+- **Owner constraint:** the owner paused phone testing on 2026-10-06. Use the emulator gate; do not `adb connect` to
+  the phone or pass `--allow-physical` until the owner says phone testing is fine again. Always give adb an explicit
+  `-s` serial. Never write a phone lock PIN or device address into files.
+- **Test loop:** `tools/native/build_emulator_x86_64.sh`, `tools/android/make_emulator_apk.py`,
+  `tools/android/device_gate.py` (commands in [tools/android/README.md](../tools/android/README.md)). The gate passes
+  6 of 6 on an Android 16 emulator. It checks Java, UI, input, Lua and engine logic, not arm64 code or phone speed.
+  Run it after every Android-side change before asking the owner for anything.
+- **Research tools:** the public compendium `madpai/game-decomp-compendium` (8 skills, 790-project catalog, field
+  notes); run its `hub.py prior-art "<topic>"` before researching. Executable recon of `Oblivion.exe` is in
+  [EXECUTABLE_RECON.md](research/EXECUTABLE_RECON.md); the tables themselves are private.
+- **Traps:** an app uninstall wipes the 236 MB data payload (sign emulator APKs with the same debug key so
+  `install -r` keeps it); the x86_64 build overlays the arm64 engine tree, so re-run the script after any receipt
+  change; the donor worktree carries two private x86_64 script fixes that the script re-applies; `pgrep -f` matches
+  its own command line; the build host has a confirmed bad RAM stick, so double-build and compare hashes for anything
+  shipped, and remind the owner to replace it; raw screenshots and logs stay in `~/openoblivion-private/evidence/`.
+- **Next, in order:** (1) package `0.45` through `build_personal.py` and the publish routine, with a non-debuggable,
+  16 KB-aligned build if feasible; (2) extend the gate (other menus, a walk, a door, a conversation, frame timing);
+  (3) rest of Phase 0 in the review: one engine revision, CI `git apply --check` of every receipt, slim APK and hot
+  overlay, docs ledger (the README progress section stops at 0.22); (4) phone batch acceptance of 0.40-0.44 when the
+  owner resumes; (5) Phase 1 ruleset core.
+- **Open owner decisions** (from the review): move Android to a newer OpenMW or stay on the donor; Phase 2 (script
+  subsystems, 66% of call sites covered) before or after Phase 3 (menu XML interpreter); replace the faulty RAM;
+  confirm multiplayer stays deferred.
+
 End-of-session state, 2026-10-05 (phone build `0.43-object-scripts`): the Vilverin
 slice plus the open world is playable as before (TES4 player and NPC bodies, faces,
 hair, items, fists and weapons, armor, loot, bandit AI, first person) and now has
