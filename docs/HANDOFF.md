@@ -20,8 +20,10 @@ solver is untouched). Desktop: standing jump 78.0 to 66.7 units (original law at
 - **What the original does that the port does not yet do** (oracle data in the evidence folder, laws in TES4_AIRBORNE.md):
   gravity applies on the ground (stairs descend as a free fall per tread without leaving the ground state); landings are
   captured about 15 units early and the hull glides down; the support check range is unread. The 0.5 camera filter stays.
+- **Feel rule (owner, same day):** the engine must feel like the original; only touch/mobile play may take liberties (see the
+  deviation ledger in PARITY.md). So the grounded fall law and landing capture are to be ported, not debated.
 - **Next, in order:** (1) read the proxy's support check and sample drops of 10/20/40/80/120 units to find where ground
-  becomes air; then decide whether the port should follow the grounded fall law (it changes stair feel: owner test needed);
+  becomes air, then port the grounded fall law and landing capture behind the switch (no owner feel test needed: the original does it);
   (2) step height and slope limit (probably emergent from hull + support); (3) fall damage, fatigue per jump, swimming;
   (4) package `0.45`; (5) the review's Phase 0 items; (6) the original UI interpreter (Phase 3, HUD first) in parallel.
 - **Compendium:** this session's findings, experiment EXP-OO-015, technique note and golden queries are in

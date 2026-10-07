@@ -25,6 +25,23 @@ placeholder bodies and template UI are not evidence of TES4 equivalence.
 | Audio | Native audio enabled; original door sounds packaged and identified in desktop engine output | Phone audio acceptance, original attenuation, effects/footsteps, music selection, voices/subtitles, synchronization and mobile audio lifecycle |
 | Saves/mods | No TES4 save compatibility demonstrated | Durable reference/quest/actor state, original save behavior, load/reload checks and representative mod compatibility |
 
+## Feel rule and deviation ledger
+
+Owner rule (2026-10-06): the engine must feel like the original in every case. The only place for creative liberties is
+touch and mobile play. A deviation is acceptable only if it is about touch input or what touch play physically needs; anything
+else is a gap to close, recorded here until it is.
+
+| Deviation from the original | Why it exists | Class | Status |
+|---|---|---|---|
+| Native post-physics eye smoothing against the per-tread camera jolt (the "0.5 filter") | Added from phone feedback; the original has no such filter (its body is a free fall per tread, so its view bounces) | Presentation, not touch input | **Open question for the owner**: keep as an opt-in comfort setting (default original) or remove once the grounded fall law is ported; not a mobile necessity by itself |
+| Grounded gravity and landing capture: the port snaps down stairs and lands instantly | Not yet recovered (support-check range unread) | Gap | Close it: read the support check, sample drops of 10 to 120 units, port behind the switch |
+| Step 34/62 and slope 46 degrees (Morrowind constants) | Donor defaults; the original's step and slope are emergent from hull and support check | Gap | Close it with the support-check work |
+| Hand-built journal, conversation, container and loot windows | Stand-ins until the original menu XML interpreter exists | Gap | Phase 3 (HUD first); touch-sized targets stay as the allowed mobile adaptation |
+| Touch overlay (USE, JUMP, BACK, look drag, tap-to-activate) | Phone has no keyboard or mouse | **Touch**, allowed | Keep; tune for comfort only |
+| Default run (Caps-lock style) on, as the original ships | Matches the original | None | n/a |
+| Spawn at the prologue sewer exit, prologue skipped | Owner decision for the playable slice | Scope, not feel | Revisit when the prologue exists |
+| Trees as crossed billboards, no wind or trunks | Rendering stand-in | Gap | Open |
+
 Work proceeds in testable slices: finish native TES4 interaction plumbing,
 recover original animation/door sequence support, implement live inventory
 and equipment, then the original motor, gameplay and script/quest systems.

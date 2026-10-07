@@ -22,6 +22,10 @@ docs/decisions/0001-foundation.md and docs/HANDOFF.md first.
 - Run CTest and the public-content guard after changes. For reader changes,
   use original fixtures first, then an owner-supplied local installation.
 - Never publish or push without a user instruction covering that action.
+- **Feel rule (owner, 2026-10-06):** the engine must always feel like the original game. The only sanctioned creative
+  liberties are for touch and mobile play (input mapping, on-screen controls, touch-sized menus). Any other difference is a
+  bug or an unfinished measurement, not a design choice. Record every deviation, with its reason, in the deviation ledger in
+  `docs/PARITY.md`; do not add one without writing it there.
 - Player movement continues from `docs/HANDOFF.md`,
   `docs/research/HAVOK_COLLISION.md`, `docs/research/TES4_PLAYER_BODY.md` and
   `docs/research/TES4_AIRBORNE.md`. Fixed `OL_STATIC` strips load when
