@@ -11,8 +11,8 @@ android {
         applicationId 'org.openoblivion.preview'
         minSdk 29
         targetSdk 32
-        versionCode downloadAssets ? 44 : (installedAssets ? 23 : (nativeStairs ? 22 : 3))
-        versionName downloadAssets ? '0.44-menu-exit' : installedAssets ? '0.23-installed-body' : (nativeStairs ? '0.22-body' : '0.3-camera-repair')
+        versionCode downloadAssets ? 45 : (installedAssets ? 23 : (nativeStairs ? 22 : 3))
+        versionName downloadAssets ? '0.45-airborne' : installedAssets ? '0.23-installed-body' : (nativeStairs ? '0.22-body' : '0.3-camera-repair')
         buildConfigField 'boolean', 'NATIVE_GROUNDED_EYE', nativeStairs.toString()
         ndk { abiFilters 'arm64-v8a' }
     }

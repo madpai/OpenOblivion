@@ -210,3 +210,10 @@ home protection needs a write exception for this evidence directory.
 Original fixture tests exercise dependency closure and the complete HTTP
 upload/report flow, including private-file boundaries and download ranges:
 `python3 tests/test_android_preview.py`. Owner/device evidence stays external.
+
+## Phone frame pacing and memory
+
+`phone_perf.py --serial <phone> --seconds 30 --label <name>` is a read-only sampler for a running scene: frames presented,
+dropped frames and the present-to-present histogram (SurfaceFlinger time statistics for the game's layer), process memory, the
+busiest threads and thermal state. Start the scene first (`device_gate.py` leaves the app on its launcher screen). First results
+and their limits: [PHONE_PERF_20261006.md](../../docs/research/PHONE_PERF_20261006.md). An emulator proves nothing about speed.
