@@ -201,3 +201,13 @@ deadlock (see [ANDROID.md](ANDROID.md)) and verified the system back-key fix (`G
 both fixed in the Java host and awaiting packaging as the next phone build. Still open: phone batch acceptance of
 0.40-0.44, frame-time evidence (an emulator proves nothing about phone speed), the other menus and the scripted
 walk/stairs/door/talk scenario in the gate, and CI for the gate (needs a runner with KVM).
+
+## 10. Addendum 2026-10-06 (night): the device loop is real now
+
+Phone testing resumed the same evening. Phase 0 items that moved: the device gate runs on the real phone (6 of 6), `tools/android/phone_perf.py`
+measures frame pacing, memory and threads (first result: 120 fps, no dropped frames, 1.8 GB, light scenes only; see
+[PHONE_PERF_20261006.md](research/PHONE_PERF_20261006.md)), wireless adb removes the cable-drop problem, and the engine can log a quantity on the
+device (the jump line) so a desktop-invisible bug was found in minutes. The biggest open risk is still performance in dense scenes (Imperial City,
+forests, crowds) and at native resolution; the launcher cannot start there yet. The original controller's laws are now recovered and checked by
+replaying its own logged steps ([TES4_AIRBORNE.md](research/TES4_AIRBORNE.md)); the owner's feel rule ("always like the original; liberties only
+for touch") is in AGENTS.md and the deviation ledger in PARITY.md.

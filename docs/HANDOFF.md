@@ -1,37 +1,37 @@
 # Maintainer handoff
 
-## Latest (2026-10-06, session 4): original airborne motor recovered and ported
+## Latest (2026-10-06, session 4, end of night): original airborne motor recovered, ported and confirmed on the phone
 
-Read [TES4_AIRBORNE.md](research/TES4_AIRBORNE.md) first. The original game's jump, gravity and air-control laws were
-measured on the owner's running copy (isolated Proton display, read-only sampler, per-update replay) and ported behind
-`OPENOBLIVION_TES4_AIRBORNE=1` as the new last receipt `tes4_airborne` (character.cpp, constants.hpp; the body receipt's
-solver is untouched). Desktop: standing jump 78.0 to 66.7 units (original law at 60 Hz: 66.8), fitted gravity 620 to 514
-(original 515), stair/ramp/wall/ceiling gates unchanged; 25/25 CTest and the content guard pass; the Android-vintage
-(0.51) tree builds and the emulator gate passes 7/7. Also verified live: run speed 355.6, jump formula at Acrobatics 5/50/100.
+Read [TES4_AIRBORNE.md](research/TES4_AIRBORNE.md) first, then [PHONE_PERF_20261006.md](research/PHONE_PERF_20261006.md) and the deviation ledger
+in [PARITY.md](PARITY.md). The original game's jump, gravity and air-control laws were measured on the owner's running copy (isolated
+Proton display, read-only sampler, per-update replay) and ported behind `OPENOBLIVION_TES4_AIRBORNE=1` as the last receipt `tes4_airborne`
+(character.cpp, constants.hpp; the body receipt's solver is untouched). Run speed 355.6 and the jump formula at Acrobatics 5/50/100 were
+verified live. **Owner rule (same day): the engine must feel like the original; only touch/mobile play may take liberties** (AGENTS.md "Feel rule").
 
-- **Phone testing resumed (owner, same evening; USB cable, serial `R5CX13GTDRJ`, always pass `-s` and `--allow-physical`).**
-  First measurements on 0.44: [PHONE_PERF_20261006.md](research/PHONE_PERF_20261006.md) (120 fps, 0 dropped frames, 1.8 GB, but only
-  light scenes). 0.45-airborne installed and gated; 0.46-jumplog adds the on-device jump log and fixes a 120 fps bug (see
-  TES4_AIRBORNE.md, "On the phone"). The fixed 0.46 APK is built (`~/openoblivion-private/android-installed-assets-build/`, engine
-  double-built with identical hashes, same signer and data payload id) but is **not installed yet**: the phone dropped off adb (USB
-  debugging off or unauthorised; on Samsung check Auto Blocker). The installed 0.46 still has the bug. After installing, tap JUMP and read
-  `run-as org.openoblivion.preview grep "TES4 jump" files/preview-user/config/openmw.log`: expect rise about 66.8 and air time about 1 s.
-- **Reference game recipe** (private): start `docker start openoblivion-original-reference-x openoblivion-original-reference-wm`,
-  then `bash ~/openoblivion-private/original-reference-20261003/launch_reference.sh` detached (it must run from `game/`; it
-  starts in the start cell). Sampler, driver and replay scripts: `~/openoblivion-private/evidence/tes4-motor-20261006/`
-  (`sample_motor.py` needs `sudo -n`; use `pgrep -f '[Z]:.*Oblivion.exe'`, never `pkill -f` with a pattern that appears in your
-  own command line; hold console keys 0.2 s). `session-tools/exe.py` reads the exe by address (`fn`, `vslot`, `refs`).
-- **What the original does that the port does not yet do** (oracle data in the evidence folder, laws in TES4_AIRBORNE.md):
-  gravity applies on the ground (stairs descend as a free fall per tread without leaving the ground state); landings are
-  captured about 15 units early and the hull glides down; the support check range is unread. The 0.5 camera filter stays.
-- **Feel rule (owner, same day):** the engine must feel like the original; only touch/mobile play may take liberties (see the
-  deviation ledger in PARITY.md). So the grounded fall law and landing capture are to be ported, not debated.
-- **Next, in order:** (1) read the proxy's support check and sample drops of 10/20/40/80/120 units to find where ground
-  becomes air, then port the grounded fall law and landing capture behind the switch (no owner feel test needed: the original does it);
-  (2) step height and slope limit (probably emergent from hull + support); (3) fall damage, fatigue per jump, swimming;
-  (4) package `0.45`; (5) the review's Phase 0 items; (6) the original UI interpreter (Phase 3, HUD first) in parallel.
-- **Compendium:** this session's findings, experiment EXP-OO-015, technique note and golden queries are in
-  madpai/game-decomp-compendium (`hub.py diagnose "jump height differs from the formula"`).
+- **Phone:** the owner resumed phone testing (USB, then wireless adb on the home LAN; serial `R5CX13GTDRJ`, Galaxy S24+, always pass `-s`).
+  Installed and measured: 0.44 (120 fps, 0 dropped frames, 1.8 GB, light scenes only), 0.45-airborne, **0.46-jumplog** (current). 0.46 logs
+  each jump (`run-as org.openoblivion.preview grep "TES4 jump" files/preview-user/config/openmw.log`) and fixes a 120 fps bug found that way
+  (the frame after a takeoff was taken for a landing, doubling the forward speed of running jumps: the owner called it "too far"). With the
+  fix: three running jumps rose 66.8/66.4/67.7 units at 320 to 355 units/s horizontal. **Owner verdict: "feels more right".**
+- **Served build is still 0.44** on the sideload server; 0.46 was installed by cable/wifi and archived in
+  `~/openoblivion-private/sideload-staging/0.46-jumplog/` (not published; publish with `publish_apk_only.py` when wanted). The 0.46 engine
+  was double-built with identical hashes (the host has a bad RAM stick). Wireless adb stays on until the phone reboots or Wi-Fi changes.
+- **Not in the port yet (the original does these; oracle data in `~/openoblivion-private/evidence/tes4-motor-20261006/`):** gravity applies
+  on the ground (stairs descend as a free fall per tread without leaving the ground state); landings are captured about 15 units early and the
+  hull glides down; the support check's range is unread; step height and slope limit are still Morrowind constants. By the feel rule these are
+  to be ported, not debated. Open question for the owner: keep the 0.5 camera eye smoothing as an opt-in comfort setting, or remove it.
+- **Reference game recipe** (private): `docker start openoblivion-original-reference-x openoblivion-original-reference-wm`, then
+  `bash ~/openoblivion-private/original-reference-20261003/launch_reference.sh` detached (it must run from `game/`). Sampler, driver, replay:
+  `~/openoblivion-private/evidence/tes4-motor-20261006/` (`sudo -n python3 sample_motor.py`; `pgrep -f '[Z]:.*Oblivion.exe'`, never
+  `pkill -f` with a pattern in your own command; hold console keys 0.2 s). `session-tools/exe.py` reads the exe by address. Both containers
+  and the game are stopped.
+- **Next, in order:** (1) read the proxy's support check and sample drops of 10/20/40/80/120 units on the original, then port the grounded
+  fall law and landing capture behind the switch; (2) step height and slope limit; (3) dense-scene phone performance (the launcher has no start
+  in the Imperial City or a forest: add one, e.g. an overlay teleport) and native resolution; (4) fall damage, fatigue per jump, swimming;
+  (5) the review's Phase 0 items (one engine revision, slim APK, docs ledger); (6) the original UI interpreter (Phase 3, HUD first) in parallel;
+  (7) publish 0.46 to the sideload server.
+- **Compendium** (madpai/game-decomp-compendium): EXP-OO-015/016/017, seven verified findings, the technique note "replaying a character
+  controller from its own timesteps", golden queries; `hub.py diagnose "jump height differs from the formula"` finds them.
 
 ## Start here (2026-10-06, earlier in the day)
 
