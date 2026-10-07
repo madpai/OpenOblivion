@@ -98,6 +98,11 @@ and it found a bug the desktop could not show:
   landing is only logged after the air was seen. Desktop probes cannot show this (they run below 60 fps); the phone is the test.
 - **Check:** the phone's own 20 Hz position samples for a standing jump fit the original's law at 60 Hz physics within 2.7 units
   (model apex 66.8, air time about 1.0 s); the desktop probe logs `rise 66.77 units, air time 0.999 s`.
+- **Confirmed on the phone with the fixed 0.46 (owner's three running jumps, on flat ground):** logged rise 66.8, 66.4 and 67.7 units
+  (model at 60 Hz: 66.8), air time 1.07, 1.13 and 1.00 s; horizontal speed in the air 320 to 355 units/s, i.e. the run speed (355.6) kept, not
+  doubled. A running leap therefore covers about 350 to 390 units (roughly 5 m), which is what the original's law gives (run speed kept for
+  about a second, steering gain 0.015 per update). The owner's "too far" on the buggy build matches the doubled speed; standing jumps from a
+  ledge read 61 to 63 units (a slope at the spawn point, not measured further).
 - Lesson recorded in the compendium: per-frame bookkeeping in a controller that runs faster than the physics step sees stale ground state.
 
 ## Unknowns and next measurements
