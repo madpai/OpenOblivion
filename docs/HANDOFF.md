@@ -9,12 +9,13 @@ solver is untouched). Desktop: standing jump 78.0 to 66.7 units (original law at
 (original 515), stair/ramp/wall/ceiling gates unchanged; 25/25 CTest and the content guard pass; the Android-vintage
 (0.51) tree builds and the emulator gate passes 7/7. Also verified live: run speed 355.6, jump formula at Acrobatics 5/50/100.
 
-- **Phone testing resumed (owner, same evening; USB cable, serial `R5CX13GTDRJ`, always pass `-s`).** First measurements on the
-  installed 0.44: [PHONE_PERF_20261006.md](research/PHONE_PERF_20261006.md) (120 fps, 0 dropped frames, 1.8 GB, but only light
-  scenes). Package `0.45-airborne` (versionCode 45) is built (`~/openoblivion-private/android-installed-assets-build/`,
-  sha256 a55bc0b4...; arm64 engine double-built with identical hashes; same signer and data payload id as 0.44, so
-  `adb install -r` keeps the 236 MB data) and was waiting to be installed when the phone dropped off adb (USB debugging turned
-  off or unauthorised). It carries the airborne receipt, the two Java fixes and the launcher switch.
+- **Phone testing resumed (owner, same evening; USB cable, serial `R5CX13GTDRJ`, always pass `-s` and `--allow-physical`).**
+  First measurements on 0.44: [PHONE_PERF_20261006.md](research/PHONE_PERF_20261006.md) (120 fps, 0 dropped frames, 1.8 GB, but only
+  light scenes). 0.45-airborne installed and gated; 0.46-jumplog adds the on-device jump log and fixes a 120 fps bug (see
+  TES4_AIRBORNE.md, "On the phone"). The fixed 0.46 APK is built (`~/openoblivion-private/android-installed-assets-build/`, engine
+  double-built with identical hashes, same signer and data payload id) but is **not installed yet**: the phone dropped off adb (USB
+  debugging off or unauthorised; on Samsung check Auto Blocker). The installed 0.46 still has the bug. After installing, tap JUMP and read
+  `run-as org.openoblivion.preview grep "TES4 jump" files/preview-user/config/openmw.log`: expect rise about 66.8 and air time about 1 s.
 - **Reference game recipe** (private): start `docker start openoblivion-original-reference-x openoblivion-original-reference-wm`,
   then `bash ~/openoblivion-private/original-reference-20261003/launch_reference.sh` detached (it must run from `game/`; it
   starts in the start cell). Sampler, driver and replay scripts: `~/openoblivion-private/evidence/tes4-motor-20261006/`

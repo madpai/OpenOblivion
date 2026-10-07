@@ -94,6 +94,22 @@ int main()
     Tes4Vec2 delta = tes4AirStep(coast, { 0.f, 0.f }, tes4AirControl(5.f));
     require(near(coast.velocity.x, 50.f * (1.f - 0.015f), 1e-3f) && near(delta.x, -0.75f, 1e-3f), "coasting");
 
+    // Rise bookkeeping for the device log line.
+    Tes4AirState tracked;
+    tes4AirTakeoff(tracked, { 0.f, 0.f }, 100.f);
+    require(tes4AirTakeoffPending(tracked), "takeoff pending until the physics lifts the player");
+    tes4AirTrack(tracked, 130.f, 0.1f);
+    require(!tes4AirTakeoffPending(tracked) && tracked.sawAir, "air seen");
+    tes4AirTrack(tracked, 166.f, 0.1f);
+    tes4AirTrack(tracked, 150.f, 0.1f);
+    require(near(tes4AirRise(tracked), 66.f, 1e-3f) && near(tracked.seconds, 0.3f, 1e-3f) && tracked.jumped, "rise tracking");
+    Tes4AirState lost;
+    tes4AirTakeoff(lost, { 10.f, 0.f }, 0.f);
+    lost.seconds = 0.2f;
+    require(!tes4AirTakeoffPending(lost), "a takeoff the physics never acted on expires");
+    tes4AirGround(tracked, {});
+    require(!tracked.jumped, "landing clears the jump");
+
     unsetenv("OPENOBLIVION_TES4_AIRBORNE");
     require(!tes4AirborneEnabled(), "disabled by default");
     std::cout << "TES4 airborne fixtures passed: " << checks << " checks\n";

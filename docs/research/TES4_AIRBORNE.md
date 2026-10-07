@@ -86,6 +86,20 @@ new gravity; run-to-run spread of this diagnostic is a few percent. 25 of 25 CTe
 The 20 Hz probe samples are not aligned with the 60 Hz physics, so a 1 to 2 unit residual in the trajectory comparison is
 sampling phase. Android: the same receipt is applied to the donor tree; see HANDOFF for the build state.
 
+## On the phone (0.46-jumplog, 2026-10-06)
+
+The receipt writes one line per jump to the engine log (`OpenOblivion TES4 jump: rise ... units, air time ... s`); the phone keeps it
+in the app's `preview-user/config/openmw.log` (`run-as`, the build is debuggable). This gave the first on-device check without a probe,
+and it found a bug the desktop could not show:
+
+- **Bug (fixed in 0.46):** at 120 fps the controller runs about twice per 60 Hz physics step. The frame after a takeoff still reported "on
+  ground", so the bookkeeping treated it as a landing and reset the air state (log: `rise 0 units, air time 0 s` for every jump). A running
+  jump would then have carried its takeoff velocity twice. A takeoff is now pending until the physics reports the air (at most 0.1 s), and the
+  landing is only logged after the air was seen. Desktop probes cannot show this (they run below 60 fps); the phone is the test.
+- **Check:** the phone's own 20 Hz position samples for a standing jump fit the original's law at 60 Hz physics within 2.7 units
+  (model apex 66.8, air time about 1.0 s); the desktop probe logs `rise 66.77 units, air time 0.999 s`.
+- Lesson recorded in the compendium: per-frame bookkeeping in a controller that runs faster than the physics step sees stale ground state.
+
 ## Unknowns and next measurements
 
 1. The **support check** (range and rule that make the ground state persist through a 38-unit drop and capture a landing 15

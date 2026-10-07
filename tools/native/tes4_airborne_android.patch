@@ -1,15 +1,17 @@
 --- a/apps/openmw/mwmechanics/character.cpp
 +++ b/apps/openmw/mwmechanics/character.cpp
-@@ -35,6 +35,8 @@
+@@ -35,6 +35,10 @@
  
  #include "../mwrender/animation.hpp"
  
++#include <components/debug/debuglog.hpp>
++
 +#include "openoblivion_tes4_airborne.hpp"
 +
  #include "../mwbase/environment.hpp"
  #include "../mwbase/luamanager.hpp"
  #include "../mwbase/mechanicsmanager.hpp"
-@@ -2194,6 +2196,10 @@
+@@ -2194,6 +2198,10 @@
              bool wasInJump = mInJump;
              mInJump = false;
              const float jumpHeight = cls.getJump(mPtr);
@@ -20,7 +22,7 @@
              if (jumpHeight <= 0.f || sneak || inwater || flying || !solid)
              {
                  vec.z() = 0.f;
-@@ -2210,20 +2216,42 @@
+@@ -2210,20 +2218,43 @@
                      mInJump = true;
                      jumpstate = JumpState_InAir;
  
@@ -38,6 +40,7 @@
 +                        // small gain per update; the solver keeps the takeoff velocity as inertia.
 +                        if (!tes4Air.active)
 +                            OpenOblivion::tes4AirFall(tes4Air);
++                        OpenOblivion::tes4AirTrack(tes4Air, mPtr.getRefData().getPosition().pos[2], duration);
 +                        const osg::Vec3f wanted = tes4Heading * osg::Vec3f(vec.x(), vec.y(), 0.f);
 +                        const OpenOblivion::Tes4Vec2 delta = OpenOblivion::tes4AirStep(tes4Air,
 +                            { wanted.x(), wanted.y() }, OpenOblivion::tes4AirControl(OpenOblivion::sTes4PlayerAcrobatics));
@@ -65,14 +68,14 @@
 +                    {
 +                        // OpenOblivion: keep the horizontal velocity, launch at sqrt(2 g h) (see the header).
 +                        const osg::Vec3f wanted = tes4Heading * osg::Vec3f(vec.x(), vec.y(), 0.f);
-+                        OpenOblivion::tes4AirTakeoff(tes4Air, { wanted.x(), wanted.y() });
++                        OpenOblivion::tes4AirTakeoff(tes4Air, { wanted.x(), wanted.y() }, mPtr.getRefData().getPosition().pos[2]);
 +                        vec.z() = OpenOblivion::tes4TakeoffVerticalSpeed(OpenOblivion::sTes4PlayerAcrobatics);
 +                    }
 +                    else if (vec.x() == 0 && vec.y() == 0)
                          vec.z() = jumpHeight;
                      else
                      {
-@@ -2234,6 +2262,17 @@
+@@ -2234,6 +2265,25 @@
                  }
              }
  
@@ -80,8 +83,16 @@
 +            {
 +                if (onground && !mInJump)
 +                {
-+                    const osg::Vec3f wanted = tes4Heading * osg::Vec3f(vec.x(), vec.y(), 0.f);
-+                    OpenOblivion::tes4AirGround(tes4Air, { wanted.x(), wanted.y() });
++                    if (OpenOblivion::tes4AirTakeoffPending(tes4Air))
++                        tes4Air.seconds += duration; // the physics has not lifted the player yet (frames outrun its 60 Hz step)
++                    else
++                    {
++                        if (tes4Air.jumped && tes4Air.sawAir)
++                            Log(Debug::Info) << "OpenOblivion TES4 jump: rise " << OpenOblivion::tes4AirRise(tes4Air)
++                                             << " units, air time " << tes4Air.seconds << " s";
++                        const osg::Vec3f wanted = tes4Heading * osg::Vec3f(vec.x(), vec.y(), 0.f);
++                        OpenOblivion::tes4AirGround(tes4Air, { wanted.x(), wanted.y() });
++                    }
 +                }
 +                else if (inwater || flying || !solid)
 +                    OpenOblivion::tes4AirGround(tes4Air, {});

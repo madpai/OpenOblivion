@@ -86,13 +86,48 @@ namespace OpenOblivion
         Tes4Vec2 base;
         Tes4Vec2 velocity;
         Tes4Vec2 lastGround;
+        // Bookkeeping for the log line that lets a device report each jump's rise without a probe.
+        bool jumped = false;
+        // The controller can run several times between a takeoff and the first physics step that lifts the player
+        // (a 120 Hz screen against 60 Hz physics): until the physics reports the air the takeoff is still pending.
+        bool sawAir = false;
+        float startZ = 0.f;
+        float maxZ = 0.f;
+        float seconds = 0.f;
     };
 
-    inline void tes4AirTakeoff(Tes4AirState& state, Tes4Vec2 velocity)
+    inline void tes4AirTakeoff(Tes4AirState& state, Tes4Vec2 velocity, float z = 0.f)
     {
         state.active = true;
         state.base = velocity;
         state.velocity = velocity;
+        state.jumped = true;
+        state.sawAir = false;
+        state.startZ = state.maxZ = z;
+        state.seconds = 0.f;
+    }
+
+    // Called every controller update while the physics reports the air.
+    inline void tes4AirTrack(Tes4AirState& state, float z, float dt)
+    {
+        if (!state.sawAir)
+        {
+            state.sawAir = true;
+            state.seconds = 0.f;
+        }
+        state.maxZ = std::max(state.maxZ, z);
+        state.seconds += dt;
+    }
+
+    // True while a takeoff has been issued but the physics has not lifted the player yet (and not for long).
+    inline bool tes4AirTakeoffPending(const Tes4AirState& state)
+    {
+        return state.active && !state.sawAir && state.seconds < 0.1f;
+    }
+
+    inline float tes4AirRise(const Tes4AirState& state)
+    {
+        return state.maxZ - state.startZ;
     }
 
     inline void tes4AirFall(Tes4AirState& state)
@@ -105,6 +140,8 @@ namespace OpenOblivion
     inline void tes4AirGround(Tes4AirState& state, Tes4Vec2 desired)
     {
         state.active = false;
+        state.jumped = false;
+        state.sawAir = false;
         state.base = Tes4Vec2();
         state.velocity = Tes4Vec2();
         state.lastGround = desired;
