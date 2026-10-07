@@ -1,0 +1,138 @@
+--- a/apps/openmw/mwmechanics/character.cpp
++++ b/apps/openmw/mwmechanics/character.cpp
+@@ -35,6 +35,8 @@
+ 
+ #include "../mwrender/animation.hpp"
+ 
++#include "openoblivion_tes4_airborne.hpp"
++
+ #include "../mwbase/environment.hpp"
+ #include "../mwbase/luamanager.hpp"
+ #include "../mwbase/mechanicsmanager.hpp"
+@@ -2194,6 +2196,10 @@
+             bool wasInJump = mInJump;
+             mInJump = false;
+             const float jumpHeight = cls.getJump(mPtr);
++            // OpenOblivion: classic TES4 airborne motion for the player, opt in (OPENOBLIVION_TES4_AIRBORNE=1).
++            static OpenOblivion::Tes4AirState tes4Air;
++            const bool tes4Airborne = isPlayer && OpenOblivion::tes4AirborneEnabled();
++            const osg::Quat tes4Heading(mPtr.getRefData().getPosition().rot[2], osg::Vec3f(0, 0, -1));
+             if (jumpHeight <= 0.f || sneak || inwater || flying || !solid)
+             {
+                 vec.z() = 0.f;
+@@ -2210,20 +2216,42 @@
+                     mInJump = true;
+                     jumpstate = JumpState_InAir;
+ 
+-                    static const float fJumpMoveBase = gmst.find("fJumpMoveBase")->mValue.getFloat();
+-                    static const float fJumpMoveMult = gmst.find("fJumpMoveMult")->mValue.getFloat();
+-                    float factor = fJumpMoveBase
+-                        + fJumpMoveMult * mPtr.getClass().getSkill(mPtr, ESM::Skill::Acrobatics) / 100.f;
+-                    factor = std::min(1.f, factor);
+-                    vec.x() *= factor;
+-                    vec.y() *= factor;
+-                    vec.z() = 0.0f;
++                    if (tes4Airborne)
++                    {
++                        // OpenOblivion: the original relaxes the horizontal velocity toward the wanted one by a
++                        // small gain per update; the solver keeps the takeoff velocity as inertia.
++                        if (!tes4Air.active)
++                            OpenOblivion::tes4AirFall(tes4Air);
++                        const osg::Vec3f wanted = tes4Heading * osg::Vec3f(vec.x(), vec.y(), 0.f);
++                        const OpenOblivion::Tes4Vec2 delta = OpenOblivion::tes4AirStep(tes4Air,
++                            { wanted.x(), wanted.y() }, OpenOblivion::tes4AirControl(OpenOblivion::sTes4PlayerAcrobatics));
++                        const osg::Vec3f local = tes4Heading.inverse() * osg::Vec3f(delta.x, delta.y, 0.f);
++                        vec = osg::Vec3f(local.x(), local.y(), 0.f);
++                    }
++                    else
++                    {
++                        static const float fJumpMoveBase = gmst.find("fJumpMoveBase")->mValue.getFloat();
++                        static const float fJumpMoveMult = gmst.find("fJumpMoveMult")->mValue.getFloat();
++                        float factor = fJumpMoveBase
++                            + fJumpMoveMult * mPtr.getClass().getSkill(mPtr, ESM::Skill::Acrobatics) / 100.f;
++                        factor = std::min(1.f, factor);
++                        vec.x() *= factor;
++                        vec.y() *= factor;
++                        vec.z() = 0.0f;
++                    }
+                 }
+                 // Started a jump.
+                 else if (mJumpState != JumpState_InAir && vec.z() > 0.f)
+                 {
+                     mInJump = true;
+-                    if (vec.x() == 0 && vec.y() == 0)
++                    if (tes4Airborne)
++                    {
++                        // OpenOblivion: keep the horizontal velocity, launch at sqrt(2 g h) (see the header).
++                        const osg::Vec3f wanted = tes4Heading * osg::Vec3f(vec.x(), vec.y(), 0.f);
++                        OpenOblivion::tes4AirTakeoff(tes4Air, { wanted.x(), wanted.y() });
++                        vec.z() = OpenOblivion::tes4TakeoffVerticalSpeed(OpenOblivion::sTes4PlayerAcrobatics);
++                    }
++                    else if (vec.x() == 0 && vec.y() == 0)
+                         vec.z() = jumpHeight;
+                     else
+                     {
+@@ -2234,6 +2262,17 @@
+                 }
+             }
+ 
++            if (tes4Airborne)
++            {
++                if (onground && !mInJump)
++                {
++                    const osg::Vec3f wanted = tes4Heading * osg::Vec3f(vec.x(), vec.y(), 0.f);
++                    OpenOblivion::tes4AirGround(tes4Air, { wanted.x(), wanted.y() });
++                }
++                else if (inwater || flying || !solid)
++                    OpenOblivion::tes4AirGround(tes4Air, {});
++            }
++
+             if (!mInJump)
+             {
+                 if (mJumpState == JumpState_InAir && !flying && solid && wasInJump)
+--- a/components/misc/constants.hpp
++++ b/components/misc/constants.hpp
+@@ -1,6 +1,8 @@
+ #ifndef OPENMW_CONSTANTS_H
+ #define OPENMW_CONSTANTS_H
+ 
++#include <cstdlib>
++#include <cstring>
+ #include <string>
+ 
+ namespace Constants
+@@ -14,12 +16,33 @@
+     constexpr float SoundSpeedInAir = 343.3f;
+     constexpr float SoundSpeedUnderwater = 1484.0f;
+ 
++    // OpenOblivion: opt-in classic TES4 gravity (OPENOBLIVION_TES4_AIRBORNE=1). The original world's gravity was
++    // read from the running game as 73.575 Havok units/s^2 (9.81 * 7.5); a Havok unit is 1 / 0.1428767293691635
++    // game units. See docs/research/TES4_AIRBORNE.md and tools/native/tes4_airborne.hpp.
++    inline bool tes4AirborneEnabled()
++    {
++        static const bool enabled = [] {
++            const char* value = std::getenv("OPENOBLIVION_TES4_AIRBORNE");
++            return value != nullptr && std::strcmp(value, "1") == 0;
++        }();
++        return enabled;
++    }
++
+     // Gravity constant in m/sec^2
+     // Note: 8.96 m/sec^2 = 9.8 yards/sec^2
+     // Probably original engine's developers just forgot
+     // that their engine uses yards instead of meters
+     // and used standard gravity value as it is
+-    constexpr float GravityConst = 8.96f;
++    // A value that converts to float so existing uses (Constants::GravityConst * Constants::UnitsPerMeter) keep
++    // working while the TES4 switch picks the original's gravity at run time.
++    struct GravityConstant
++    {
++        operator float() const
++        {
++            return tes4AirborneEnabled() ? 73.575f / 0.1428767293691635f / UnitsPerMeter : 8.96f;
++        }
++    };
++    inline constexpr GravityConstant GravityConst{};
+ 
+     // Size of one exterior cell in game units
+     constexpr int CellSizeInUnits = 8192;

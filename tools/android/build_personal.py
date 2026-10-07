@@ -233,6 +233,12 @@ def main():
             validate_door_tools(receipt)
             if receipt.get('base_revision') != lock['engine_base_revision']:
                 raise ValueError('TES4 door tools differ from the native build')
+        if native_build.get('tes4_airborne'):
+            from tes4_airborne import tools_identity as airborne_tools
+            receipt = native_build['tes4_airborne']
+            if (receipt.get('base_revision') != lock['engine_base_revision']
+                    or receipt.get('tools_sha256') != airborne_tools(receipt['base_revision'])):
+                raise ValueError('TES4 airborne tools differ from the native build')
         if native_build.get('tes4_trees'):
             from tes4_trees import tools_identity as trees_tools
             receipt = native_build['tes4_trees']

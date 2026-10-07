@@ -63,6 +63,16 @@ published; no executable code is copied. The header
 OpenOblivion GPL-3.0-only code. Pre-change SHA256s are in
 `tools/native/tes4_movement.lock.json`; the receipt follows the body receipt.
 
+## TES4 player airborne motion audit (2026-10-06)
+
+Intended change: with `OPENOBLIVION_TES4_AIRBORNE=1`, apply the original game's gravity, jump launch and air-control law
+to the player by editing `apps/openmw/mwmechanics/character.cpp` and `components/misc/constants.hpp` (OpenMW GPLv3 project
+grant; desktop and Android pre-change SHA256s are in `tools/native/tes4_airborne.lock.json`). The numbers and laws were
+measured on the owner's running copy (read-only) and read statically from the executable; only constants and the structure of
+the laws are published, no executable code or data. The header `tools/native/tes4_airborne.hpp`, receipt tool and
+fixtures are original OpenOblivion GPL-3.0-only code. The receipt follows the trees receipt and touches no file owned by
+an earlier receipt.
+
 ## Measured TES4 player body audit (2026-10-03)
 
 Intended change: when `OPENOBLIVION_ORIGINAL_BODY=1`, give only the player

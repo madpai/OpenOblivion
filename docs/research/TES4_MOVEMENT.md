@@ -48,9 +48,13 @@ the run/sneak stances directly. Swimming and levitation keep the existing
 paths. The phone shell sets the switch. Desktop probe, same binary: walk
 116.6, run 355.6, sneak 70.0 units/s (`evidence/tes4-gait-*-02`).
 
+Update 2026-10-06: the run branch is now **verified** on the running original: the controller's first
+velocity after Shift+W reads 355.6 units/s (Speed 40, Athletics 5, weapon sheathed), exactly the formula's value. Jump,
+gravity and air control are recovered and ported separately ([TES4_AIRBORNE.md](TES4_AIRBORNE.md)).
+
 Not yet modelled: carried weight (treated as unencumbered), changing
-attributes/skills, the athletics/acrobatics skill use, swim speed, jump height
-and the sneak camera height. Other actors keep the borrowed speeds.
+attributes/skills, the athletics/acrobatics skill use, swim speed and the sneak camera height. Other actors keep the
+borrowed speeds.
 
 ## Start location
 

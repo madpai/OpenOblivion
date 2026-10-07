@@ -1,5 +1,10 @@
 # Player movement priority
 
+> **Status note, 2026-10-06.** This file is the movement history up to 0.9. Later facts supersede several statements below:
+> the original controller hull, walk and run speed (verified) are in [TES4_PLAYER_BODY.md](research/TES4_PLAYER_BODY.md) and
+> [TES4_MOVEMENT.md](research/TES4_MOVEMENT.md); jump, gravity, air control and the original's grounded fall law are in
+> [TES4_AIRBORNE.md](research/TES4_AIRBORNE.md). "Gait ... unmeasured" below is out of date.
+
 The owner requested that engine work prioritize actual in-game player movement.
 The existing scene preview is a test harness for the player controller and
 content collision. Smooth travel up and down stairs is the target; the owner's

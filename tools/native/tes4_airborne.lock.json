@@ -1,0 +1,10 @@
+{
+  "desktop": {
+    "apps/openmw/mwmechanics/character.cpp": "63f2facc8379be21b7ccabe6d4d8772a050c02ce461f527dfc3b1eb2f733dc64",
+    "components/misc/constants.hpp": "984ad3684cbb9f838de11ed4aa32272b9a21741f78b9b8158206856a193c684d"
+  },
+  "android": {
+    "apps/openmw/mwmechanics/character.cpp": "22093dffdab656ece156754d0ff89040d92e2d3b91fa871b7108ba40358a5e08",
+    "components/misc/constants.hpp": "984ad3684cbb9f838de11ed4aa32272b9a21741f78b9b8158206856a193c684d"
+  }
+}

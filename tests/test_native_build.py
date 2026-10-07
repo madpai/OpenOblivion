@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/native'))
 import prepare_android
 import tes4_animation
 import tes4_body
+import tes4_airborne
 import tes4_movement
 import tes4_player
 import tes4_trees
@@ -180,6 +181,30 @@ class NativeTreesReceipt(unittest.TestCase):
             self.assertIn('tes4TreesEnabled()', text)
             self.assertFalse(set(lock[name]) & set(player[name]))
         self.assertEqual(tes4_trees.PARENT, '.openoblivion-tes4-player.json')
+
+
+class NativeAirborneReceipt(unittest.TestCase):
+    def test_lock_matches_patch_targets_and_avoids_every_earlier_receipt(self):
+        here = Path(tes4_airborne.HERE)
+        lock = json.loads((here / 'tes4_airborne.lock.json').read_text())
+        earlier = [json.loads(path.read_text()) for path in sorted(here.glob('tes4_*.lock.json'))
+                   if path.name != 'tes4_airborne.lock.json' and path.name != 'tes4_interactions.lock.json']
+        for name in ('desktop', 'android'):
+            text = (here / ('tes4_airborne_' + name + '.patch')).read_text()
+            self.assertEqual({l[6:] for l in text.splitlines() if l.startswith('+++ b/')}, set(lock[name]))
+            self.assertIn('tes4AirborneEnabled()', text)
+            for other in earlier:
+                self.assertFalse(set(lock[name]) & set(other[name]))
+        self.assertEqual(tes4_airborne.PARENT, '.openoblivion-tes4-trees.json')
+
+    def test_gravity_numbers_agree_between_header_and_constants_patch(self):
+        here = Path(tes4_airborne.HERE)
+        header = (here / 'tes4_airborne.hpp').read_text()
+        for name in ('desktop', 'android'):
+            text = (here / ('tes4_airborne_' + name + '.patch')).read_text()
+            for literal in ('73.575f', '0.1428767293691635'):
+                self.assertIn(literal, header)
+                self.assertIn(literal, text)
 
 
 if __name__ == '__main__':

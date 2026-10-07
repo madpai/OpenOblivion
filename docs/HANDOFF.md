@@ -1,6 +1,33 @@
 # Maintainer handoff
 
-## Start here (2026-10-06)
+## Latest (2026-10-06, session 4): original airborne motor recovered and ported
+
+Read [TES4_AIRBORNE.md](research/TES4_AIRBORNE.md) first. The original game's jump, gravity and air-control laws were
+measured on the owner's running copy (isolated Proton display, read-only sampler, per-update replay) and ported behind
+`OPENOBLIVION_TES4_AIRBORNE=1` as the new last receipt `tes4_airborne` (character.cpp, constants.hpp; the body receipt's
+solver is untouched). Desktop: standing jump 78.0 to 66.7 units (original law at 60 Hz: 66.8), fitted gravity 620 to 514
+(original 515), stair/ramp/wall/ceiling gates unchanged; 25/25 CTest and the content guard pass; the Android-vintage
+(0.51) tree builds and the emulator gate passes 7/7. Also verified live: run speed 355.6, jump formula at Acrobatics 5/50/100.
+
+- **Repo state:** committed and pushed (see git log). Not in any phone build yet: the next phone package (`0.45`) will carry
+  this receipt, the two Java fixes (EGL pre-init, back key) and the launcher switch; it needs an arm64 engine rebuild
+  (double-build and compare hashes: the host has a bad RAM stick). Phone testing is still paused by the owner.
+- **Reference game recipe** (private): start `docker start openoblivion-original-reference-x openoblivion-original-reference-wm`,
+  then `bash ~/openoblivion-private/original-reference-20261003/launch_reference.sh` detached (it must run from `game/`; it
+  starts in the start cell). Sampler, driver and replay scripts: `~/openoblivion-private/evidence/tes4-motor-20261006/`
+  (`sample_motor.py` needs `sudo -n`; use `pgrep -f '[Z]:.*Oblivion.exe'`, never `pkill -f` with a pattern that appears in your
+  own command line; hold console keys 0.2 s). `session-tools/exe.py` reads the exe by address (`fn`, `vslot`, `refs`).
+- **What the original does that the port does not yet do** (oracle data in the evidence folder, laws in TES4_AIRBORNE.md):
+  gravity applies on the ground (stairs descend as a free fall per tread without leaving the ground state); landings are
+  captured about 15 units early and the hull glides down; the support check range is unread. The 0.5 camera filter stays.
+- **Next, in order:** (1) read the proxy's support check and sample drops of 10/20/40/80/120 units to find where ground
+  becomes air; then decide whether the port should follow the grounded fall law (it changes stair feel: owner test needed);
+  (2) step height and slope limit (probably emergent from hull + support); (3) fall damage, fatigue per jump, swimming;
+  (4) package `0.45`; (5) the review's Phase 0 items; (6) the original UI interpreter (Phase 3, HUD first) in parallel.
+- **Compendium:** this session's findings, experiment EXP-OO-015, technique note and golden queries are in
+  madpai/game-decomp-compendium (`hub.py diagnose "jump height differs from the formula"`).
+
+## Start here (2026-10-06, earlier in the day)
 
 State: the served phone build is still `0.44-menu-exit`. The repo is ahead of it by two Java fixes
 (`GameActivity`: EGL pre-initialisation against a start-up deadlock, and the Android back key closing menus) that are

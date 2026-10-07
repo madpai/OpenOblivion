@@ -7,6 +7,12 @@ classic TES4 player hull and its centre-support check, both inactive unless
 `llvm-strip --strip-debug` to keep the symbol table that earlier phone
 packages carried. See [player body measurement and limits](../../docs/research/TES4_PLAYER_BODY.md).
 
+The airborne continuation follows the trees receipt: `tes4_airborne.py apply`, rebuild, then
+`tes4_airborne.py record`. It adds the original game's gravity, jump launch and air control for the player behind
+`OPENOBLIVION_TES4_AIRBORNE=1` and touches only `mwmechanics/character.cpp` and `components/misc/constants.hpp`
+(no file owned by an earlier receipt). Fixtures: `tests/test_tes4_airborne.cpp`. See
+[airborne motion](../../docs/research/TES4_AIRBORNE.md).
+
 The door continuation follows the recorded animation integration:
 `tes4_doors.py apply`, rebuild, then `tes4_doors.py record`. It adds embedded
 classic transform clips, TES4 door clocks/queued requests and authored

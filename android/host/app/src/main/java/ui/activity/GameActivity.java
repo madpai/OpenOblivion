@@ -23,6 +23,7 @@ public final class GameActivity extends SDLActivity {
                 Os.setenv("OPENOBLIVION_AUTHORED_COLLISION", "1", true);
                 Os.setenv("OPENOBLIVION_ORIGINAL_BODY", "1", true);
                 Os.setenv("OPENOBLIVION_TES4_MOVEMENT", "1", true);
+                Os.setenv("OPENOBLIVION_TES4_AIRBORNE", "1", true);
                 Os.setenv("OPENOBLIVION_TES4_PLAYER", "1", true);
                 Os.setenv("OPENOBLIVION_TES4_TREES", "1", true);
                 // A native crash on the game thread leaves a backtrace here; MainActivity shows it with the scene log.
