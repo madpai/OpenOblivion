@@ -26,8 +26,9 @@ emulator ... -no-window -gpu host` (the file name changes per login: `ps aux | g
   28 degree ramp and is grounded 35% of the time; the original at 60 fps is unmeasured (software GL only gives 10 to 30 fps), so this
   decides whether mode 1 can become the default. Both are first on the feel list in [PARITY.md](PARITY.md).
 - **Next, in order:** (a) read the proxy's contact/surface classification and port the stair law, then step height and slope limit;
-  (b) measure the original on a walkable interior ramp at 30 Hz or more (or on hardware GL); (c) when the phone is back: feel test with
-  the marker file, publish 0.46 to the sideload server (still unpublished; served build is 0.44) and package 0.47 with a double build;
+  (b) measure the original on a walkable interior ramp at 30 Hz or more (or on hardware GL; the low-resolution, low-effects config of this
+  session is `Oblivion.ini.measure-20261008` beside the live ini under `proton-compat/.../My Games/Oblivion/`, the live ini is the original again); (c) when the phone is back: feel test with
+  the marker file, publish 0.46 to the sideload server (still unpublished, served build is 0.44; deferred only because nobody can download it while the phone is away and the staged set in `sideload-staging/0.46-jumplog` needs its hashes re-checked by `publish_apk_only.py`, not because of a problem) and package 0.47 with a double build;
   (d) dense-scene phone performance, fall damage/fatigue per jump/swimming, Phase 0 of the review, the UI interpreter (HUD first).
 - Session tooling (private, `~/openoblivion-private/session-tools`): `rebuild_grounded.sh` (desktop), `rebuild_android_grounded.sh` (arm64),
   `grounded/{desktop,android}/a` pristine `mtphysics.cpp`; after any edit to the receipt files run both, then

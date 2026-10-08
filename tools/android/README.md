@@ -217,3 +217,18 @@ upload/report flow, including private-file boundaries and download ranges:
 dropped frames and the present-to-present histogram (SurfaceFlinger time statistics for the game's layer), process memory, the
 busiest threads and thermal state. Start the scene first (`device_gate.py` leaves the app on its launcher screen). First results
 and their limits: [PHONE_PERF_20261006.md](../../docs/research/PHONE_PERF_20261006.md). An emulator proves nothing about speed.
+
+## Grounded motion switch (opt-in, off by default)
+
+The engine's support range, hover and landing capture (`OPENOBLIVION_TES4_GROUNDED=1`, see
+`docs/research/TES4_AIRBORNE.md`) stay off in the launcher until the owner has felt them. To turn them on for a debuggable build
+(emulator or phone), write `1` into the app's config folder and restart the game:
+
+```sh
+adb -s emulator-5582 shell "run-as org.openoblivion.preview sh -c 'echo 1 > files/preview-user/config/openoblivion-grounded.txt'"
+# the engine then logs: OpenOblivion TES4 grounded motion: mode 1   (grep -E in files/preview-user/config/openmw.log)
+adb -s emulator-5582 shell "run-as org.openoblivion.preview rm files/preview-user/config/openoblivion-grounded.txt"   # off again
+```
+
+Anything but `1` is ignored. A jump test without a screen: `adb -s emulator-5582 shell input keyevent KEYCODE_E` logs
+`OpenOblivion TES4 jump: rise ... air time ...` (about 0.045 s less air time with the switch on).
