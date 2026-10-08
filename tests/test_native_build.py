@@ -15,6 +15,7 @@ import prepare_android
 import tes4_animation
 import tes4_body
 import tes4_airborne
+import tes4_grounded
 import tes4_movement
 import tes4_player
 import tes4_trees
@@ -205,6 +206,34 @@ class NativeAirborneReceipt(unittest.TestCase):
             for literal in ('73.575f', '0.1428767293691635'):
                 self.assertIn(literal, header)
                 self.assertIn(literal, text)
+
+
+class NativeGroundedReceipt(unittest.TestCase):
+    def test_lock_matches_patch_targets_and_avoids_every_other_receipt(self):
+        here = Path(tes4_grounded.HERE)
+        lock = json.loads((here / 'tes4_grounded.lock.json').read_text())
+        others = [json.loads(path.read_text()) for path in sorted(here.glob('tes4_*.lock.json'))
+                  if path.name not in ('tes4_grounded.lock.json', 'tes4_interactions.lock.json')]
+        for name in ('desktop', 'android'):
+            text = (here / ('tes4_grounded_' + name + '.patch')).read_text()
+            self.assertEqual({l[6:] for l in text.splitlines() if l.startswith('+++ b/')}, set(lock[name]))
+            self.assertIn('tes4GroundedMove', text)
+            for other in others:
+                self.assertFalse(set(lock[name]) & set(other[name]))
+        self.assertEqual(tes4_grounded.PARENT, '.openoblivion-tes4-airborne.json')
+
+    def test_tool_identity_covers_both_headers(self):
+        for revision, name in tes4_grounded.REVISIONS.items():
+            self.assertEqual(set(tes4_grounded.tools_identity(revision)),
+                             {'tools/native/tes4_grounded.py', 'tools/native/tes4_grounded.lock.json',
+                              'tools/native/tes4_grounded_' + name + '.patch', 'tools/native/tes4_grounded.hpp',
+                              'tools/native/tes4_grounded_law.hpp'})
+
+    def test_support_range_is_two_havok_units_in_law_and_doc(self):
+        header = (Path(tes4_grounded.HERE) / 'tes4_grounded_law.hpp').read_text()
+        self.assertIn('2.f * sTes4HavokToUnits', header)
+        self.assertIn('OPENOBLIVION_TES4_GROUNDED', header)
+        self.assertIn('OPENOBLIVION_TES4_GROUNDED', (Path(tes4_grounded.HERE).parents[1] / 'android/host/app/src/main/java/ui/activity/GameActivity.java').read_text())
 
 
 if __name__ == '__main__':

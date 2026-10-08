@@ -45,6 +45,8 @@ parser.add_argument('--authored-collision', action='store_true', help='Enable th
 parser.add_argument('--original-body', action='store_true', help='Enable the measured classic TES4 player hull in a recorded body build')
 parser.add_argument('--tes4-movement', action='store_true', help='Enable the classic TES4 player ground-speed formula in a recorded build')
 parser.add_argument('--tes4-airborne', action='store_true', help='Enable the classic TES4 player jump, gravity and air control in a recorded build')
+parser.add_argument('--tes4-grounded', type=int, choices=(1, 2), help='Enable the classic TES4 support range, hover and capture (1; 2 adds the sliding state); needs --tes4-airborne')
+parser.add_argument('--engine-env', action='append', default=[], metavar='KEY=VALUE', help='Extra environment variable for the engine (debug switches)')
 parser.add_argument('--tes4-player', action='store_true', help='Render the player as the TES4 Player record in a recorded player build')
 parser.add_argument('--tes4-trees', action='store_true', help='Draw TES4 trees from the original billboard images in a recorded trees build')
 parser.add_argument('--phone-overlay', action='store_true', help='Mount the phone launcher overlay (scripts, sky, generated TES4 stats) as on Android')
@@ -168,6 +170,8 @@ if args.tes4_movement and (not native_manifest or not native_manifest.get('tes4_
     parser.error('--tes4-movement requires a recorded movement integration')
 if args.tes4_airborne and (not native_manifest or not native_manifest.get('tes4_airborne')):
     parser.error('--tes4-airborne requires a recorded airborne integration')
+if args.tes4_grounded and (not args.tes4_airborne or not native_manifest.get('tes4_grounded')):
+    parser.error('--tes4-grounded requires --tes4-airborne and a recorded grounded integration')
 if args.original_body and not native_manifest.get('tes4_body'):
     parser.error('--original-body requires a recorded body integration')
 if args.tes4_doors:
@@ -287,7 +291,9 @@ command = ['docker', 'run', '--rm', '--init', '--name', container_name, '--netwo
            *(['--env', 'OPENOBLIVION_ORIGINAL_BODY=1'] if args.original_body else []),
            *(['--env', 'OPENOBLIVION_TES4_MOVEMENT=1'] if args.tes4_movement else []),
            *(['--env', 'OPENOBLIVION_TES4_AIRBORNE=1'] if args.tes4_airborne else []),
+           *(['--env', f'OPENOBLIVION_TES4_GROUNDED={args.tes4_grounded}'] if args.tes4_grounded else []),
            *(['--env', 'OPENOBLIVION_TES4_PLAYER=1'] if args.tes4_player else []),
+           *[item for pair in args.engine_env for item in ('--env', pair)],
            *(['--env', 'OPENOBLIVION_TES4_TREES=1'] if args.tes4_trees else []),
            *(['--env', 'OPENOBLIVION_HIDE_PART=' + args.hide_part] if args.hide_part else []),
            *(['--env', 'OPENOBLIVION_GROUNDED_EYE=1'] if args.native_grounded_eye else []),
@@ -489,6 +495,7 @@ metrics['authored_collision_enabled'] = args.tes4_doors or args.authored_collisi
 metrics['original_body_enabled'] = args.original_body
 metrics['tes4_movement_enabled'] = args.tes4_movement
 metrics['tes4_airborne_enabled'] = args.tes4_airborne
+metrics['tes4_grounded_mode'] = args.tes4_grounded or 0
 metrics['tes4_player_enabled'] = args.tes4_player
 metrics['tes4_trees_enabled'] = args.tes4_trees
 body_logged = 'OpenOblivion original TES4 player body: half extents' in log

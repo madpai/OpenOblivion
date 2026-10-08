@@ -239,6 +239,12 @@ def main():
             if (receipt.get('base_revision') != lock['engine_base_revision']
                     or receipt.get('tools_sha256') != airborne_tools(receipt['base_revision'])):
                 raise ValueError('TES4 airborne tools differ from the native build')
+        if native_build.get('tes4_grounded'):
+            from tes4_grounded import tools_identity as grounded_tools
+            receipt = native_build['tes4_grounded']
+            if (receipt.get('base_revision') != lock['engine_base_revision']
+                    or receipt.get('tools_sha256') != grounded_tools(receipt['base_revision'])):
+                raise ValueError('TES4 grounded tools differ from the native build')
         if native_build.get('tes4_trees'):
             from tes4_trees import tools_identity as trees_tools
             receipt = native_build['tes4_trees']

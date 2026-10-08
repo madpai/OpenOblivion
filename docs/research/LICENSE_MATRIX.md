@@ -73,6 +73,16 @@ the laws are published, no executable code or data. The header `tools/native/tes
 fixtures are original OpenOblivion GPL-3.0-only code. The receipt follows the trees receipt and touches no file owned by
 an earlier receipt.
 
+## TES4 player grounded motion audit (2026-10-08)
+
+Intended change: with `OPENOBLIVION_TES4_GROUNDED=1` (and the airborne switch), apply the original game's support range,
+landing capture and hover to the player by editing `apps/openmw/mwphysics/mtphysics.cpp` (OpenMW GPLv3 project grant; one
+include and one call site; desktop and Android pre-change SHA256s are in `tools/native/tes4_grounded.lock.json`). The law
+runs after the host's movement solver and replaces only its vertical result. The numbers were measured on the owner's running
+copy (read-only sampler, no executable code or data published); only constants and the structure of the law are published.
+The headers `tools/native/tes4_grounded.hpp` and `tools/native/tes4_grounded_law.hpp`, the receipt tool and the fixture are
+original OpenOblivion GPL-3.0-only code. The receipt follows the airborne receipt and touches no file owned by another receipt.
+
 ## Measured TES4 player body audit (2026-10-03)
 
 Intended change: when `OPENOBLIVION_ORIGINAL_BODY=1`, give only the player

@@ -1,0 +1,20 @@
+--- a/apps/openmw/mwphysics/mtphysics.cpp
++++ b/apps/openmw/mwphysics/mtphysics.cpp
+@@ -33,6 +33,7 @@
+ #include "contacttestwrapper.h"
+ #include "movementsolver.hpp"
+ #include "object.hpp"
++#include "openoblivion_tes4_grounded.hpp"
+ #include "physicssystem.hpp"
+ #include "projectile.hpp"
+ 
+@@ -236,7 +237,8 @@
+             const MWPhysics::WorldFrameData& mWorldFrameData;
+             void operator()(const LockedActorSimulation& sim) const
+             {
+-                MWPhysics::MovementSolver::move(sim.second, mPhysicsDt, mCollisionWorld, mWorldFrameData);
++                // OpenOblivion: classic TES4 grounded motion for the player, opt in (OPENOBLIVION_TES4_GROUNDED=1).
++                OpenOblivion::tes4GroundedMove(sim.second, mPhysicsDt, mCollisionWorld, mWorldFrameData);
+             }
+             void operator()(const LockedProjectileSimulation& sim) const
+             {

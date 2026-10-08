@@ -1,5 +1,38 @@
 # Maintainer handoff
 
+## Latest (2026-10-08, session 5): support range, hover and capture recovered and ported (opt-in); no phone
+
+**The owner has no Android device for now** ("emulator it is"): the emulator gate is the test loop again, adb only with `-s emulator-5582`
+(see the memory notes). Emulator tip: a tool session has no `DISPLAY`, so start it with `DISPLAY=:0 XAUTHORITY=<the Xwayland -auth file>
+emulator ... -no-window -gpu host` (the file name changes per login: `ps aux | grep Xwayland`).
+
+- **Measured on the original (read-only sampler, Vilverin stair base, 21 and 30 Hz):** the controller is supported while the ground is
+  less than 2.0 Havok units (13.998 game units) below its resting height (bracket 1.9717 to 2.0003); supported on level ground it resets
+  `vz = -g*dt` every update (a hover: the hull sinks `g*dt^2` per update, 8.6 units/s at 60 Hz); the update that captures a fall keeps its
+  velocity; capture needs `vz <= 0`; replays exactly. Details and tables: [TES4_AIRBORNE.md](research/TES4_AIRBORNE.md) "Support range,
+  landing capture and the sliding state". Raw captures `evidence/tes4-motor-20261006/motor-drops{1,2,3}.json` (private; a 125-unit drop
+  kills the level-1 player and returns the game to the main menu: restore health between drops).
+- **Ported as receipt `tes4_grounded`** (after airborne; owns only `mwphysics/mtphysics.cpp` plus two headers; wrapper around the host
+  solver for the player, mode 1; both engine vintages; tests `tests/test_tes4_grounded.cpp` replay four recorded drops at 0.05 units).
+  Desktop probe `--tes4-grounded 1` (needs `--tes4-airborne`; `--engine-env KEY=VALUE` passes debug variables). **Off in the launcher**:
+  `files/preview-user/config/openoblivion-grounded.txt` containing `1` turns it on (`run-as` on a debuggable build). Emulator: engine logs
+  `OpenOblivion TES4 grounded motion: mode 1`; jumps via `input keyevent KEYCODE_E` rise the same and spend 0.045 s less in the air; the
+  spawn drop settles over a second. Gate passes with and without it. The libraries built this session are single builds (bad RAM):
+  double-build both vintages and compare hashes before any phone packaging.
+- **Open and honest:** (1) stairs: the original keeps the ground state while `vz` accumulates (a free fall per tread; classification
+  inferred, `fl` flags and the proxy velocity do not show it); the experimental sliding mode (`=2`, probes only) leaves the hull above the
+  treads, because the hull-sweep normal cannot tell an edge contact from a level one at the top of a flight. Needs the proxy's real
+  classification read from the executable. (2) Walking downhill on walkable ground: with mode 1 the hull rides about 14 units above a
+  28 degree ramp and is grounded 35% of the time; the original at 60 fps is unmeasured (software GL only gives 10 to 30 fps), so this
+  decides whether mode 1 can become the default. Both are first on the feel list in [PARITY.md](PARITY.md).
+- **Next, in order:** (a) read the proxy's contact/surface classification and port the stair law, then step height and slope limit;
+  (b) measure the original on a walkable interior ramp at 30 Hz or more (or on hardware GL); (c) when the phone is back: feel test with
+  the marker file, publish 0.46 to the sideload server (still unpublished; served build is 0.44) and package 0.47 with a double build;
+  (d) dense-scene phone performance, fall damage/fatigue per jump/swimming, Phase 0 of the review, the UI interpreter (HUD first).
+- Session tooling (private, `~/openoblivion-private/session-tools`): `rebuild_grounded.sh` (desktop), `rebuild_android_grounded.sh` (arm64),
+  `grounded/{desktop,android}/a` pristine `mtphysics.cpp`; after any edit to the receipt files run both, then
+  `tools/native/build_emulator_x86_64.sh` and `tools/android/make_emulator_apk.py` as in the emulator notes.
+
 ## Latest (2026-10-06, session 4, end of night): original airborne motor recovered, ported and confirmed on the phone
 
 Read [TES4_AIRBORNE.md](research/TES4_AIRBORNE.md) first, then [PHONE_PERF_20261006.md](research/PHONE_PERF_20261006.md) and the deviation ledger

@@ -1,0 +1,8 @@
+{
+  "desktop": {
+    "apps/openmw/mwphysics/mtphysics.cpp": "54501bb4fd47c2c92d044c1b7185c76c67826ed480aa098eb47ed522edcaa040"
+  },
+  "android": {
+    "apps/openmw/mwphysics/mtphysics.cpp": "019651dfa628cd39bf7c80f23b428d679a00d755d6ff28099df3db326283b7b4"
+  }
+}

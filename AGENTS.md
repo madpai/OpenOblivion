@@ -32,11 +32,14 @@ docs/decisions/0001-foundation.md and docs/HANDOFF.md first.
   `OPENOBLIVION_AUTHORED_COLLISION=1`; the measured classic player hull loads when
   `OPENOBLIVION_ORIGINAL_BODY=1`; the original ground speed (walk and run verified) is
   `OPENOBLIVION_TES4_MOVEMENT=1`; the original jump, gravity and air control are
-  `OPENOBLIVION_TES4_AIRBORNE=1`. Do not substitute an invented capsule for the hull, and
+  `OPENOBLIVION_TES4_AIRBORNE=1`; the level-ground support range (2.0 Havok units), hover and landing
+  capture are `OPENOBLIVION_TES4_GROUNDED=1` (opt-in, off in the launcher until the owner feels it; the
+  Android launcher reads `preview-user/config/openoblivion-grounded.txt`; mode 2 is an unfinished stair
+  experiment, never ship it). Do not substitute an invented capsule for the hull, and
   do not tune the borrowed controller by feel: recover the law from the running original
   (read-only sampler plus a per-update replay, see the compendium technique note) and
   port it behind a switch with a paired same-binary probe. Still unmeasured: the original's
-  ground-support range, step height and slope limit, other Acrobatics values, swimming and fall
-  damage. The measured reference-to-hull float is not yet reproduced; the 0.5 camera filter is
+  stair (sliding) classification, behaviour on walkable slopes at 60 fps, step height and slope limit,
+  other Acrobatics values, swimming and fall damage. The measured reference-to-hull float is not yet reproduced; the 0.5 camera filter is
   unchanged (a deliberate deviation: the original's stairs are a free fall per tread).
   Research first: `hub.py prior-art` / `diagnose` / `tried` in madpai/game-decomp-compendium.

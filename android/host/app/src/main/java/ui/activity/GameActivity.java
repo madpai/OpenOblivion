@@ -24,6 +24,13 @@ public final class GameActivity extends SDLActivity {
                 Os.setenv("OPENOBLIVION_ORIGINAL_BODY", "1", true);
                 Os.setenv("OPENOBLIVION_TES4_MOVEMENT", "1", true);
                 Os.setenv("OPENOBLIVION_TES4_AIRBORNE", "1", true);
+                // Support range, hover and landing capture: the feel is not confirmed on a device, so it stays off unless
+                // preview-user/config/openoblivion-grounded.txt says 1. (Mode 2, stair sliding, is probe-only and not offered.)
+                try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(
+                        new File(getFilesDir(), "preview-user/config/openoblivion-grounded.txt")))) {
+                    String mode = reader.readLine();
+                    if (mode != null && mode.trim().equals("1")) Os.setenv("OPENOBLIVION_TES4_GROUNDED", "1", true);
+                } catch (java.io.IOException absent) { /* off */ }
                 Os.setenv("OPENOBLIVION_TES4_PLAYER", "1", true);
                 Os.setenv("OPENOBLIVION_TES4_TREES", "1", true);
                 // A native crash on the game thread leaves a backtrace here; MainActivity shows it with the scene log.

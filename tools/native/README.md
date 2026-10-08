@@ -13,6 +13,13 @@ The airborne continuation follows the trees receipt: `tes4_airborne.py apply`, r
 (no file owned by an earlier receipt). Fixtures: `tests/test_tes4_airborne.cpp`. See
 [airborne motion](../../docs/research/TES4_AIRBORNE.md).
 
+The grounded continuation follows the airborne receipt: `tes4_grounded.py apply`, rebuild, then `tes4_grounded.py record`. With
+`OPENOBLIVION_TES4_GROUNDED=1` (needs the airborne switch) it runs the original's support range, hover and landing capture
+around the host solver for the player; it owns only `mwphysics/mtphysics.cpp` plus two new headers (`tes4_grounded_law.hpp` is
+pure and unit-tested, `tes4_grounded.hpp` is the solver wrapper). `=2` adds an experimental sliding state for steep contacts that
+does not yet reproduce the original's stairs (see the research note). Fixtures: `tests/test_tes4_grounded.cpp` replays four
+recorded drops of the original through the law. See [airborne motion](../../docs/research/TES4_AIRBORNE.md).
+
 The door continuation follows the recorded animation integration:
 `tes4_doors.py apply`, rebuild, then `tes4_doors.py record`. It adds embedded
 classic transform clips, TES4 door clocks/queued requests and authored
